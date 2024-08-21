@@ -34,7 +34,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMG_HOSTNAME}} '
             cd /home/ubuntu/img-be &&
             sudo git pull origin development &&
-            sudo npm run build && sudo pm2 stop all && sudo pm2 delete all && sudo npm run start:prod && sudo pm2 save -f'
+            sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
       - name: Deploy to  Stage Env
         if: github.ref == 'refs/heads/testing'
         env:
