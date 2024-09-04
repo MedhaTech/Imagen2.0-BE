@@ -36,7 +36,7 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/stuBadgesStats`, this.getStudentBadges.bind(this));
         this.router.get(`${this.path}/stuPrePostStats`, this.getStudentPREPOST.bind(this));
         //team stats..
-        this.router.get(`${this.path}/teamStats/:team_id`, this.getTeamStats.bind(this));
+       // this.router.get(`${this.path}/teamStats/:team_id`, this.getTeamStats.bind(this));
         //evaluator stats..
         this.router.get(`${this.path}/evaluatorStats`, this.getEvaluatorStats.bind(this));
         //quizscore
@@ -68,145 +68,145 @@ export default class DashboardController extends BaseController {
     ///////// TEAM STATS
     ///////// PS: this assumes that there is only course in the systems and hence alll topics inside topics table are taken for over counts
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private async getTeamStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            const newParams: any = await this.authService.decryptGlobal(req.params.team_id);
-            const team_id = JSON.parse(newParams);
-            let newREQQuery: any = {}
-            if (req.query.Data) {
-                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-                newREQQuery = JSON.parse(newQuery);
-            } else if (Object.keys(req.query).length !== 0) {
-                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-            }
-            const paramStatus: any = newREQQuery.status;
-            let whereClauseStatusPart: any = {};
-            let whereClauseStatusPartLiteral = "1=1";
-            let addWhereClauseStatusPart = false
-            if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
-                whereClauseStatusPart = { "status": paramStatus }
-                whereClauseStatusPartLiteral = `status = "${paramStatus}"`
-                addWhereClauseStatusPart = true;
-            }
+    // private async getTeamStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE') {
+    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+    //     }
+    //     try {
+    //         const newParams: any = await this.authService.decryptGlobal(req.params.team_id);
+    //         const team_id = JSON.parse(newParams);
+    //         let newREQQuery: any = {}
+    //         if (req.query.Data) {
+    //             let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+    //             newREQQuery = JSON.parse(newQuery);
+    //         } else if (Object.keys(req.query).length !== 0) {
+    //             return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+    //         }
+    //         const paramStatus: any = newREQQuery.status;
+    //         let whereClauseStatusPart: any = {};
+    //         let whereClauseStatusPartLiteral = "1=1";
+    //         let addWhereClauseStatusPart = false
+    //         if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
+    //             whereClauseStatusPart = { "status": paramStatus }
+    //             whereClauseStatusPartLiteral = `status = "${paramStatus}"`
+    //             addWhereClauseStatusPart = true;
+    //         }
 
-            const serviceDashboard = new DashboardService();
-            const studentStatsResul: any = await student.findAll({
-                where: { team_id },
-                raw: true,
-                attributes: [
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForAllToipcsCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "all_topics_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForAllToipcVideosCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "all_videos_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForAllToipcWorksheetCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "all_worksheets_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForAllToipcQuizCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "all_quiz_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForAllToipcsCompletedCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "topics_completed_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForVideoToipcsCompletedCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "videos_completed_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForWorksheetToipcsCompletedCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "worksheet_completed_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForQuizToipcsCompletedCount(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "quiz_completed_count"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForPreSurveyStatus(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "pre_survey_status"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralForPostSurveyStatus(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "post_survey_status"
-                    ],
-                    [
-                        db.literal(`(
-                            ${serviceDashboard.getDbLieralIdeaSubmission(addWhereClauseStatusPart,
-                            whereClauseStatusPartLiteral)}
-                            )`),
-                        "idea_submission"
-                    ],
-                    "certificate",
-                    "badges",
-                    "created_at",
-                    "full_name",
-                    "user_id"
-                ]
-            })
-            if (!studentStatsResul) {
-                throw notFound(speeches.USER_NOT_FOUND)
-            }
-            if (studentStatsResul instanceof Error) {
-                throw studentStatsResul
-            }
-            //console.log(studentStatsResul)
-            const badges = studentStatsResul.badges;
-            let badgesCount = 0
-            if (badges) {
-                const badgesParsed = JSON.parse(badges);
-                if (badgesParsed) {
-                    badgesCount = Object.keys(badgesParsed).length
-                }
-                delete studentStatsResul.badges;
-            }
-            studentStatsResul["badges_earned_count"] = badgesCount;
+    //         const serviceDashboard = new DashboardService();
+    //         const studentStatsResul: any = await student.findAll({
+    //             where: { team_id },
+    //             raw: true,
+    //             attributes: [
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForAllToipcsCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "all_topics_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForAllToipcVideosCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "all_videos_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForAllToipcWorksheetCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "all_worksheets_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForAllToipcQuizCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "all_quiz_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForAllToipcsCompletedCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "topics_completed_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForVideoToipcsCompletedCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "videos_completed_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForWorksheetToipcsCompletedCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "worksheet_completed_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForQuizToipcsCompletedCount(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "quiz_completed_count"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForPreSurveyStatus(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "pre_survey_status"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralForPostSurveyStatus(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "post_survey_status"
+    //                 ],
+    //                 [
+    //                     db.literal(`(
+    //                         ${serviceDashboard.getDbLieralIdeaSubmission(addWhereClauseStatusPart,
+    //                         whereClauseStatusPartLiteral)}
+    //                         )`),
+    //                     "idea_submission"
+    //                 ],
+    //                 "certificate",
+    //                 "badges",
+    //                 "created_at",
+    //                 "full_name",
+    //                 "user_id"
+    //             ]
+    //         })
+    //         if (!studentStatsResul) {
+    //             throw notFound(speeches.USER_NOT_FOUND)
+    //         }
+    //         if (studentStatsResul instanceof Error) {
+    //             throw studentStatsResul
+    //         }
+    //         //console.log(studentStatsResul)
+    //         const badges = studentStatsResul.badges;
+    //         let badgesCount = 0
+    //         if (badges) {
+    //             const badgesParsed = JSON.parse(badges);
+    //             if (badgesParsed) {
+    //                 badgesCount = Object.keys(badgesParsed).length
+    //             }
+    //             delete studentStatsResul.badges;
+    //         }
+    //         studentStatsResul["badges_earned_count"] = badgesCount;
 
 
 
-            res.status(200).send(dispatcher(res, studentStatsResul, "success"))
+    //         res.status(200).send(dispatcher(res, studentStatsResul, "success"))
 
-        } catch (err) {
-            next(err)
-        }
-    }
+    //     } catch (err) {
+    //         next(err)
+    //     }
+    // }
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////

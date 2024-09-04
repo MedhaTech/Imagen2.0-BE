@@ -93,7 +93,7 @@ export default class App {
      */
     private initializeJobs(): void {
         const cronManager = CronManager.getInstance()
-        cronManager.addJob(new DashboardMapStatsJob())
+        //cronManager.addJob(new DashboardMapStatsJob())
         cronManager.startAll();
     }
 
