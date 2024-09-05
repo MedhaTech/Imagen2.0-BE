@@ -3,6 +3,7 @@ import { constents } from "./constents.config";
 export const speeches = {
     USER_USERNAME_REQUIRED: "Username can not be null/empty",
     USER_FULLNAME_REQUIRED: "full_name can not be null/empty",
+    USER_TYPE_REQUIRED: "Type can not be null/empty",
     USER_ROLE_REQUIRED: "Role can not be null/empty",
     USER_TEAMID_REQUIRED: "Team_id can not be null/empty",
     USER_PASSWORD_REQUIRED: "Password cant not be null/empty",

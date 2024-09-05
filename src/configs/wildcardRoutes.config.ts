@@ -14,12 +14,14 @@ export const wildcardRoutes = [
     "/api/v1/mentors/login",
     "/api/v1/mentors/register",
     "/api/v1/mentors/resetPassword",
-    "/api/v1/mentors/emailOtp",
+    "/api/v1/students/emailOtp",
     "/api/v1/organizations/checkOrg",
     "/api/v1/organizations/createOrg",
     "/api/v1/organizations/districts",
     "/api/v1/organizations/states",
     "/api/v1/mentors/triggerWelcomeEmail",
     "/api/v1/teams/login",
-    "/api/v1/dashboard/mapStats"
+    "/api/v1/dashboard/mapStats",
+    "/api/v1/students/register",
+    "/api/v1/students/addStudent"
 ];

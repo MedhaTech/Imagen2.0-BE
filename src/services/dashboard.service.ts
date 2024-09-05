@@ -206,32 +206,32 @@ export default class DashboardService extends BaseService {
             }
 
 
-            const studentsResult = await student.findAll({
-                attributes: [
-                    "user_id",
-                    "student_id"
-                ],
-                where: {
-                    team_id: teamIdInDistrict,
-                    status: 'ACTIVE'
-                }
-            })
-            if (!studentsResult || (!studentsResult.length) || studentsResult.length == 0) {
-                studentsInDistric = []
-            } else {
-                studentsInDistric = studentsResult.map((Element: any) => Element.dataValues.student_id);
-            }
-            studentsInDistric = studentsResult.map((Element: any) => Element.dataValues.student_id);
+            // const studentsResult = await student.findAll({
+            //     attributes: [
+            //         "user_id",
+            //         "student_id"
+            //     ],
+            //     where: {
+            //         team_id: teamIdInDistrict,
+            //         status: 'ACTIVE'
+            //     }
+            // })
+            // if (!studentsResult || (!studentsResult.length) || studentsResult.length == 0) {
+            //     studentsInDistric = []
+            // } else {
+            //     studentsInDistric = studentsResult.map((Element: any) => Element.dataValues.student_id);
+            // }
+            // studentsInDistric = studentsResult.map((Element: any) => Element.dataValues.student_id);
 
-            return {
-                schoolIdsInDistrict: schoolIdsInDistrict,
-                registeredSchoolIdsInDistrict: registeredSchoolIdsInDistrict,
-                teamIdInDistrict: teamIdInDistrict,
-                challengeInDistrict: challengeInDistrict,
-                studentsInDistric: studentsInDistric,
-                schoolIdsInDistrictWithTeams: schoolIdsInDistrictWithTeams,
-                registerMentor:registerMentor
-            }
+            // return {
+            //     schoolIdsInDistrict: schoolIdsInDistrict,
+            //     registeredSchoolIdsInDistrict: registeredSchoolIdsInDistrict,
+            //     teamIdInDistrict: teamIdInDistrict,
+            //     challengeInDistrict: challengeInDistrict,
+            //     studentsInDistric: studentsInDistric,
+            //     schoolIdsInDistrictWithTeams: schoolIdsInDistrictWithTeams,
+            //     registerMentor:registerMentor
+            // }
         } catch (err) {
             return err
         }

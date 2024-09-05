@@ -759,23 +759,23 @@ export default class authService {
      * @param argTeamId String
      * @returns Boolean
      */
-    async checkIfTeamHasPlaceForNewMember(argTeamId: any) {
-        try {
-            let studentResult: any = await student.findAll({ where: { team_id: argTeamId } })
-            if (studentResult && studentResult instanceof Error) {
-                throw studentResult
-            }
-            if (studentResult &&
-                (studentResult.length == 0 ||
-                    studentResult.length < constents.TEAMS_MAX_STUDENTS_ALLOWED)
-            ) {
-                return true;
-            }
-            return false
-        } catch (err) {
-            return err
-        }
-    }
+    // async checkIfTeamHasPlaceForNewMember(argTeamId: any) {
+    //     try {
+    //         let studentResult: any = await student.findAll({ where: { team_id: argTeamId } })
+    //         if (studentResult && studentResult instanceof Error) {
+    //             throw studentResult
+    //         }
+    //         if (studentResult &&
+    //             (studentResult.length == 0 ||
+    //                 studentResult.length < constents.TEAMS_MAX_STUDENTS_ALLOWED)
+    //         ) {
+    //             return true;
+    //         }
+    //         return false
+    //     } catch (err) {
+    //         return err
+    //     }
+    // }
 
     /**
      * Create a students user in bulk
