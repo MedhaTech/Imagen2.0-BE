@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { customAlphabet } from 'nanoid';
 import { speeches } from '../configs/speeches.config';
 import dispatcher from '../utils/dispatch.util';
-import { studentSchema, studentSchemaAddstudent, studentUpdateSchema } from '../validations/student.validationa';
+import { studentLoginSchema, studentSchema, studentSchemaAddstudent, studentUpdateSchema } from '../validations/student.validationa';
 import bcrypt from 'bcrypt';
 import authService from '../services/auth.service';
 import BaseController from './base.controller';
@@ -42,8 +42,24 @@ export default class StudentController extends BaseController {
         this.router.get(`${this.path}/:student_user_id/badges`, this.getStudentBadges.bind(this));
         this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
         //this.router.get(`${this.path}/studentsList/:teamId`, this.getStudentsList.bind(this));
+        this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
+
         super.initializeRoutes();
     }
+    private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        // let studentDetails: any;
+         let result;
+         req.body['role'] = 'STUDENT'
+         result = await this.authService.login(req.body);
+         if (!result) {
+             return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
+         } else if (result.error) {
+             return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
+         } else {
+             //studentDetails = await this.authService.getServiceDetails('student', { user_id: result.data.user_id });
+             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
+         }
+     }
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
