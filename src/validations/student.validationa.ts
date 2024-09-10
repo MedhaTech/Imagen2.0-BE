@@ -45,3 +45,12 @@ export const studentUpdateSchema = Joi.object().keys({
     disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     Gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
 });
+
+export const studentLoginSchema = Joi.object().keys({
+    username: Joi.string().email().required().messages({
+        'string.empty': speeches.USER_USERNAME_REQUIRED
+    }),
+    password: Joi.string().required().messages({
+        'string.empty': speeches.USER_PASSWORD_REQUIRED
+    })
+});
