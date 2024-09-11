@@ -38,7 +38,7 @@ export default class MentorController extends BaseController {
     protected initializeRoutes(): void {
         //example route to add
         //this.router.get(`${this.path}/`, this.getData);
-        this.router.post(`${this.path}/register`, validationMiddleware(mentorRegSchema), this.register.bind(this));
+        this.router.post(`${this.path}/register`, validationMiddleware(mentorSchema), this.register.bind(this));
         this.router.post(`${this.path}/login`, this.login.bind(this));
         this.router.get(`${this.path}/logout`, this.logout.bind(this));
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
@@ -50,7 +50,7 @@ export default class MentorController extends BaseController {
         this.router.post(`${this.path}/:mentor_user_id/badges`, this.addBadgeToMentor.bind(this));
         this.router.get(`${this.path}/:mentor_user_id/badges`, this.getMentorBadges.bind(this));
         this.router.get(`${this.path}/teamCredentials/:mentorId`, this.getteamCredentials.bind(this));
-        
+
         super.initializeRoutes();
     }
     protected async autoFillUserDataForBulkUpload(req: Request, res: Response, modelLoaded: any, reqData: any = null) {
@@ -262,24 +262,8 @@ export default class MentorController extends BaseController {
         }
     }
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (!req.body.organization_code || req.body.organization_code === "") return res.status(406).send(dispatcher(res, speeches.ORG_CODE_REQUIRED, 'error', speeches.NOT_ACCEPTABLE, 406));
-        const org = await this.authService.checkOrgDetails(req.body.organization_code);
-        if (!org) {
-            return res.status(406).send(dispatcher(res, org, 'error', speeches.ORG_CODE_NOT_EXISTS, 406));
-        }
-        if (!req.body.role || req.body.role !== 'MENTOR') {
-            return res.status(406).send(dispatcher(res, null, 'error', speeches.USER_ROLE_REQUIRED, 406));
-        }
-        req.body['reg_status'] = '3';
-        if (!req.body.password || req.body.password == null) req.body.password = '';
-        if (req.body.district) {
-            const where: any = {};
-            where[`organization_code`] = req.body.organization_code;
-            const playload = {
-                'district': req.body.district
-            }
-            const uporg = await this.crudService.update(organization, playload, { where: where })
-        }
+        req.body['role'] = 'MENTOR';
+        req.body.password  = req.body.confirmPassword
         const payloadData = this.autoFillTrackingColumns(req, res, mentor);
         const result: any = await this.authService.mentorRegister(payloadData);
         if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
@@ -288,17 +272,6 @@ export default class MentorController extends BaseController {
         if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
             return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MOBILE_EXISTS, 406));
         }
-        // // const otp = await this.authService.generateOtp();
-        // let otp = await this.authService.triggerOtpMsg(req.body.mobile); //async function but no need to await ...since we yet do not care about the outcome of the sms trigger ....!!this may need to change later on ...!!
-        // otp = String(otp)
-        // let hashString = await this.authService.generateCryptEncryption(otp);
-        // const updatePassword = await this.authService.crudService.update(user,
-        //     { password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT) },
-        //     { where: { user_id: result.dataValues.user_id } });
-        // const findMentorDetailsAndUpdateOTP: any = await this.crudService.updateAndFind(mentor,
-        //     { otp: otp },
-        //     { where: { user_id: result.dataValues.user_id } }
-        // );
         const data = result.dataValues;
         return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
     }
@@ -309,29 +282,7 @@ export default class MentorController extends BaseController {
             if (!result) {
                 return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
             }
-            // else if (result.error) {
-            //     return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
-            // }
             else {
-                // mentorDetails = await this.authService.getServiceDetails('mentor', { user_id: result.data.user_id });
-                // result.data['mentor_id'] = mentorDetails.dataValues.mentor_id
-                const mentorData = await this.authService.crudService.findOne(mentor, {
-                    where: { user_id: result.data.user_id },
-                    include: {
-                        model: organization
-                    }
-                });
-                if (!mentorData || mentorData instanceof Error) {
-                    return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_REG_STATUS));
-                }
-                if (mentorData.dataValues.reg_status !== '3') {
-                    return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_REG_STATUS));
-                }
-                result.data['mentor_id'] = mentorData.dataValues.mentor_id;
-                result.data['organization_name'] = mentorData.dataValues.organization.organization_name;
-                result.data['state'] = mentorData.dataValues.organization.state;
-                result.data['title'] = mentorData.dataValues.title;
-                result.data['gender'] = mentorData.dataValues.gender;
                 return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
             }
         } catch (error) {

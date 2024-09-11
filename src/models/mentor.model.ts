@@ -11,19 +11,19 @@ import { student } from './student.model';
 export class mentor extends Model<InferAttributes<mentor>, InferCreationAttributes<mentor>> {
     declare mentor_id: CreationOptional<number>;
     declare user_id: number;
-    declare reg_status: number;
-    declare organization_code: string;
     declare full_name: string;
     declare mobile: string;
+    declare district: string;
+    declare college_type: string;
+    declare college_name: string;
+    declare otp:number;
     declare status: Enumerator;
+    declare badges: string;
     declare created_by: number;
     declare created_at: Date;
     declare updated_by: number;
     declare updated_at: Date;
-    declare title: string;
-    declare gender: string;
-    declare whatapp_mobile: string;
-    declare badges: string;
+    
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -42,16 +42,6 @@ mentor.init(
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        reg_status: {
-            type: DataTypes.ENUM(...Object.values(constents.res_status.list)),
-            defaultValue: constents.res_status.default,
-            allowNull: true
-        },
-        organization_code: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-
         full_name: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -60,8 +50,14 @@ mentor.init(
             type: DataTypes.STRING,
             unique: true
         },
-        badges: {
-            type: DataTypes.TEXT('long')
+        district: {
+            type: DataTypes.STRING
+        },
+        college_type: {
+            type: DataTypes.STRING
+        },
+        college_name: {
+            type: DataTypes.STRING
         },
         otp: {
             type: DataTypes.STRING,
@@ -70,6 +66,9 @@ mentor.init(
         status: {
             type: DataTypes.ENUM(...Object.values(constents.common_status_flags.list)),
             defaultValue: constents.common_status_flags.default
+        },
+        badges: {
+            type: DataTypes.TEXT('long')
         },
         created_by: {
             type: DataTypes.INTEGER,
@@ -92,18 +91,6 @@ mentor.init(
             defaultValue: DataTypes.NOW,
             onUpdate: new Date().toLocaleString()
         },
-        title: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        gender: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        whatapp_mobile: {
-            type: DataTypes.STRING,
-            allowNull: false
-        }
     },
     {
         sequelize: db,
@@ -128,7 +115,7 @@ mentor.init(
 
 mentor.belongsTo(user, { foreignKey: 'user_id', constraints: false, scope: { role: 'MENTOR' } });
 user.hasOne(mentor, { foreignKey: 'user_id', constraints: false });
-mentor.belongsTo(organization, { targetKey: 'organization_code', foreignKey: 'organization_code', constraints: false });
-organization.hasOne(mentor, { sourceKey: 'organization_code', foreignKey: 'organization_code', constraints: false });
+// mentor.belongsTo(organization, { targetKey: 'organization_code', foreignKey: 'organization_code', constraints: false });
+// organization.hasOne(mentor, { sourceKey: 'organization_code', foreignKey: 'organization_code', constraints: false });
 // mentor.belongsTo(student, { targetKey: 'team_id', foreignKey: 'organization_code', constraints: false });
 // student.hasOne(mentor, { sourceKey: 'team_id', foreignKey: 'organization_code', constraints: false });
