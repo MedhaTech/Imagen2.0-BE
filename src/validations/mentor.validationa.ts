@@ -3,18 +3,18 @@ import { constents } from '../configs/constents.config';
 import { speeches } from '../configs/speeches.config';
 
 export const mentorSchema = Joi.object().keys({
-    username: Joi.string().trim().min(1).required().messages({
+    username: Joi.string().email().trim().min(1).required().messages({
         'string.empty': speeches.USER_USERNAME_REQUIRED
     }),
     full_name: Joi.string().trim().min(1).required().messages({
         'string.empty': speeches.USER_FULLNAME_REQUIRED
     }),
-    role: Joi.string().required().messages({
-        'string.empty': speeches.USER_ROLE_REQUIRED
-    }),
-    organization_code: Joi.string().required().messages({
-        'string.empty': speeches.USER_ORGANIZATION_CODE_REQUIRED
-    }),
+    mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN),
+    district: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    college_type: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    college_name: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    password: Joi.any(),
+    confirmPassword: Joi.any()
 });
 
 export const mentorLoginSchema = Joi.object().keys({
@@ -38,17 +38,13 @@ export const mentorChangePasswordSchema = Joi.object().keys({
 });
 
 export const mentorUpdateSchema = Joi.object().keys({
-    status: Joi.string().valid(...Object.values(constents.common_status_flags.list)),
-    username: Joi.string().trim().min(1).required().email().messages({
-        'string.empty': speeches.USER_USERNAME_REQUIRED
-    }),
+    username: Joi.string().email().trim().min(1),
+    full_name: Joi.string().trim().min(1),
     mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN),
-    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).required().messages({
-        'string.empty': speeches.USER_FULLNAME_REQUIRED
-    }),
-    title: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    whatapp_mobile: Joi.string().max(10).regex(constents.ONLY_DIGIT_PATTERN)
+    district: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    college_type: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    college_name: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    password: Joi.any(),
 });
 export const mentorRegSchema = Joi.object().keys({
     status: Joi.string().valid(...Object.values(constents.common_status_flags.list)),

@@ -15,6 +15,7 @@ export const wildcardRoutes = [
     "/api/v1/mentors/register",
     "/api/v1/mentors/resetPassword",
     "/api/v1/students/emailOtp",
+    "/api/v1/mentors/emailOtp",
     "/api/v1/organizations/checkOrg",
     "/api/v1/organizations/createOrg",
     "/api/v1/organizations/districts",

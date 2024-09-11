@@ -48,18 +48,18 @@ export default class StudentController extends BaseController {
     }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         // let studentDetails: any;
-         let result;
-         req.body['role'] = 'STUDENT'
-         result = await this.authService.login(req.body);
-         if (!result) {
-             return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
-         } else if (result.error) {
-             return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
-         } else {
-             //studentDetails = await this.authService.getServiceDetails('student', { user_id: result.data.user_id });
-             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
-         }
-     }
+        let result;
+        req.body['role'] = 'STUDENT'
+        result = await this.authService.login(req.body);
+        if (!result) {
+            return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
+        } else if (result.error) {
+            return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
+        } else {
+            //studentDetails = await this.authService.getServiceDetails('student', { user_id: result.data.user_id });
+            return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
+        }
+    }
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -173,7 +173,7 @@ export default class StudentController extends BaseController {
                         where: {
                             [Op.and]: [
                                 whereClauseStatusPart,
-                               // condition,
+                                // condition,
                                 stateFilter.liter
                             ]
                         },
@@ -342,10 +342,10 @@ export default class StudentController extends BaseController {
     }
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            req.body.password = await this.authService.generateCryptEncryption(req.body.confirmPassword);
-            req.body.role = 'STUDENT'
-            req.body.type = 0
-            const payload = this.autoFillTrackingColumns(req, res, student)
+            req.body.password = req.body.confirmPassword;
+            req.body.role = 'STUDENT';
+            req.body.type = 0;
+            const payload = this.autoFillTrackingColumns(req, res, student);
             const result = await this.authService.register(payload);
             if (result.user_res) return res.status(406).send(dispatcher(res, result.user_res.dataValues, 'error', speeches.STUDENT_EXISTS, 406));
             return res.status(201).send(dispatcher(res, result.profile.dataValues, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
@@ -355,9 +355,9 @@ export default class StudentController extends BaseController {
     }
     private async addStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            req.body.password = await this.authService.generateCryptEncryption(req.body.confirmPassword);
-            req.body.role = 'STUDENT'
-            const payload = this.autoFillTrackingColumns(req, res, student)
+            req.body.password = req.body.confirmPassword;
+            req.body.role = 'STUDENT';
+            const payload = this.autoFillTrackingColumns(req, res, student);
             const result = await this.authService.register(payload);
             if (result.user_res) return res.status(406).send(dispatcher(res, result.user_res.dataValues, 'error', speeches.STUDENT_EXISTS, 406));
             return res.status(201).send(dispatcher(res, result.profile.dataValues, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
@@ -632,10 +632,10 @@ export default class StudentController extends BaseController {
     //     <h3> Dear ${team_name} team,</h3>
 
     //         <p>Your project has been successfully submitted in ATL Marathon 23-24.</p>
-            
+
     //         <p>Project Titled: ${title}</p>
     //         <p>We have received your project and it is currently in our review process. Our team will assess your work, and we will notify you of the evaluation results.</p>
-            
+
     //         <p>We appreciate your hard work and dedication to this project, and we look forward to providing you with feedback and results as soon as possible.</p>
     //         <p>Thank you for participating In ATL Marathon.</p>
     //         <p>
