@@ -36,14 +36,14 @@ export default class StudentController extends BaseController {
     protected initializeRoutes(): void {
         this.router.post(`${this.path}/register`, validationMiddleware(studentSchema), this.register.bind(this));
         this.router.post(`${this.path}/addStudent`, validationMiddleware(studentSchemaAddstudent), this.addStudent.bind(this));
-        this.router.post(`${this.path}/bulkCreateStudent`, this.bulkCreateStudent.bind(this));
+        // this.router.post(`${this.path}/bulkCreateStudent`, this.bulkCreateStudent.bind(this));
         this.router.get(`${this.path}/:student_user_id/studentCertificate`, this.studentCertificate.bind(this));
         this.router.post(`${this.path}/:student_user_id/badges`, this.addBadgeToStudent.bind(this));
         this.router.get(`${this.path}/:student_user_id/badges`, this.getStudentBadges.bind(this));
         this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
         //this.router.get(`${this.path}/studentsList/:teamId`, this.getStudentsList.bind(this));
         this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
-
+        this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
         super.initializeRoutes();
     }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -365,42 +365,42 @@ export default class StudentController extends BaseController {
             next(err)
         }
     }
-    private async bulkCreateStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        try {
-            for (let student in req.body) {
-                if (!req.body[student].team_id) throw notFound(speeches.USER_TEAMID_REQUIRED);
-                //const team_id = req.body[student].team_id
-                // if (team_id) {
-                //     const teamCanAddMember = await this.authService.checkIfTeamHasPlaceForNewMember(team_id)
-                //     if (!teamCanAddMember) {
-                //         throw badRequest(speeches.TEAM_MAX_MEMBES_EXCEEDED)
-                //     }
-                //     if (teamCanAddMember instanceof Error) {
-                //         throw teamCanAddMember;
-                //     }
-                // }
-            }
-            let cryptoEncryptedString: any;
-            const teamName = await this.authService.crudService.findOne(team, {
-                attributes: ["team_name"], where: { team_id: req.body[0].team_id }
-            });
-            if (!teamName) throw notFound(speeches.TEAM_NOT_FOUND, 406);
-            if (teamName instanceof Error) throw teamName;
-            for (let student in req.body) {
-                cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
-                req.body[student].username = `${req.body[student].team_id}_${req.body[student].full_name.trim()}`;
-                req.body[student].full_name = req.body[student].full_name.trim();
-                req.body[student].role = 'STUDENT';
-                req.body[student].password = cryptoEncryptedString;
-                req.body[student].created_by = res.locals.user_id
-                req.body[student].updated_by = res.locals.user_id
-            }
-            const responseFromService = await this.authService.bulkCreateStudentService(req.body);
-            return res.status(201).send(dispatcher(res, responseFromService, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
-        } catch (error) {
-            next(error);
-        }
-    }
+    // private async bulkCreateStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     try {
+    //         for (let student in req.body) {
+    //             if (!req.body[student].team_id) throw notFound(speeches.USER_TEAMID_REQUIRED);
+    //             //const team_id = req.body[student].team_id
+    //             // if (team_id) {
+    //             //     const teamCanAddMember = await this.authService.checkIfTeamHasPlaceForNewMember(team_id)
+    //             //     if (!teamCanAddMember) {
+    //             //         throw badRequest(speeches.TEAM_MAX_MEMBES_EXCEEDED)
+    //             //     }
+    //             //     if (teamCanAddMember instanceof Error) {
+    //             //         throw teamCanAddMember;
+    //             //     }
+    //             // }
+    //         }
+    //         let cryptoEncryptedString: any;
+    //         const teamName = await this.authService.crudService.findOne(team, {
+    //             attributes: ["team_name"], where: { team_id: req.body[0].team_id }
+    //         });
+    //         if (!teamName) throw notFound(speeches.TEAM_NOT_FOUND, 406);
+    //         if (teamName instanceof Error) throw teamName;
+    //         for (let student in req.body) {
+    //             cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
+    //             req.body[student].username = `${req.body[student].team_id}_${req.body[student].full_name.trim()}`;
+    //             req.body[student].full_name = req.body[student].full_name.trim();
+    //             req.body[student].role = 'STUDENT';
+    //             req.body[student].password = cryptoEncryptedString;
+    //             req.body[student].created_by = res.locals.user_id
+    //             req.body[student].updated_by = res.locals.user_id
+    //         }
+    //         const responseFromService = await this.authService.bulkCreateStudentService(req.body);
+    //         return res.status(201).send(dispatcher(res, responseFromService, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
     private async addBadgeToStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -618,134 +618,26 @@ export default class StudentController extends BaseController {
             next(error)
         }
     }
-    // private async stuIdeaSubmissionEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         const { mentor_id, team_id, team_name, title } = req.body;
-    //         let data: any = {}
-    //         const contentText = `
-    //         <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-    //     <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
-    //     <div style="padding: 1% 5%;">
-    //     <h3> Dear ${team_name} team,</h3>
+    private async getPilotStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            let result: any = {};
+            result = await db.query(`SELECT 
+                student_id,
+    full_name,
+    (SELECT 
+            COUNT(*)
+        FROM
+            students AS sub
+        WHERE
+            sub.type = Smain.student_id) AS crewCount
+FROM
+    Aim_db.students AS Smain
+WHERE
+    type = 0;`, { type: QueryTypes.SELECT });
+            res.status(200).send(dispatcher(res, result, 'done'))
+        } catch (error) {
+            next(error)
+        }
+    }
 
-    //         <p>Your project has been successfully submitted in ATL Marathon 23-24.</p>
-
-    //         <p>Project Titled: ${title}</p>
-    //         <p>We have received your project and it is currently in our review process. Our team will assess your work, and we will notify you of the evaluation results.</p>
-
-    //         <p>We appreciate your hard work and dedication to this project, and we look forward to providing you with feedback and results as soon as possible.</p>
-    //         <p>Thank you for participating In ATL Marathon.</p>
-    //         <p>
-    //         <strong>
-    //         Regards,<br>
-    //         ATL Marathon</strong></p></div></body>`;
-    //         const subject = `ATL marathon - Idea submission successful`
-    //         const summary = await db.query(`SELECT GROUP_CONCAT(username SEPARATOR ', ') AS all_usernames
-    //         FROM (
-    //                 SELECT 
-    //                 u.username
-    //             FROM
-    //                 mentors AS m
-    //                     JOIN
-    //                 users AS u ON m.user_id = u.user_id
-    //             WHERE
-    //                 m.mentor_id = ${mentor_id}
-    //             UNION ALL
-    //                 SELECT 
-    //                 u.username
-    //             FROM
-    //                 students AS s
-    //                     JOIN
-    //                 users AS u ON s.user_id = u.user_id
-    //             WHERE
-    //                 s.team_id = ${team_id}
-    //         ) AS combined_usernames;`, { type: QueryTypes.SELECT });
-    //         data = summary;
-    //         const usernameArray = data[0].all_usernames;
-    //         let arrayOfUsernames = usernameArray.split(', ');
-    //         const result = await this.authService.triggerBulkEmail(arrayOfUsernames, contentText, subject);
-
-    //         return res.status(200).send(dispatcher(res, result, 'Email sent'));
-    //     } catch (error) {
-    //         next(error);
-    //     }
-    // }
-    // protected async getStudentsList(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'TEAM') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         let data: any;
-    //         const where: any = {};
-    //         const { teamId } = req.params;
-    //         console.log(teamId);
-    //         if (teamId) {
-    //             const newParamId = await this.authService.decryptGlobal(req.params.teamId);
-    //             console.log(newParamId);
-    //             where[`team_id`] = newParamId;
-    //             data = await this.crudService.findAll(student, {
-    //                 attributes: {
-    //                     include: [
-    //                         [
-    //                             db.literal(`( SELECT role FROM users AS u WHERE u.user_id = \`student\`.\`user_id\`)`), 'role'
-    //                         ],
-
-    //                     ]
-    //                 },
-    //                 where: {
-    //                     [Op.and]: [
-    //                         where
-    //                     ],
-    //                 },
-    //                 // include: {
-    //                 //     model: team,
-    //                 //     attributes: [
-    //                 //         'team_id',
-    //                 //         'team_name',
-    //                 //     ],
-    //                 //     include: {
-    //                 //         model: mentor,
-    //                 //         attributes: [
-    //                 //             'organization_code',
-    //                 //             'full_name',
-    //                 //             'gender',
-    //                 //             'mobile',
-    //                 //         ],
-    //                 //         include: {
-    //                 //             model: organization,
-    //                 //             attributes: [
-    //                 //                 "organization_name",
-    //                 //                 'organization_code',
-    //                 //                 "unique_code",
-    //                 //                 "pin_code",
-    //                 //                 "category",
-    //                 //                 "principal_name",
-    //                 //                 "principal_mobile",
-    //                 //                 "city",
-    //                 //                 "district",
-    //                 //                 "state",
-    //                 //                 "country",
-    //                 //                 'address'
-    //                 //             ],
-    //                 //         },
-
-    //                 //     },
-    //                 // },
-    //             });
-    //         }
-    //         if (!data || data instanceof Error) {
-    //             if (data != null) {
-    //                 throw notFound(data.message)
-    //             } else {
-    //                 throw notFound()
-    //             }
-    //         }
-    //         return res.status(200).send(dispatcher(res, data, 'success'));
-    //     } catch (error) {
-    //         next(error);
-    //     }
-    // }
 }
