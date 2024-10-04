@@ -622,18 +622,22 @@ export default class StudentController extends BaseController {
         try {
             let result: any = {};
             result = await db.query(`SELECT 
-                student_id,
-    full_name,
-    (SELECT 
-            COUNT(*)
-        FROM
-            students AS sub
-        WHERE
-            sub.type = Smain.student_id) AS crewCount
+    Smain.student_id,
+    Smain.full_name,
+    IFNULL(CONCAT('[', 
+           GROUP_CONCAT(
+               CONCAT('{"full_name": "', sub.full_name, '", "student_id": "', sub.student_id, '"}')
+               ORDER BY sub.student_id SEPARATOR ', '), 
+           ']'), '[]') AS crewDetails
 FROM
-    Aim_db.students AS Smain
+    students AS Smain
+LEFT JOIN 
+    students AS sub ON sub.type = Smain.student_id
 WHERE
-    type = 0;`, { type: QueryTypes.SELECT });
+    Smain.type = 0
+GROUP BY 
+    Smain.student_id, Smain.full_name;
+`, { type: QueryTypes.SELECT });
             res.status(200).send(dispatcher(res, result, 'done'))
         } catch (error) {
             next(error)
