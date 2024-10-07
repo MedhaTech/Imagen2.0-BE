@@ -41,7 +41,6 @@ export default class StudentController extends BaseController {
         this.router.post(`${this.path}/:student_user_id/badges`, this.addBadgeToStudent.bind(this));
         this.router.get(`${this.path}/:student_user_id/badges`, this.getStudentBadges.bind(this));
         this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
-        //this.router.get(`${this.path}/studentsList/:teamId`, this.getStudentsList.bind(this));
         this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
         this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
         super.initializeRoutes();
@@ -72,44 +71,13 @@ export default class StudentController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            let data: any;
-            const { model, id } = req.params;
-            const paramStatus: any = newREQQuery.status;
-            if (model) {
-                this.model = model;
-            };
-            // pagination
-            const { page, size, adult } = newREQQuery;
-            let condition = adult ? { UUID: null } : { UUID: { [Op.like]: `%%` } };
-            const { limit, offset } = this.getPagination(page, size);
-            const modelClass = await this.loadModel(model).catch(error => {
-                next(error)
-            });
-            const where: any = {};
-            let whereClauseStatusPart: any = {}
-            let boolStatusWhereClauseRequired = false;
-            if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
-                if (paramStatus === 'ALL') {
-                    whereClauseStatusPart = {};
-                    boolStatusWhereClauseRequired = false;
-                } else {
-                    whereClauseStatusPart = { "status": paramStatus };
-                    boolStatusWhereClauseRequired = true;
-                }
-            } else {
-                whereClauseStatusPart = { "status": "ACTIVE" };
-                boolStatusWhereClauseRequired = true;
-            };
-            let state: any = newREQQuery.state;
-            let stateFilter: any = {}
-            if (state) {
-                stateFilter['whereClause'] = state && typeof state == 'string' && state !== 'All States' ? { state } : {}
-                stateFilter["liter"] = state && typeof state == 'string' && state !== 'All States' ? db.literal('`team->mentor->organization`.`state` = ' + JSON.stringify(state)) : {}
-            }
-            if (id) {
+            let data: any = {}
+            let where: any = { 'status': 'ACTIVE' }
+            let { district } = newREQQuery
+            if (req.params.id) {
                 const newParamId = await this.authService.decryptGlobal(req.params.id);
                 where[`${this.model}_id`] = newParamId;
-                data = await this.crudService.findOne(modelClass, {
+                data = await this.crudService.findOne(student, {
                     attributes: {
                         include: [
                             [
@@ -119,50 +87,16 @@ export default class StudentController extends BaseController {
                     },
                     where: {
                         [Op.and]: [
-                            whereClauseStatusPart,
                             where,
                         ],
-                    },
-                    include: {
-                        model: team,
-                        attributes: [
-                            'team_id',
-                            'team_name',
-                            'mentor_id',
-                            'team_email'
-                        ],
-                        include: {
-                            model: mentor,
-                            attributes: [
-                                'organization_code',
-                                'full_name',
-                                'gender',
-                                'mobile',
-                            ],
-                            include: {
-                                model: organization,
-                                attributes: [
-                                    "organization_name",
-                                    'organization_code',
-                                    "unique_code",
-                                    "pin_code",
-                                    "category",
-                                    "principal_name",
-                                    "principal_mobile",
-                                    "city",
-                                    "district",
-                                    "state",
-                                    "country",
-                                    'address'
-                                ],
-                            },
-
-                        },
-                    },
+                    }
                 });
             } else {
                 try {
-                    const responseOfFindAndCountAll = await this.crudService.findAndCountAll(modelClass, {
+                    if (district !== 'All Districts' && typeof district == 'string') {
+                        where[`district`] = district;
+                    }
+                    const responseOfFindAndCountAll = await this.crudService.findAndCountAll(student, {
                         attributes: {
                             include: [
                                 [
@@ -172,68 +106,15 @@ export default class StudentController extends BaseController {
                         },
                         where: {
                             [Op.and]: [
-                                whereClauseStatusPart,
-                                // condition,
-                                stateFilter.liter
+                                where
                             ]
-                        },
-                        include: {
-                            model: team,
-                            attributes: [
-                                'team_id',
-                                'team_name',
-                                'team_email'
-                            ],
-                            include: {
-                                model: mentor,
-                                attributes: [
-                                    'mentor_id',
-                                    'full_name'
-                                ],
-                                include: {
-                                    where: stateFilter.whereClause,
-                                    required: false,
-                                    model: organization,
-                                    attributes: [
-                                        "organization_name",
-                                        'organization_code',
-                                        "unique_code",
-                                        "pin_code",
-                                        "category",
-                                        "city",
-                                        "district",
-                                        "state",
-                                        'address'
-                                    ]
-                                }
-                            }
-                        }, limit, offset
+                        }
                     });
-                    const result = this.getPagingData(responseOfFindAndCountAll, page, limit);
-                    data = result;
+                    data = responseOfFindAndCountAll;
                 } catch (error: any) {
                     return res.status(500).send(dispatcher(res, data, 'error'))
                 }
-
             }
-            // if (!data) {
-            //     return res.status(404).send(dispatcher(res,data, 'error'));
-            // }
-            if (!data || data instanceof Error) {
-                if (data != null) {
-                    throw notFound(data.message)
-                } else {
-                    throw notFound()
-                }
-                res.status(200).send(dispatcher(res, null, "error", speeches.DATA_NOT_FOUND));
-                // if(data!=null){
-                //     throw 
-                (data.message)
-                // }else{
-                //     throw notFound()
-                // }
-            }
-
             return res.status(200).send(dispatcher(res, data, 'success'));
         } catch (error) {
             next(error);
@@ -248,7 +129,6 @@ export default class StudentController extends BaseController {
             if (model) {
                 this.model = model;
             };
-            const user_id = res.locals.user_id
             const newParamId: any = await this.authService.decryptGlobal(req.params.id);
             const studentTableDetails = await student.findOne(
                 {
@@ -268,36 +148,26 @@ export default class StudentController extends BaseController {
             where[`${this.model}_id`] = JSON.parse(newParamId);
             const modelLoaded = await this.loadModel(model);
             const payload = this.autoFillTrackingColumns(req, res, modelLoaded);
-            // if (req.body.username) {
-            //     const cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
-            //     const username = req.body.username;
-            //     const studentDetails = await this.crudService.findOne(user, { where: { username: username } });
-            //     if (studentDetails) {
-            //         if (studentDetails.dataValues.username == username) throw badRequest(speeches.USER_EMAIL_EXISTED);
-            //         if (studentDetails instanceof Error) throw studentDetails;
-            //     };
-            //     const user_data = await this.crudService.update(user, {
-            //         full_name: payload.full_name,
-            //         username: username,
-            //         password: await bcrypt.hashSync(cryptoEncryptedString, process.env.SALT || baseConfig.SALT),
-            //     }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
-            //     if (!user_data) {
-            //         throw internal()
-            //     }
-            //     if (user_data instanceof Error) {
-            //         throw user_data;
-            //     }
-            // }
-            if (req.body.full_name) {
-                const username = `${req.body.team_id}_${req.body.full_name.trim()}`
+            if (req.body.username) {
+                const username = req.body.username;
                 const studentDetails = await this.crudService.findOne(user, { where: { username: username } });
                 if (studentDetails) {
-                    if (studentDetails.dataValues.username == username) throw badRequest("Same named student already exists in this team");
+                    if (studentDetails.dataValues.username == username) throw badRequest(speeches.USER_EMAIL_EXISTED);
                     if (studentDetails instanceof Error) throw studentDetails;
                 };
                 const user_data = await this.crudService.update(user, {
-                    full_name: payload.full_name,
-                    username: username,
+                    username: username
+                }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
+                if (!user_data) {
+                    throw internal()
+                }
+                if (user_data instanceof Error) {
+                    throw user_data;
+                }
+            }
+            if (req.body.full_name) {
+                const user_data = await this.crudService.update(user, {
+                    full_name: payload.full_name
                 }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
                 if (!user_data) {
                     throw internal()
@@ -313,7 +183,6 @@ export default class StudentController extends BaseController {
             if (student_data instanceof Error) {
                 throw student_data;
             }
-
             return res.status(200).send(dispatcher(res, student_data, 'updated'));
         } catch (error) {
             next(error);
