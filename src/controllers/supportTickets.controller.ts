@@ -67,6 +67,9 @@ export default class SupportTicketController extends BaseController {
                         [
                             db.literal(`( SELECT COUNT(*) FROM support_tickets_replies AS s WHERE s.support_ticket_id = \`support_ticket\`.\`support_ticket_id\`)`), 'replies_count'
                         ],
+                        [
+                            db.literal(`(SELECT district FROM students where user_id = \`support_ticket\`.\`created_by\` )`), 'district'
+                        ],
                         'support_ticket_id',
                         'query_category',
                         'query_details',
@@ -123,7 +126,10 @@ export default class SupportTicketController extends BaseController {
                             ],
                             [
                                 db.literal(`( SELECT COUNT(*) FROM support_tickets_replies AS s WHERE s.support_ticket_id = \`support_ticket\`.\`support_ticket_id\`)`), 'replies_count'
-                            ]
+                            ],
+                            [
+                                db.literal(`(SELECT district FROM students where user_id = \`support_ticket\`.\`created_by\` )`), 'district'
+                            ],
                         ],
                         where: {
                             [Op.and]: [
