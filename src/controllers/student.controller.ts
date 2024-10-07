@@ -43,6 +43,7 @@ export default class StudentController extends BaseController {
         this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
         this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
         this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
+        this.router.delete(`${this.path}/:student_id/deleteAllData`, this.deleteAllData.bind(this));
         super.initializeRoutes();
     }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -73,10 +74,10 @@ export default class StudentController extends BaseController {
             }
             let data: any = {}
             let where: any = { 'status': 'ACTIVE' }
-            let { district } = newREQQuery
+            let { district, team, student_id } = newREQQuery
             if (req.params.id) {
                 const newParamId = await this.authService.decryptGlobal(req.params.id);
-                where[`${this.model}_id`] = newParamId;
+                where[`student_id`] = newParamId;
                 data = await this.crudService.findOne(student, {
                     attributes: {
                         include: [
@@ -91,7 +92,28 @@ export default class StudentController extends BaseController {
                         ],
                     }
                 });
-            } else {
+            } else if (team) {
+                data = await db.query(`SELECT 
+    student_id,
+    s.user_id,
+    s.full_name,
+    mobile,
+    district,
+    college_type,
+    college_name,
+    roll_number,
+    branch,
+    year_of_study,
+    type,
+    username
+FROM
+    students AS s
+      INNER JOIN
+    users AS u ON s.user_id = u.user_id
+WHERE
+    s.status = 'ACTIVE' and (student_id = ${student_id} || type = ${student_id});`, { type: QueryTypes.SELECT })
+            }
+            else {
                 try {
                     if (district !== 'All Districts' && typeof district == 'string') {
                         where[`district`] = district;
@@ -202,6 +224,39 @@ export default class StudentController extends BaseController {
             if (!getUserIdFromStudentData) throw notFound(speeches.USER_NOT_FOUND);
             if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
             const user_id = getUserIdFromStudentData.dataValues.user_id;
+            const deleteUserStudentAndRemoveAllResponses = await this.authService.deleteStudentAndStudentResponse(user_id);
+            const data = deleteUserStudentAndRemoveAllResponses
+            return res.status(200).send(dispatcher(res, data, 'deleted'));
+        } catch (error) {
+            next(error);
+        }
+    }
+    protected async deleteAllData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            const { model, id } = req.params;
+            if (model) this.model = model;
+            const where: any = {};
+            const newParamId = await this.authService.decryptGlobal(req.params.student_id);
+            where[`${this.model}_id`] = newParamId;
+            const getUserIdFromStudentData = await this.crudService.findOne(student, { where: { student_id: where.student_id } });
+            if (!getUserIdFromStudentData) throw notFound(speeches.USER_NOT_FOUND);
+            if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
+            const user_id = getUserIdFromStudentData.dataValues.user_id;
+            const getteamuserIdfromstudentdata = await this.crudService.findAll(student, { where: { type: where.student_id } });
+
+            if (getteamuserIdfromstudentdata && !(getteamuserIdfromstudentdata instanceof Error)) {
+                const arrayOfStudentuserIds = getteamuserIdfromstudentdata.map((student: any) => student.user_id)
+                for (var i = 0; i < arrayOfStudentuserIds.length; i++) {
+                    const deletStudentResponseData = await this.authService.deleteStudentAndStudentResponse(arrayOfStudentuserIds[i])
+                    if (deletStudentResponseData instanceof Error) {
+                        throw deletStudentResponseData;
+                    }
+                };
+            }
+
             const deleteUserStudentAndRemoveAllResponses = await this.authService.deleteStudentAndStudentResponse(user_id);
             const data = deleteUserStudentAndRemoveAllResponses
             return res.status(200).send(dispatcher(res, data, 'deleted'));
