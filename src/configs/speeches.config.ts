@@ -6,6 +6,7 @@ export const speeches = {
     USER_TYPE_REQUIRED: "Type can not be null/empty",
     USER_ROLE_REQUIRED: "Role can not be null/empty",
     USER_TEAMID_REQUIRED: "Team_id can not be null/empty",
+    USER_STUDENTID_REQUIRED : "student_id can not be null/empty",
     USER_PASSWORD_REQUIRED: "Password cant not be null/empty",
     USER_USERID_REQUIRED: "User_id cant not be null/empty",
     USER_OLDPASSWORD_REQUIRED: "Old Password cant not be null/empty",

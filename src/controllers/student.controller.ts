@@ -51,6 +51,10 @@ export default class StudentController extends BaseController {
         let result;
         req.body['role'] = 'STUDENT'
         result = await this.authService.login(req.body);
+        const studentData = await this.authService.crudService.findOne(student, {
+            where: { user_id: result.data.user_id }
+        });
+        result.data['type_id'] = studentData.dataValues.type;
         if (!result) {
             return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
         } else if (result.error) {
