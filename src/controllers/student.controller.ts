@@ -56,6 +56,8 @@ export default class StudentController extends BaseController {
             where: { user_id: result.data.user_id }
         });
         result.data['type_id'] = studentData.dataValues.type;
+        result.data['student_id'] = studentData.dataValues.student_id;
+        result.data['district'] = studentData.dataValues.district;
         if (!result) {
             return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
         } else if (result.error) {
