@@ -905,23 +905,35 @@ export default class authService {
     async studentResetPassword(requestBody: any) {
         let result: any = {};
         try {
-            const updatePassword: any = await this.crudService.update(user,
-                { password: await bcrypt.hashSync(requestBody.encryptedString, process.env.SALT || baseConfig.SALT) },
-                { where: { user_id: requestBody.user_id } }
+            let passwordNeedToBeUpdated: any = {};
+            const stu_res = await this.crudService.findOne(user, {
+                where: { username: requestBody.email }
+            });
+            if (!stu_res) {
+                result['error'] = speeches.USER_NOT_FOUND;
+                return result;
+            }
+            const user_data = await this.crudService.findOnePassword(user, {
+                where: { user_id: stu_res.dataValues.user_id }
+            });
+            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no');
+            passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
+            if (passwordNeedToBeUpdated instanceof Error) {
+                throw passwordNeedToBeUpdated;
+            }
+            await this.crudService.updateAndFind(student,
+                { otp: passwordNeedToBeUpdated.otp },
+                { where: { user_id: stu_res.dataValues.user_id } }
             );
-            const findStudentDetailsAndUpdateUUID: any = await this.crudService.updateAndFind(student,
-                { UUID: requestBody.UUID, qualification: requestBody.encryptedString },
-                { where: { user_id: requestBody.user_id } }
-            );
-            if (!updatePassword) throw badRequest(speeches.NOT_ACCEPTABLE)
-            if (!updatePassword) throw badRequest(speeches.NOT_ACCEPTABLE)
-            if (!findStudentDetailsAndUpdateUUID) throw badRequest(speeches.NOT_ACCEPTABLE)
-            if (!findStudentDetailsAndUpdateUUID) throw badRequest(speeches.NOT_ACCEPTABLE)
+            passwordNeedToBeUpdated.otp = String(passwordNeedToBeUpdated.otp);
+            let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
+            const user_res: any = await this.crudService.updateAndFind(user, {
+                password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT)
+            }, { where: { user_id: user_data.dataValues.user_id } })
             result['data'] = {
-                username: requestBody.username,
-                user_id: requestBody.user_id,
-                student_id: findStudentDetailsAndUpdateUUID.dataValues.student_id,
-                student_uuid: findStudentDetailsAndUpdateUUID.dataValues.UUID
+                username: user_res.dataValues.username,
+                user_id: user_res.dataValues.user_id,
+                awsMessageId: passwordNeedToBeUpdated.messageId
             };
             return result;
         } catch (error) {

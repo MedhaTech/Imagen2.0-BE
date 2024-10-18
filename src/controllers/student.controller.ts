@@ -44,6 +44,7 @@ export default class StudentController extends BaseController {
         this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
         this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
         this.router.delete(`${this.path}/:student_id/deleteAllData`, this.deleteAllData.bind(this));
+        this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
         super.initializeRoutes();
     }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -567,6 +568,24 @@ GROUP BY
     Smain.student_id, Smain.full_name;
 `, { type: QueryTypes.SELECT });
             res.status(200).send(dispatcher(res, result, 'done'))
+        } catch (error) {
+            next(error)
+        }
+    }
+    private async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                throw badRequest(speeches.USER_EMAIL_REQUIRED);
+            }
+            const result = await this.authService.studentResetPassword(req.body);
+            if (!result) {
+                return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_NOT_FOUND));
+            } else if (result.error) {
+                return res.status(404).send(dispatcher(res, result.error, 'error', result.error));
+            } else {
+                return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASS_UPDATE, 202));
+            }
         } catch (error) {
             next(error)
         }
