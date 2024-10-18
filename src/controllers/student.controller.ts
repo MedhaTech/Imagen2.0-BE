@@ -45,6 +45,7 @@ export default class StudentController extends BaseController {
         this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
         this.router.delete(`${this.path}/:student_id/deleteAllData`, this.deleteAllData.bind(this));
         this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
+        this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         super.initializeRoutes();
     }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -590,6 +591,22 @@ GROUP BY
             }
         } catch (error) {
             next(error)
+        }
+    }
+    private async changePassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        const result = await this.authService.changePassword(req.body, res);
+        if (!result) {
+            return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_NOT_FOUND));
+        } else if (result.error) {
+            return res.status(404).send(dispatcher(res, result.error, 'error', result.error));
+        }
+        else if (result.match) {
+            return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_PASSWORD));
+        } else {
+            return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
         }
     }
 
