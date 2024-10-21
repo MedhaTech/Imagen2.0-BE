@@ -23,20 +23,20 @@ export class challenge_response extends Model<InferAttributes<challenge_response
     declare updated_by: number;
     declare updated_at: Date;
     declare theme: String;
-    declare focus_area : String;
+    declare idea_describe : String;
     declare title: String;
-    declare problem_statement: String;
-    declare causes: String;
-    declare effects: String;
-    declare community: String;
-    declare facing: String;
-    declare solution: String;
-    declare stakeholders: String;
-    declare problem_solving: String;
-    declare feedback: String;
+    declare solve: String;
+    declare customer: String;
+    declare detail: String;
+    declare stage: String;
+    declare unique: String;
+    declare similar: String;
+    declare revenue: String;
+    declare society: String;
+    declare confident: String;
     declare prototype_image: String;
     declare prototype_link: String;
-    declare workbook: Enumerator;
+    declare support: String;
     declare verified_status: Enumerator;
     declare verified_at: Date;
     declare mentor_rejected_reason: String;
@@ -74,38 +74,38 @@ challenge_response.init(
             type: DataTypes.STRING,
             allowNull: true
         },
-        focus_area: {
+        idea_describe: {
             type: DataTypes.STRING,
             allowNull: true
         },
         title: {
             type: DataTypes.STRING
         },
-        problem_statement: {
+        solve: {
             type: DataTypes.STRING
         },
-        causes: {
+        customer: {
             type: DataTypes.STRING
         },
-        effects: {
+        detail: {
             type: DataTypes.STRING
         },
-        community: {
+        stage: {
             type: DataTypes.STRING
         },
-        facing: {
+        unique: {
             type: DataTypes.STRING
         },
-        solution: {
+        similar: {
             type: DataTypes.STRING
         },
-        stakeholders: {
+        revenue: {
             type: DataTypes.STRING
         },
-        problem_solving: {
+        society: {
             type: DataTypes.STRING
         },
-        feedback: {
+        confident: {
             type: DataTypes.STRING
         },
         prototype_image: {
@@ -114,8 +114,8 @@ challenge_response.init(
         prototype_link: {
             type: DataTypes.STRING
         },
-        workbook: {
-            type: DataTypes.ENUM(...Object.values(constents.common_yes_no_flags.list))
+        support: {
+            type: DataTypes.STRING
         },
         verified_status: {
             type: DataTypes.ENUM(...Object.values(constents.verified_status_flags.list)),
