@@ -560,7 +560,8 @@ WHERE
            GROUP_CONCAT(
                CONCAT('{"full_name": "', sub.full_name, '", "student_id": "', sub.student_id, '"}')
                ORDER BY sub.student_id SEPARATOR ', '), 
-           ']'), '[]') AS crewDetails
+           ']'), '[]') AS crewDetails,
+           count(sub.student_id) as crewCount
 FROM
     students AS Smain
 LEFT JOIN 
