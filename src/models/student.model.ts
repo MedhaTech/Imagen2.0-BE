@@ -25,6 +25,7 @@ export class student extends Model<InferAttributes<student>, InferCreationAttrib
     declare updated_by: number;
     declare updated_at: Date;
     declare otp: number;
+    declare course: number;
 }
 
 student.init(
@@ -100,9 +101,13 @@ student.init(
             onUpdate: new Date().toLocaleString()
         },
         otp: {
-            type: DataTypes.STRING,
+            type: DataTypes.INTEGER,
             allowNull: true,
         },
+        course: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        }
     },
     {
         sequelize: db,
