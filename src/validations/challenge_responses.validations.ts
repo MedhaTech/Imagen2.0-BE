@@ -15,7 +15,6 @@ export const UpdateAnyFieldSchema = Joi.object().keys({
         'any.only': speeches.COMMON_STATUS_INVALID,
         'string.empty': speeches.COMMON_STATUS_REQUIRED
     }),
-    team_id: Joi.number().min(1),
     initiated_by: Joi.number(),
     theme: Joi.string(),
     others: Joi.string(),
