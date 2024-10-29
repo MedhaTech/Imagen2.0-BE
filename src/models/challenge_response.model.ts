@@ -5,7 +5,7 @@ import db from '../utils/dbconnection.util';
 export class challenge_response extends Model<InferAttributes<challenge_response>, InferCreationAttributes<challenge_response>> {
     declare challenge_response_id: CreationOptional<number>;
     declare challenge_id: ForeignKey<number>;
-    declare team_id: ForeignKey<number>;
+    declare student_id: ForeignKey<number>;
     declare others: String;
     declare initiated_by: String;
     declare submitted_at: String;
@@ -127,7 +127,7 @@ challenge_response.init(
         mentor_rejected_reason: {
             type: DataTypes.STRING
         },
-        team_id: {
+        student_id: {
             type: DataTypes.INTEGER,
             allowNull: false
         },
