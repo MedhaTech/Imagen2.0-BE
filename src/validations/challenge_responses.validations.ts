@@ -61,6 +61,9 @@ export const initiateIdeaSchema = Joi.object().keys({
     prototype_image: Joi.string(),
     prototype_link: Joi.string(),
     support: Joi.string(),
+    state:Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    district:Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    initiated_by:Joi.number()
 });
 export const challengeResponsesSchema = Joi.object().keys({
     status: Joi.string().valid(...Object.values(constents.challenges_flags.list)).required().messages({
