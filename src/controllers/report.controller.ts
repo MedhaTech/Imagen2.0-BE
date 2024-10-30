@@ -30,6 +30,7 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/studentdetailstable`, this.getstudentDetailstable.bind(this));
         this.router.get(`${this.path}/studentdetailsreport`, this.getstudentDetailsreport.bind(this));
         this.router.get(`${this.path}/studentATLnonATLcount`, this.getstudentATLnonATLcount.bind(this));
+        //this.router.get(`${this.path}/studentATLnonATLcount`, this.getstudentATLnonATLcount.bind(this));
     }
     protected async mentorsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
