@@ -118,10 +118,8 @@ export default class MentorController extends BaseController {
             // if (current_user !== getUserIdFromMentorId.getDataValue("user_id")) {
             //     throw forbidden();
             // };
-            let state: any = newREQQuery.state;
-            let whereClauseOfState: any = state && state !== 'All States' ?
-                { state: { [Op.like]: newREQQuery.state } } :
-                { state: { [Op.like]: `%%` } }
+            let { district } = newREQQuery
+
             if (id) {
                 const deValue: any = await this.authService.decryptGlobal(req.params.id);
                 where[`${this.model}_id`] = JSON.parse(deValue);
@@ -161,40 +159,23 @@ export default class MentorController extends BaseController {
                 });
             } else {
                 try {
+                    if (district !== 'All Districts' && typeof district == 'string') {
+                        where[`district`] = district;
+                    }
                     const responseOfFindAndCountAll = await this.crudService.findAndCountAll(modelClass, {
                         attributes: {
-                            attributes: [
-                                "mentor_id",
-                                "user_id",
-                                "full_name",
-                                "otp",
-                                "mobile",
-                            ],
                             include: [
                                 [
-                                    db.literal(`( SELECT username FROM users AS u WHERE u.user_id = \`mentor\`.\`user_id\`)`), 'username'
+                                    db.literal(`( SELECT username FROM users AS u WHERE u.user_id = \`student\`.\`user_id\`)`), 'username_email'
                                 ]
-                            ],
+                            ]
                         },
                         where: {
                             [Op.and]: [
-                                whereClauseStatusPart,
-                                // condition
+                                where
                             ]
-                        },
-                        include: {
-                            model: organization,
-                            attributes: [
-                                "organization_code",
-                                "organization_name",
-                                "organization_id",
-                                "district",
-                                "category",
-                                "state"
-                            ], where: whereClauseOfState,
-                            require: false
-                        }, limit, offset
-                    })
+                        }
+                    });
                     const result = this.getPagingData(responseOfFindAndCountAll, page, limit);
                     data = result;
                 } catch (error: any) {
@@ -263,7 +244,7 @@ export default class MentorController extends BaseController {
     }
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         req.body['role'] = 'MENTOR';
-        req.body.password  = req.body.confirmPassword
+        req.body.password = req.body.confirmPassword
         const payloadData = this.autoFillTrackingColumns(req, res, mentor);
         const result: any = await this.authService.mentorRegister(payloadData);
         if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
