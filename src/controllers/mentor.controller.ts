@@ -147,7 +147,7 @@ export default class MentorController extends BaseController {
                         attributes: {
                             include: [
                                 [
-                                    db.literal(`( SELECT username FROM users AS u WHERE u.user_id = \`student\`.\`user_id\`)`), 'username_email'
+                                    db.literal(`( SELECT username FROM users AS u WHERE u.user_id = \`mentor\`.\`user_id\`)`), 'username_email'
                                 ]
                             ]
                         },
@@ -241,6 +241,10 @@ export default class MentorController extends BaseController {
         req.body['role'] = 'MENTOR'
         try {
             const result = await this.authService.login(req.body);
+            const mentorData = await this.authService.crudService.findOne(mentor, {
+                where: { user_id: result.data.user_id }
+            });
+            result.data['mentor_id'] = mentorData.dataValues.mentor_id;
             if (!result) {
                 return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
             }
