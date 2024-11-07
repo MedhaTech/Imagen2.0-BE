@@ -47,7 +47,7 @@ export default class ReportController extends BaseController {
                 students;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT  ${querystring.combilequery} count(student_id) as studentReg FROM students group by district;
+                                SELECT district,${querystring.combilequery} count(student_id) as studentReg FROM students group by district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
