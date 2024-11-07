@@ -77,14 +77,14 @@ export default class ReportController extends BaseController {
 
             let districtFilter: any = `'%%'`
             let categoryFilter: any = `'%%'`
-           
+
             if (district !== 'All Districts' && district !== undefined) {
                 districtFilter = `'${district}'`
             }
             if (college_type !== 'All Types' && college_type !== undefined) {
                 categoryFilter = `'${college_type}'`
             }
-        
+
             const mentorsResult = await db.query(`SELECT 
     s.full_name,
     mobile,
@@ -542,106 +542,57 @@ FROM
         }
         try {
             let data: any = {}
-            let newREQQuery: any = {}
-            if (req.query.Data) {
-                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-                newREQQuery = JSON.parse(newQuery);
-            } else if (Object.keys(req.query).length !== 0) {
-                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-            }
-            const state = newREQQuery.state;
-            let wherefilter = '';
-            if (state) {
-                wherefilter = `&& og.state= '${state}'`;
-            }
             const summary = await db.query(`SELECT 
-            og.state, COUNT(t.team_id) AS totalTeams
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-                LEFT JOIN
-            teams AS t ON mn.mentor_id = t.mentor_id
-            WHERE og.status='ACTIVE' ${wherefilter}
-        GROUP BY og.state;`, { type: QueryTypes.SELECT });
-            const studentCountDetails = await db.query(`SELECT 
-            og.state,
-            COUNT(st.student_id) AS totalstudent
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-                INNER JOIN
-            teams AS t ON mn.mentor_id = t.mentor_id
-                INNER JOIN
-            students AS st ON st.team_id = t.team_id where og.status = 'ACTIVE' ${wherefilter}
-        GROUP BY og.state;`, { type: QueryTypes.SELECT });
+    district, COUNT(student_id) AS totalstudent
+FROM
+    students
+GROUP BY district`, { type: QueryTypes.SELECT });
+
             const courseCompleted = await db.query(`SELECT 
-            og.state,count(st.student_id) as studentCourseCMP
+            st.district,count(st.student_id) as studentCourseCMP
         FROM
             students AS st
-                JOIN
-            teams AS te ON st.team_id = te.team_id
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
                 JOIN
             (SELECT 
                 user_id, COUNT(*)
             FROM
                 user_topic_progress
             GROUP BY user_id
-            HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+            HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const courseINprogesss = await db.query(`SELECT 
-            og.state,count(st.student_id) as studentCourseIN
+            st.district,count(st.student_id) as studentCourseIN
         FROM
             students AS st
-                JOIN
-            teams AS te ON st.team_id = te.team_id
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
                 JOIN
             (SELECT 
                 user_id, COUNT(*)
             FROM
                 user_topic_progress
             GROUP BY user_id
-            HAVING COUNT(*) < ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+            HAVING COUNT(*) < ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const submittedCount = await db.query(`SELECT 
-            og.state,count(te.team_id) as submittedCount
+            st.district,count(st.student_id) as submittedCount
         FROM
-            teams AS te
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
+            students AS st
                 JOIN
             (SELECT 
-                team_id, status
+                student_id, status
             FROM
                 challenge_responses
             WHERE
-                status = 'SUBMITTED') AS temp ON te.team_id = temp.team_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+                status = 'SUBMITTED') AS temp ON st.student_id = temp.student_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const draftCount = await db.query(`SELECT 
-            og.state,count(te.team_id) as draftCount
+            st.district,count(st.student_id) as submittedCount
         FROM
-            teams AS te
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
+            students AS st
                 JOIN
             (SELECT 
-                team_id, status
+                student_id, status
             FROM
                 challenge_responses
             WHERE
-                status = 'DRAFT') AS temp ON te.team_id = temp.team_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+                status = 'DRAFT') AS temp ON st.student_id = temp.student_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             data['summary'] = summary;
-            data['studentCountDetails'] = studentCountDetails;
             data['courseCompleted'] = courseCompleted;
             data['courseINprogesss'] = courseINprogesss;
             data['submittedCount'] = submittedCount;
@@ -841,83 +792,38 @@ WHERE
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { category, district, state } = newREQQuery;
+            const { college_type, district } = newREQQuery;
             let districtFilter: any = ''
             let categoryFilter: any = ''
-            let stateFilter: any = ''
-            if (district !== 'All Districts' && category !== 'All Categories' && state !== 'All States') {
+            if (district !== 'All Districts' && college_type !== 'All Categories') {
                 districtFilter = `'${district}'`
-                categoryFilter = `'${category}'`
-                stateFilter = `'${state}'`
+                categoryFilter = `'${college_type}'`
             } else if (district !== 'All Districts') {
                 districtFilter = `'${district}'`
                 categoryFilter = `'%%'`
-                stateFilter = `'%%'`
-            } else if (category !== 'All Categories') {
-                categoryFilter = `'${category}'`
+            } else if (college_type !== 'All Types') {
+                categoryFilter = `'${college_type}'`
                 districtFilter = `'%%'`
-                stateFilter = `'%%'`
-            } else if (state !== 'All States') {
-                stateFilter = `'${state}'`
-                districtFilter = `'%%'`
-                categoryFilter = `'%%'`
             }
             else {
                 districtFilter = `'%%'`
                 categoryFilter = `'%%'`
-                stateFilter = `'%%'`
             }
             const summary = await db.query(`SELECT 
     student_id,
-    students.full_name as studentfullname,
-    Age,
-    students.gender as studentgender,
-    students.Grade,
-    students.team_id,
-    students.user_id,
-    disability
+    s.full_name as studentfullname,
+    s.user_id,
+    mobile,
+    district,
+    college_type,
+    college_name,
+    roll_number,
+    branch,
+    year_of_study
 FROM
-    students
-        JOIN
-    teams ON students.team_id = teams.team_id
-        JOIN
-    mentors ON teams.mentor_id = mentors.mentor_id
-        JOIN
-    organizations AS og ON mentors.organization_code = og.organization_code
+    students as s
 WHERE
-    og.status = 'ACTIVE' && og.state LIKE ${stateFilter} && og.district LIKE ${districtFilter} && og.category LIKE ${categoryFilter} order by og.district`, { type: QueryTypes.SELECT });
-            const teamData = await db.query(`SELECT 
-    team_id, team_name,team_email, mentor_id
-FROM
-    teams`, { type: QueryTypes.SELECT });
-            const mentorData = await db.query(`SELECT 
-    mn.mentor_id,
-    mn.user_id as mentorUserId,
-    og.organization_code,
-    og.organization_name,
-    og.district,
-    og.category,
-    og.city,
-    og.principal_name,
-    og.principal_mobile,
-    mn.full_name,
-    mn.gender,
-    mn.mobile,
-    mn.whatapp_mobile,
-    og.state,
-    og.unique_code
-FROM
-    (mentors AS mn)
-        LEFT JOIN
-    organizations AS og ON mn.organization_code = og.organization_code
-WHERE
-    og.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
-            const mentorUsername = await db.query(`SELECT 
-               user_id, username
-           FROM
-               users
-           WHERE
-               role = 'MENTOR'`, { type: QueryTypes.SELECT });
+    s.status = 'ACTIVE' && s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} order by s.district`, { type: QueryTypes.SELECT });
             const preSurvey = await db.query(`SELECT 
                 CASE
                     WHEN status = 'ACTIVE' THEN 'Completed'
@@ -937,7 +843,7 @@ FROM
 WHERE
     quiz_survey_id = 4`, { type: QueryTypes.SELECT });
             const ideaStatusData = await db.query(`SELECT 
-    team_id, status
+    student_id, status
 FROM
     challenge_responses`, { type: QueryTypes.SELECT });
             const userTopicData = await db.query(`SELECT 
@@ -947,9 +853,6 @@ FROM
 GROUP BY user_id`, { type: QueryTypes.SELECT });
 
             data['summary'] = summary;
-            data['teamData'] = teamData;
-            data['mentorData'] = mentorData;
-            data['mentorUsername'] = mentorUsername;
             data['preSurvey'] = preSurvey;
             data['postSurvey'] = postSurvey;
             data['ideaStatusData'] = ideaStatusData;
