@@ -45,6 +45,9 @@ export const baseConfig = {
   MENTOR_COURSE: "6",
   STUDENT_COURSE: "31",
 
+    // Global password
+    GLOBAL_PASSWORD: 'h09KnBaw',
+
   //NO_of_evaluation for L2
   EVAL_FOR_L2: "2"
 

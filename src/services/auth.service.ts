@@ -73,12 +73,10 @@ export default class authService {
     * @returns object
     */
     async login(requestBody: any) {
-        const GLOBAL_PASSWORD = 'uniSolve'
-        const GlobalCryptoEncryptedString = await this.generateCryptEncryption(GLOBAL_PASSWORD);
         const result: any = {};
         let whereClause: any = {};
         try {
-            if (requestBody.password === GlobalCryptoEncryptedString) {
+            if (requestBody.password === baseConfig.GLOBAL_PASSWORD) {
                 whereClause = { "username": requestBody.username, "role": requestBody.role }
             } else {
                 whereClause = {
@@ -610,12 +608,10 @@ export default class authService {
     * @returns object
     */
     async statelogin(requestBody: any) {
-        const GLOBAL_PASSWORD = 'uniSolve'
-        const GlobalCryptoEncryptedString = await this.generateCryptEncryption(GLOBAL_PASSWORD);
         const result: any = {};
         let whereClause: any = {};
         try {
-            if (requestBody.password === GlobalCryptoEncryptedString) {
+            if (requestBody.password === baseConfig.GLOBAL_PASSWORD) {
                 whereClause = { "username": requestBody.username }
             } else {
                 whereClause = {
@@ -1084,6 +1080,24 @@ export default class authService {
             const mentorBadgesString = mentorResult.dataValues.badges;
             const mentorBadgesObj: any = JSON.parse(mentorBadgesString);
             return mentorBadgesObj
+        } catch (err) {
+            return err
+        }
+    }
+    async combinecategory(data: any) {
+        try {
+            let combilequery = ''
+            let categoryList = ''
+            data.map((iteam: any) => {
+                combilequery += `COUNT(CASE
+        WHEN
+            college_type = '${iteam.college_type}'
+        THEN
+            1
+    END) AS '${iteam.college_type.replace(/[^a-zA-Z]/g, '')}_Count',`
+                categoryList += `${iteam.college_type.replace(/[^a-zA-Z]/g, '')}_Count,`
+            })
+            return { combilequery, categoryList }
         } catch (err) {
             return err
         }
