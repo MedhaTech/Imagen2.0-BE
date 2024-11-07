@@ -136,26 +136,7 @@ export default class MentorController extends BaseController {
                             whereClauseStatusPart,
                             where,
                         ]
-                    },
-                    include: {
-                        model: organization,
-                        attributes: [
-                            "organization_code",
-                            "organization_name",
-                            "organization_id",
-                            "principal_name",
-                            "principal_mobile",
-                            "principal_email",
-                            "city",
-                            "district",
-                            "state",
-                            "country",
-                            "category",
-                            "pin_code",
-                            "unique_code",
-                            "new_district"
-                        ]
-                    },
+                    }  
                 });
             } else {
                 try {
