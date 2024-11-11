@@ -24,6 +24,8 @@ export default class ReportController extends BaseController {
     protected initializeRoutes(): void {
         this.router.get(this.path + "/studentsummary", this.studentsummary.bind(this));
         this.router.get(this.path + "/studentRegList", this.studentRegDetails.bind(this));
+        this.router.get(this.path + "/instsummary", this.instsummary.bind(this));
+        this.router.get(this.path + "/instRegList", this.institutionRegDetails.bind(this));
         //this.router.get(this.path + "/mentorsummary", this.mentorsummary.bind(this));
         //this.router.get(this.path + "/mentorRegList", this.getMentorRegList.bind(this));
         //this.router.get(this.path + "/notRegistered", this.notRegistered.bind(this));
@@ -85,7 +87,7 @@ export default class ReportController extends BaseController {
                 categoryFilter = `'${college_type}'`
             }
 
-            const mentorsResult = await db.query(`SELECT 
+            const stuReglist = await db.query(`SELECT 
     s.full_name,
     mobile,
     username,
@@ -100,13 +102,88 @@ FROM
         LEFT JOIN
     users AS u ON s.user_id = u.user_id
     where s.status='ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter};`, { type: QueryTypes.SELECT });
-            if (!mentorsResult) {
+            if (!stuReglist) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
-            if (mentorsResult instanceof Error) {
-                throw mentorsResult
+            if (stuReglist instanceof Error) {
+                throw stuReglist
             }
-            res.status(200).send(dispatcher(res, mentorsResult, "success"))
+            res.status(200).send(dispatcher(res, stuReglist, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async instsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let cat_gender
+            const categorydata = await db.query(`SELECT DISTINCT
+                college_type
+            FROM
+                mentors;`, { type: QueryTypes.SELECT });
+            const querystring: any = await this.authService.combinecategory(categorydata);
+            cat_gender = await db.query(`
+                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district;
+                                `, { type: QueryTypes.SELECT });
+            data = cat_gender
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async institutionRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, college_type } = newREQQuery;
+
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+
+            const insReglist = await db.query(`SELECT 
+    m.full_name,
+    username,
+    mobile,
+    district,
+    college_type,
+    college_name
+FROM
+    mentors AS m
+        JOIN
+    users AS u ON m.user_id = u.user_id
+WHERE
+    m.status = 'ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter};`, { type: QueryTypes.SELECT });
+            if (!insReglist) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (insReglist instanceof Error) {
+                throw insReglist
+            }
+            res.status(200).send(dispatcher(res, insReglist, "success"))
         } catch (err) {
             next(err)
         }
