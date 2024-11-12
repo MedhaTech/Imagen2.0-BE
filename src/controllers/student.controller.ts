@@ -581,7 +581,6 @@ GROUP BY
 `, { type: QueryTypes.SELECT });
             res.status(200).send(dispatcher(res, result, 'done'))
         } catch (error) {
-            console.log(error)
             next(error)
         }
     }
