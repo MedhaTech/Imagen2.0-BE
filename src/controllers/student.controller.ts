@@ -575,12 +575,13 @@ FROM
 LEFT JOIN 
     students AS sub ON sub.type = Smain.student_id
 WHERE
-    Smain.type = 0 && Smain.college_name = ${college_name}
+    Smain.type = 0 && Smain.college_name = '${college_name}'
 GROUP BY 
     Smain.student_id, Smain.full_name;
 `, { type: QueryTypes.SELECT });
             res.status(200).send(dispatcher(res, result, 'done'))
         } catch (error) {
+            console.log(error)
             next(error)
         }
     }
