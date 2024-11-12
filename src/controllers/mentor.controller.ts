@@ -245,6 +245,7 @@ export default class MentorController extends BaseController {
                 where: { user_id: result.data.user_id }
             });
             result.data['mentor_id'] = mentorData.dataValues.mentor_id;
+            result.data['college_name'] = mentorData.dataValues.college_name;
             if (!result) {
                 return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
             }
