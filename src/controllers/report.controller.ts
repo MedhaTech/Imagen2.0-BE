@@ -26,8 +26,8 @@ export default class ReportController extends BaseController {
         this.router.get(this.path + "/studentRegList", this.studentRegDetails.bind(this));
         this.router.get(this.path + "/instsummary", this.instsummary.bind(this));
         this.router.get(this.path + "/instRegList", this.institutionRegDetails.bind(this));
-        this.router.get(`${this.path}/mentordetailstable`, this.getmentorDetailstable.bind(this));
-        //this.router.get(`${this.path}/mentordetailsreport`, this.getmentorDetailsreport.bind(this));
+        this.router.get(`${this.path}/instdetailstable`, this.getmentorDetailstable.bind(this));
+        this.router.get(`${this.path}/instdetailsreport`, this.getmentorDetailsreport.bind(this));
         this.router.get(`${this.path}/studentdetailstable`, this.getstudentDetailstable.bind(this));
         this.router.get(`${this.path}/studentdetailsreport`, this.getstudentDetailsreport.bind(this));
     }
@@ -283,136 +283,109 @@ GROUP BY district`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
-//     protected async getmentorDetailsreport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-//         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
-//             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-//         }
-//         try {
-//             let data: any = {}
-//             let newREQQuery: any = {}
-//             if (req.query.Data) {
-//                 let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-//                 newREQQuery = JSON.parse(newQuery);
-//             } else if (Object.keys(req.query).length !== 0) {
-//                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-//             }
-//             const { college_type, district} = newREQQuery;
-//             let districtFilter: any = ''
-//             let categoryFilter: any = ''
-//             if (district !== 'All Districts' && college_type !== 'All Types') {
-//                 districtFilter = `'${district}'`
-//                 categoryFilter = `'${college_type}'`
-//             } else if (district !== 'All Districts') {
-//                 districtFilter = `'${district}'`
-//                 categoryFilter = `'%%'`
-//             } else if (college_type !== 'All Types') {
-//                 categoryFilter = `'${college_type}'`
-//                 districtFilter = `'%%'`
-//             }
-//             else {
-//                 districtFilter = `'%%'`
-//                 categoryFilter = `'%%'`
-//             }
-//             const summary = await db.query(`SELECT 
-//     mn.mentor_id,
-//     mn.user_id,
-//     og.organization_code,
-//     og.organization_name,
-//     og.district,
-//     og.category,
-//     og.city,
-//     og.principal_name,
-//     og.principal_mobile,
-//     mn.full_name,
-//     mn.gender,
-//     mn.mobile,
-//     mn.whatapp_mobile,
-//     og.state,
-//     og.unique_code
-// FROM
-//     (mentors AS mn)
-//         LEFT JOIN
-//     organizations AS og ON mn.organization_code = og.organization_code
-// WHERE
-//     og.status = 'ACTIVE' && og.state LIKE ${stateFilter} && og.district LIKE ${districtFilter} && og.category LIKE ${categoryFilter}
-//             ORDER BY og.district,mn.full_name;`, { type: QueryTypes.SELECT });
-//             const studentCount = await db.query(`SELECT 
-//     COUNT(*) AS student_count, mentor_id
-// FROM
-//     teams
-//         JOIN
-//     students ON teams.team_id = students.team_id
-// GROUP BY mentor_id`, { type: QueryTypes.SELECT });
-//             const StudentCourseCmp = await db.query(`SELECT 
-//     COUNT(*) AS countop, mentor_id
-// FROM
-//     (SELECT 
-//         mentor_id, student_id, COUNT(*), students.user_id
-//     FROM
-//         teams
-//     LEFT JOIN students ON teams.team_id = students.team_id
-//     JOIN user_topic_progress ON students.user_id = user_topic_progress.user_id
-//     GROUP BY student_id
-//     HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS total
-// GROUP BY mentor_id`, { type: QueryTypes.SELECT });
-//             const StudentCourseINpro = await db.query(`SELECT 
-//     COUNT(*) AS courseinprogess, mentor_id
-// FROM
-//     (SELECT 
-//         mentor_id, student_id, COUNT(*), students.user_id
-//     FROM
-//         teams
-//     LEFT JOIN students ON teams.team_id = students.team_id
-//     JOIN user_topic_progress ON students.user_id = user_topic_progress.user_id
-//     GROUP BY student_id
-//     HAVING COUNT(*) < ${baseConfig.STUDENT_COURSE}) AS total
-// GROUP BY mentor_id`, { type: QueryTypes.SELECT });
-//             const StuIdeaSubCount = await db.query(`SELECT 
-//     COUNT(*) AS submittedcout, mentor_id
-// FROM
-//     teams
-//         JOIN
-//     challenge_responses ON teams.team_id = challenge_responses.team_id
-// WHERE
-//     challenge_responses.status = 'SUBMITTED'
-// GROUP BY mentor_id`, { type: QueryTypes.SELECT });
-//             const StuIdeaDraftCount = await db.query(`SELECT 
-//     COUNT(*) AS draftcout, mentor_id
-// FROM
-//     teams
-//         JOIN
-//     challenge_responses ON teams.team_id = challenge_responses.team_id
-// WHERE
-//     challenge_responses.status = 'DRAFT'
-// GROUP BY mentor_id`, { type: QueryTypes.SELECT });
-//             const Username = await db.query(`SELECT 
-//     user_id, username
-// FROM
-//     users
-// WHERE
-//     role = 'MENTOR'`, { type: QueryTypes.SELECT });
-//             data['summary'] = summary;
-//             data['preSurvey'] = preSurvey;
-//             data['postSurvey'] = postSurvey;
-//             data['Course'] = Course;
-//             data['teamCount'] = teamCount;
-//             data['studentCount'] = studentCount;
-//             data['StudentCourseCmp'] = StudentCourseCmp;
-//             data['StudentCourseINpro'] = StudentCourseINpro;
-//             data['StuIdeaSubCount'] = StuIdeaSubCount;
-//             data['StuIdeaDraftCount'] = StuIdeaDraftCount;
-//             data['Username'] = Username;
-//             if (!data) {
-//                 throw notFound(speeches.DATA_NOT_FOUND)
-//             }
-//             if (data instanceof Error) {
-//                 throw data
-//             }
-//             res.status(200).send(dispatcher(res, data, "success"))
-//         } catch (err) {
-//             next(err)
-//         }
-//     }
+    protected async getmentorDetailsreport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { college_type, district } = newREQQuery;
+            let districtFilter: any = ''
+            let categoryFilter: any = ''
+            if (district !== 'All Districts' && college_type !== 'All Types') {
+                districtFilter = `'${district}'`
+                categoryFilter = `'${college_type}'`
+            } else if (district !== 'All Districts') {
+                districtFilter = `'${district}'`
+                categoryFilter = `'%%'`
+            } else if (college_type !== 'All Types') {
+                categoryFilter = `'${college_type}'`
+                districtFilter = `'%%'`
+            }
+            else {
+                districtFilter = `'%%'`
+                categoryFilter = `'%%'`
+            }
+            const summary = await db.query(`SELECT 
+    college_name,
+    college_type,
+    district,
+    m.full_name,
+    mobile,
+    username
+FROM
+    mentors AS m
+        JOIN
+    users AS u ON m.user_id = u.user_id
+WHERE
+    m.status = 'ACTIVE' && m.district LIKE ${districtFilter} && m.college_type LIKE ${categoryFilter}
+            ORDER BY m.district,m.full_name;`, { type: QueryTypes.SELECT });
+            const studentCount = await db.query(`SELECT 
+    college_name, COUNT(student_id) as stuCount
+FROM
+    students
+GROUP BY college_name;`, { type: QueryTypes.SELECT });
+            const StudentCourseCmp = await db.query(`SELECT 
+    COUNT(*) AS countop, college_name
+FROM
+    (SELECT 
+        utp.user_id, COUNT(user_topic_progress_id), college_name
+    FROM
+        user_topic_progress AS utp
+    JOIN students AS s ON utp.user_id = s.user_id
+    GROUP BY user_id
+    HAVING COUNT(user_topic_progress_id) >= ${baseConfig.STUDENT_COURSE}) AS total
+GROUP BY college_name`, { type: QueryTypes.SELECT });
+            const StudentCourseINpro = await db.query(`SELECT 
+    COUNT(*) AS countIN, college_name
+FROM
+    (SELECT 
+        utp.user_id, COUNT(user_topic_progress_id), college_name
+    FROM
+        user_topic_progress AS utp
+    JOIN students AS s ON utp.user_id = s.user_id
+    GROUP BY user_id
+    HAVING COUNT(user_topic_progress_id) < ${baseConfig.STUDENT_COURSE}) AS total
+GROUP BY college_name`, { type: QueryTypes.SELECT });
+            const StuIdeaSubCount = await db.query(`SELECT 
+    COUNT(challenge_response_id) AS submittedcout, college_name
+FROM
+    challenge_responses as cr join students as s ON cr.student_id = s.student_id
+WHERE
+    cr.status = 'SUBMITTED'
+GROUP BY college_name`, { type: QueryTypes.SELECT });
+            const StuIdeaDraftCount = await db.query(`SELECT 
+    COUNT(challenge_response_id) AS draftcout, college_name
+FROM
+    challenge_responses as cr join students as s ON cr.student_id = s.student_id
+WHERE
+    cr.status = 'DRAFT'
+GROUP BY college_name`, { type: QueryTypes.SELECT });
+
+            data['summary'] = summary;
+            data['studentCount'] = studentCount;
+            data['StudentCourseCmp'] = StudentCourseCmp;
+            data['StudentCourseINpro'] = StudentCourseINpro;
+            data['StuIdeaSubCount'] = StuIdeaSubCount;
+            data['StuIdeaDraftCount'] = StuIdeaDraftCount;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
     protected async getstudentDetailsreport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
