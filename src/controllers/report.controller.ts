@@ -30,6 +30,8 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/instdetailsreport`, this.getmentorDetailsreport.bind(this));
         this.router.get(`${this.path}/studentdetailstable`, this.getstudentDetailstable.bind(this));
         this.router.get(`${this.path}/studentdetailsreport`, this.getstudentDetailsreport.bind(this));
+        this.router.get(`${this.path}/ideadeatilreport`, this.getideaReport.bind(this));
+        this.router.get(`${this.path}/ideaReportTable`, this.getideaReportTable.bind(this));
     }
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
@@ -473,6 +475,130 @@ GROUP BY user_id`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, data, "success"))
         } catch (err) {
+            next(err)
+        }
+    }
+    protected async getideaReportTable(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let summary
+            summary = await db.query(`SELECT 
+    s.district,
+    COUNT(*) AS totalSubmited,
+    COUNT(CASE
+        WHEN cal.theme = 'Sustainable Development and Environment' THEN 1
+    END) AS SustainableDevelopmentandEnvironment,
+    COUNT(CASE
+        WHEN cal.theme = 'Digital Transformation' THEN 1
+    END) AS DigitalTransformation,
+    COUNT(CASE
+        WHEN cal.theme = 'Health and Well-being' THEN 1
+    END) AS HealthandWellbeing,
+    COUNT(CASE
+        WHEN cal.theme = 'Quality Education' THEN 1
+    END) AS QualityEducation,
+    COUNT(CASE
+        WHEN cal.theme = 'Economic Empowerment' THEN 1
+    END) AS EconomicEmpowerment,
+    COUNT(CASE
+        WHEN cal.theme = 'Smart and Resilient Communities' THEN 1
+    END) AS SmartandResilientCommunities,
+    COUNT(CASE
+        WHEN cal.theme = 'Agriculture and Rural Development' THEN 1
+    END) AS AgricultureandRuralDevelopment,
+    COUNT(CASE
+        WHEN cal.theme = 'Others' THEN 1
+    END) AS OTHERS
+FROM
+    challenge_responses AS cal
+        JOIN
+    students AS s ON cal.student_id = s.student_id
+WHERE
+    cal.status = 'SUBMITTED'
+GROUP BY s.district`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getideaReport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { state, district, theme, college_type } = newREQQuery;
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+            let themesFilter: any = `'%%'`
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+            if (theme !== 'All Themes' && theme !== undefined) {
+                themesFilter = `'${theme}'`
+            }
+
+            const summary = await db.query(`SELECT 
+    theme,
+    idea_describe,
+    title,
+    solve,
+    customer,
+    detail,
+    stage,
+\`unique\`,
+    similar,
+    revenue,
+    society,
+    confident,
+    support,
+    prototype_image,
+    prototype_link,
+    cal.status,
+    cal.student_id,
+    s.full_name as studentfullname,
+    mobile,
+    s.district,
+    college_type,
+    college_name,
+    roll_number,
+    branch,
+    year_of_study
+FROM
+    challenge_responses as cal join students as s on cal.student_id = s.student_id 
+WHERE
+   s.status = 'ACTIVE' && cal.status = 'SUBMITTED' && s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} && cal.theme LIKE ${themesFilter};`, { type: QueryTypes.SELECT });
+
+            data['summary'] = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            console.log(err)
             next(err)
         }
     }
