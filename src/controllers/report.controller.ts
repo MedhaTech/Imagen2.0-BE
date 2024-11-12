@@ -544,7 +544,7 @@ GROUP BY s.district`, { type: QueryTypes.SELECT });
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { state, district, theme, college_type } = newREQQuery;
+            const { district, theme, college_type } = newREQQuery;
             let districtFilter: any = `'%%'`
             let categoryFilter: any = `'%%'`
             let themesFilter: any = `'%%'`

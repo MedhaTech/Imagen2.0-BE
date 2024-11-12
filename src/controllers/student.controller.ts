@@ -552,6 +552,14 @@ WHERE
     }
     private async getPilotStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { college_name } =newREQQuery
             let result: any = {};
             result = await db.query(`SELECT 
     Smain.student_id,
@@ -567,7 +575,7 @@ FROM
 LEFT JOIN 
     students AS sub ON sub.type = Smain.student_id
 WHERE
-    Smain.type = 0
+    Smain.type = 0 && Smain.college_name = ${college_name}
 GROUP BY 
     Smain.student_id, Smain.full_name;
 `, { type: QueryTypes.SELECT });
