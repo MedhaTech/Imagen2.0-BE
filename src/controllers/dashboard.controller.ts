@@ -36,7 +36,7 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/stuBadgesStats`, this.getStudentBadges.bind(this));
         this.router.get(`${this.path}/stuPrePostStats`, this.getStudentPREPOST.bind(this));
         //team stats..
-       // this.router.get(`${this.path}/teamStats/:team_id`, this.getTeamStats.bind(this));
+        // this.router.get(`${this.path}/teamStats/:team_id`, this.getTeamStats.bind(this));
         //evaluator stats..
         this.router.get(`${this.path}/evaluatorStats`, this.getEvaluatorStats.bind(this));
         //quizscore
@@ -63,7 +63,7 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
     }
 
-    
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     ///////// TEAM STATS
     ///////// PS: this assumes that there is only course in the systems and hence alll topics inside topics table are taken for over counts
@@ -228,7 +228,7 @@ export default class DashboardController extends BaseController {
                 [
                     [db.fn('DISTINCT', db.col('state_name')), 'state_name'],
                     `dashboard_map_stat_id`,
-                    `overall_schools`, `reg_schools`,  `reg_mentors`,`schools_with_teams`, `teams`, `ideas`, `students`, `status`, `created_by`, `created_at`, `updated_by`, `updated_at`
+                    `overall_schools`, `reg_schools`, `reg_mentors`, `schools_with_teams`, `teams`, `ideas`, `students`, `status`, `created_by`, `created_at`, `updated_by`, `updated_at`
                 ]
             )
         } catch (error) {
@@ -376,23 +376,12 @@ export default class DashboardController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { mentor_id } = newREQQuery
-            if (mentor_id) {
-                result = await db.query(`SELECT count(*) as student_count FROM students join teams on students.team_id = teams.team_id  where mentor_id = ${mentor_id};`, { type: QueryTypes.SELECT });
+            const { college_name } = newREQQuery
+            if (college_name) {
+                result = await db.query(`SELECT count(student_id) as student_count FROM students where college_name = '${college_name}';`, { type: QueryTypes.SELECT });
             }
             else {
-                result = await db.query(`SELECT 
-                COUNT(st.student_id) AS student_count
-            FROM
-                organizations AS og
-                    LEFT JOIN
-                mentors AS mn ON og.organization_code = mn.organization_code
-                    INNER JOIN
-                teams AS t ON mn.mentor_id = t.mentor_id
-                    INNER JOIN
-                students AS st ON st.team_id = t.team_id
-                WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
-
+                result = await db.query(`SELECT count(student_id) as student_count FROM students where status = "ACTIVE"`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
@@ -413,9 +402,9 @@ export default class DashboardController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { mentor_id } = newREQQuery
-            if (mentor_id) {
-                result = await db.query(`SELECT count(*) as idea_count FROM challenge_responses join teams on challenge_responses.team_id = teams.team_id where mentor_id = ${mentor_id} && challenge_responses.status = 'SUBMITTED';`, { type: QueryTypes.SELECT });
+            const { college_name } = newREQQuery
+            if (college_name) {
+                result = await db.query(`SELECT count(challenge_response_id) as idea_count FROM challenge_responses join students on challenge_responses.student_id = students.student_id where students.college_name = ${college_name} && challenge_responses.status = 'SUBMITTED';`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
