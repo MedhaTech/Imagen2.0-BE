@@ -192,7 +192,12 @@ WHERE
         try {
 
             const data = await db.query(`SELECT 
-    m.district, COUNT(mentor_id) as insReg, COUNT(student_id) as studentReg
+    m.district,
+    COUNT(mentor_id) AS insReg,
+    COUNT(student_id) AS studentReg,
+    COUNT(CASE
+        WHEN s.type = 0 THEN 1
+    END) AS 'teamCount'
 FROM
     mentors AS m
         LEFT JOIN
@@ -330,7 +335,9 @@ WHERE
     m.status = 'ACTIVE' && m.district LIKE ${districtFilter} && m.college_type LIKE ${categoryFilter}
             ORDER BY m.district,m.full_name;`, { type: QueryTypes.SELECT });
             const studentCount = await db.query(`SELECT 
-    college_name, COUNT(student_id) as stuCount
+    college_name, COUNT(student_id) as stuCount, COUNT(CASE
+        WHEN type = 0 THEN 1
+    END) AS 'teamCount'
 FROM
     students
 GROUP BY college_name;`, { type: QueryTypes.SELECT });
