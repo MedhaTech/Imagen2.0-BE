@@ -344,7 +344,7 @@ export default class DashboardService extends BaseService {
      */
     getDbLieralIdeaSubmission(addWhereClauseStatusPart: any, whereClauseStatusPartLiteral: any) {
         return `
-        select count(*) from challenge_responses as idea where idea.team_id = \`student\`.\`team_id\` and status = "SUBMITTED"
+        select count(*) from challenge_responses as idea where idea.student_id = \`student\`.\`student_id\` and status = "SUBMITTED"
         `
     }
     /**
