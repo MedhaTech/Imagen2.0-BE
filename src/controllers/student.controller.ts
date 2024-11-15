@@ -110,6 +110,7 @@ export default class StudentController extends BaseController {
     college_type,
     college_name,
     roll_number,
+    id_number,
     branch,
     year_of_study,
     type,

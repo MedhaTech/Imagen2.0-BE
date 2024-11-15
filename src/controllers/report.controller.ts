@@ -92,6 +92,7 @@ export default class ReportController extends BaseController {
     college_type,
     college_name,
     roll_number,
+    id_number,
     branch,
     year_of_study
 FROM
@@ -434,6 +435,7 @@ GROUP BY college_name`, { type: QueryTypes.SELECT });
     college_type,
     college_name,
     roll_number,
+    id_number,
     branch,
     year_of_study
 FROM
@@ -589,6 +591,7 @@ GROUP BY s.district`, { type: QueryTypes.SELECT });
     college_type,
     college_name,
     roll_number,
+    id_number,
     branch,
     year_of_study
 FROM
