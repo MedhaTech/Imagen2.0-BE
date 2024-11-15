@@ -14,6 +14,7 @@ export class student extends Model<InferAttributes<student>, InferCreationAttrib
     declare college_type: string;
     declare college_name: string;
     declare roll_number: string;
+    declare id_number: string;
     declare branch: string;
     declare year_of_study: string;
     declare type: number;
@@ -56,6 +57,9 @@ student.init(
             type: DataTypes.STRING
         },
         roll_number: {
+            type: DataTypes.STRING
+        },
+        id_number: {
             type: DataTypes.STRING
         },
         branch: {
