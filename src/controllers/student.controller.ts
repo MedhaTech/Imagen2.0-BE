@@ -53,18 +53,19 @@ export default class StudentController extends BaseController {
         let result;
         req.body['role'] = 'STUDENT'
         result = await this.authService.login(req.body);
-        const studentData = await this.authService.crudService.findOne(student, {
-            where: { user_id: result.data.user_id }
-        });
-        result.data['type_id'] = studentData.dataValues.type;
-        result.data['student_id'] = studentData.dataValues.student_id;
-        result.data['district'] = studentData.dataValues.district;
+    
         if (!result) {
             return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
         } else if (result.error) {
             return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
         } else {
             //studentDetails = await this.authService.getServiceDetails('student', { user_id: result.data.user_id });
+            const studentData = await this.authService.crudService.findOne(student, {
+                where: { user_id: result.data.user_id }
+            });
+            result.data['type_id'] = studentData.dataValues.type;
+            result.data['student_id'] = studentData.dataValues.student_id;
+            result.data['district'] = studentData.dataValues.district;
             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
         }
     }
@@ -152,7 +153,7 @@ WHERE
         }
     }
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
@@ -220,7 +221,7 @@ WHERE
         }
     }
     protected async deleteData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
@@ -241,7 +242,7 @@ WHERE
         }
     }
     protected async deleteAllData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
@@ -560,7 +561,7 @@ WHERE
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { college_name } =newREQQuery
+            const { college_name } = newREQQuery
             let result: any = {};
             result = await db.query(`SELECT 
     Smain.student_id,

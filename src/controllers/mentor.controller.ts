@@ -136,7 +136,7 @@ export default class MentorController extends BaseController {
                             whereClauseStatusPart,
                             where,
                         ]
-                    }  
+                    }
                 });
             } else {
                 try {
@@ -241,15 +241,16 @@ export default class MentorController extends BaseController {
         req.body['role'] = 'MENTOR'
         try {
             const result = await this.authService.login(req.body);
-            const mentorData = await this.authService.crudService.findOne(mentor, {
-                where: { user_id: result.data.user_id }
-            });
-            result.data['mentor_id'] = mentorData.dataValues.mentor_id;
-            result.data['college_name'] = mentorData.dataValues.college_name;
+           
             if (!result) {
                 return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
             }
             else {
+                const mentorData = await this.authService.crudService.findOne(mentor, {
+                    where: { user_id: result.data.user_id }
+                });
+                result.data['mentor_id'] = mentorData.dataValues.mentor_id;
+                result.data['college_name'] = mentorData.dataValues.college_name;
                 return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
             }
         } catch (error) {
