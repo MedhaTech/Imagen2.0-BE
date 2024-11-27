@@ -228,13 +228,32 @@ export default class DashboardController extends BaseController {
     private async getMapStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             this.model = dashboard_map_stat.name
-            return await this.getData(req, res, next, [],
-                [
-                    [db.fn('DISTINCT', db.col('state_name')), 'state_name'],
-                    `dashboard_map_stat_id`,
-                    `overall_schools`, `reg_schools`, `reg_mentors`, `schools_with_teams`, `teams`, `ideas`, `students`, `status`, `created_by`, `created_at`, `updated_by`, `updated_at`
-                ]
+            const result = await this.crudService.findAll(dashboard_map_stat,{
+                attributes: [
+                    "dashboard_map_stat_id",
+                    "district_name",
+                    "reg_mentors",
+                    "teams",
+                    "students",
+                    "ideas"
+                ],
+            }
             )
+            const TotalObj: any = {
+                reg_mentors:0,
+                teams:0,
+                students:0,
+                ideas:0,
+                district_name: "all"
+            };
+            result.map((student: any) => {
+                TotalObj.reg_mentors +=Number(student.reg_mentors)
+                TotalObj.teams +=Number(student.teams)
+                TotalObj.students +=Number(student.students)
+                TotalObj.ideas +=Number(student.ideas)
+            })
+            const totalResult = [...result,TotalObj]
+            return res.status(200).send(dispatcher(res, totalResult, 'success'));
         } catch (error) {
             next(error);
         }

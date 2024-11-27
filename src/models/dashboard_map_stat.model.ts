@@ -4,7 +4,7 @@ import db from '../utils/dbconnection.util';
 
 export class dashboard_map_stat extends Model<InferAttributes<dashboard_map_stat>, InferCreationAttributes<dashboard_map_stat>> {
     declare dashboard_map_stat_id: CreationOptional<number>;
-    declare state_name: string;
+    declare district_name: string;
     declare overall_schools: string;
     declare reg_schools: string;
     declare reg_mentors: string;
@@ -26,7 +26,7 @@ dashboard_map_stat.init(
             autoIncrement: true,
             primaryKey: true
         },
-        state_name: {
+        district_name: {
             type: DataTypes.STRING,
             allowNull: false
         },
