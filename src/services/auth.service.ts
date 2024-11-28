@@ -298,7 +298,37 @@ export default class authService {
         }
     }
 
-    async emailotp(requestBody: any) {
+    /**
+     * registers the mentor
+     * @param requestBody object
+     * @returns Object
+     */
+    async studentRegister(requestBody: any) {
+        let response: any;
+        try {
+            const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
+            if (user_data) {
+                throw badRequest('Email');
+            } else {
+                const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
+                if (mentor_data) {
+                    throw badRequest('Mobile')
+                } else {
+                    let createUserAccount = await this.crudService.create(user, requestBody);
+                    let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
+                    let createMentorAccount = await this.crudService.create(student, conditions);
+                    createMentorAccount.dataValues['username'] = createUserAccount.dataValues.username;
+                    createMentorAccount.dataValues['user_id'] = createUserAccount.dataValues.user_id;
+                    response = createMentorAccount;
+                    return response;
+                }
+            }
+        } catch (error) {
+            return error;
+        }
+    }
+
+    async emailotp(requestBody: any,modelname:any) {
         let result: any = {};
         try {
             const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
@@ -306,7 +336,7 @@ export default class authService {
                 throw badRequest('Email');
             }
             else {
-                const mentor_data = await this.crudService.findOne(mentor, { where: { mobile: requestBody.mobile } })
+                const mentor_data = await this.crudService.findOne(modelname, { where: { mobile: requestBody.mobile } })
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {

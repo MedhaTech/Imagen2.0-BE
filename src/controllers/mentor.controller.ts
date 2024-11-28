@@ -232,7 +232,7 @@ export default class MentorController extends BaseController {
             return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
         }
         if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
-            return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MOBILE_EXISTS, 406));
+            return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
         }
         const data = result.dataValues;
         return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
@@ -251,6 +251,7 @@ export default class MentorController extends BaseController {
                 });
                 result.data['mentor_id'] = mentorData.dataValues.mentor_id;
                 result.data['college_name'] = mentorData.dataValues.college_name;
+                result.data['district'] = mentorData.dataValues.district;
                 return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
             }
         } catch (error) {
@@ -389,7 +390,7 @@ export default class MentorController extends BaseController {
             if (!username) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
             }
-            const result = await this.authService.emailotp(req.body);
+            const result = await this.authService.emailotp(req.body,mentor);
             if (result.error) {
                 if (result && result.error.output && result.error.output.payload && result.error.output.payload.message == 'Email') {
                     return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));

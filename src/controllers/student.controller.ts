@@ -280,9 +280,15 @@ WHERE
             req.body.role = 'STUDENT';
             req.body.type = 0;
             const payload = this.autoFillTrackingColumns(req, res, student);
-            const result = await this.authService.register(payload);
-            if (result.user_res) return res.status(406).send(dispatcher(res, result.user_res.dataValues, 'error', speeches.STUDENT_EXISTS, 406));
-            return res.status(201).send(dispatcher(res, result.profile.dataValues, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+            const result = await this.authService.studentRegister(payload);
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
+            }
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
+            }
+            const data = result.dataValues;
+            return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
         } catch (err) {
             next(err)
         }
@@ -292,9 +298,15 @@ WHERE
             req.body.password = req.body.confirmPassword;
             req.body.role = 'STUDENT';
             const payload = this.autoFillTrackingColumns(req, res, student);
-            const result = await this.authService.register(payload);
-            if (result.user_res) return res.status(406).send(dispatcher(res, result.user_res.dataValues, 'error', speeches.STUDENT_EXISTS, 406));
-            return res.status(201).send(dispatcher(res, result.profile.dataValues, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+            const result = await this.authService.studentRegister(payload);
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
+            }
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
+            }
+            const data = result.dataValues;
+            return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
         } catch (err) {
             next(err)
         }
@@ -535,7 +547,7 @@ WHERE
             if (!username) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
             }
-            const result = await this.authService.emailotp(req.body);
+            const result = await this.authService.emailotp(req.body,student);
             if (result.error) {
                 if (result && result.error.output && result.error.output.payload && result.error.output.payload.message == 'Email') {
                     return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
