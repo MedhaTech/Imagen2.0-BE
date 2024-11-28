@@ -29,7 +29,6 @@ export const speeches = {
     MENTOR_EXISTS_MOBILE: "Mobile already exists",
     MENTOR_NOT_EXISTS: "Mentor not found",
     AWSMESSAGEID: "Service not used, password is updated to default password",
-    MOBILE_EXISTS: "Mobile Number already exists",
     STUDENT_EXISTS: "Student already exists",
     ADMIN_EXISTS: "Admin already exists",
     EVALUATOR_EXISTS: "Evaluator already exists",

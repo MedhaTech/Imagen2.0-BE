@@ -9,7 +9,7 @@ export interface supportTicketAttributes {
     file: string;
     link: string;
     status: Enumerator;
-    state: string;
+    district: string;
     created_by: number;
     created_at: Date;
     updated_by: number;
@@ -43,7 +43,7 @@ support_ticket.init(
             type: DataTypes.ENUM(...Object.values(constents.support_tickets_status_flags.list)),
             defaultValue: constents.support_tickets_status_flags.default
         },
-        state: {
+        district: {
             type: DataTypes.STRING,
         },
         created_by: {

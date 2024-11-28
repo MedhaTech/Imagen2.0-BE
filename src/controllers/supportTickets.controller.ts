@@ -44,9 +44,9 @@ export default class SupportTicketController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { page, size, status, user_id, state } = newREQQuery;
+            const { page, size, status, user_id, district } = newREQQuery;
             let condition = status ? { status: { [Op.like]: `%${status}%` } } : null;
-            let stateFilter = state ? { state: { [Op.like]: `%${state}%` } } : null;
+            let districtFilter = district ? { district: { [Op.like]: `%${district}%` } } : null;
             let filteringBasedOnUser_id = user_id ? { created_by: user_id } : null;
             const { limit, offset } = this.getPagination(page, size);
             const modelClass = await this.loadModel(model).catch(error => {
@@ -67,9 +67,6 @@ export default class SupportTicketController extends BaseController {
                         [
                             db.literal(`( SELECT COUNT(*) FROM support_tickets_replies AS s WHERE s.support_ticket_id = \`support_ticket\`.\`support_ticket_id\`)`), 'replies_count'
                         ],
-                        [
-                            db.literal(`(SELECT district FROM students where user_id = \`support_ticket\`.\`created_by\` )`), 'district'
-                        ],
                         'support_ticket_id',
                         'query_category',
                         'query_details',
@@ -78,7 +75,7 @@ export default class SupportTicketController extends BaseController {
                         'status',
                         'created_at',
                         'updated_at',
-                        'state'
+                        'district'
                     ],
                     where: {
                         [Op.and]: [
@@ -117,7 +114,7 @@ export default class SupportTicketController extends BaseController {
                             'updated_at',
                             "link",
                             "file",
-                            'state',
+                            'district',
                             [
                                 db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`support_ticket\`.\`created_by\` )`), 'created_by'
                             ],
@@ -126,14 +123,11 @@ export default class SupportTicketController extends BaseController {
                             ],
                             [
                                 db.literal(`( SELECT COUNT(*) FROM support_tickets_replies AS s WHERE s.support_ticket_id = \`support_ticket\`.\`support_ticket_id\`)`), 'replies_count'
-                            ],
-                            [
-                                db.literal(`(SELECT district FROM students where user_id = \`support_ticket\`.\`created_by\` )`), 'district'
-                            ],
+                            ]
                         ],
                         where: {
                             [Op.and]: [
-                                stateFilter,
+                                districtFilter,
                                 condition,
                                 filteringBasedOnUser_id
                             ]
