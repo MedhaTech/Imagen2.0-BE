@@ -251,6 +251,7 @@ export default class MentorController extends BaseController {
                 });
                 result.data['mentor_id'] = mentorData.dataValues.mentor_id;
                 result.data['college_name'] = mentorData.dataValues.college_name;
+                result.data['college_type'] = mentorData.dataValues.college_type;
                 result.data['district'] = mentorData.dataValues.district;
                 return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
             }
