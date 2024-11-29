@@ -8,6 +8,7 @@ export class video extends Model<InferAttributes<video>, InferCreationAttributes
     declare video_id: CreationOptional<number>;
     declare video_stream_id: string;
     declare video_duration: string;
+    declare description: string;
     declare status: Enumerator;
     declare created_by: number;
     declare created_at: Date;
@@ -32,6 +33,9 @@ video.init(
             type: DataTypes.STRING,
             allowNull: false,
             defaultValue: '-1'
+        },
+        description: {
+            type: DataTypes.STRING
         },
         status: {
             type: DataTypes.ENUM(...Object.values(constents.common_status_flags.list)),
