@@ -194,7 +194,7 @@ WHERE
 
             const data = await db.query(`SELECT 
     m.district,
-    COUNT(mentor_id) AS insReg,
+    COUNT(DISTINCT mentor_id) AS insReg,
     COUNT(student_id) AS studentReg,
     COUNT(CASE
         WHEN s.type = 0 THEN 1
@@ -265,7 +265,7 @@ GROUP BY district`, { type: QueryTypes.SELECT });
             WHERE
                 status = 'SUBMITTED') AS temp ON st.student_id = temp.student_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const draftCount = await db.query(`SELECT 
-            st.district,count(st.student_id) as submittedCount
+            st.district,count(st.student_id) as draftCount
         FROM
             students AS st
                 JOIN
