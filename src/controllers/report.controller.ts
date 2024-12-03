@@ -511,7 +511,7 @@ GROUP BY user_id`, { type: QueryTypes.SELECT });
     END) AS "MedTechorBioTechorHealthTech",
     COUNT(CASE
         WHEN cal.theme = "Agriculture, and Rural Development" THEN 1
-    END) AS "Agriculture,andRuralDevelopment",
+    END) AS "AgricultureandRuralDevelopment",
     COUNT(CASE
         WHEN cal.theme = "Smart Vehicles" THEN 1
     END) AS "SmartVehicles",
