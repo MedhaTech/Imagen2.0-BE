@@ -498,26 +498,65 @@ GROUP BY user_id`, { type: QueryTypes.SELECT });
     s.district,
     COUNT(*) AS totalSubmited,
     COUNT(CASE
-        WHEN cal.theme = 'Sustainable Development and Environment' THEN 1
-    END) AS SustainableDevelopmentandEnvironment,
+        WHEN cal.theme = "Smart Automation" THEN 1
+    END) AS "SmartAutomation",
     COUNT(CASE
-        WHEN cal.theme = 'Digital Transformation' THEN 1
-    END) AS DigitalTransformation,
+        WHEN cal.theme = "Fitness and Sports" THEN 1
+    END) AS "FitnessandSports",
     COUNT(CASE
-        WHEN cal.theme = 'Health and Well-being' THEN 1
-    END) AS HealthandWellbeing,
+        WHEN cal.theme = "Heritage and Culture" THEN 1
+    END) AS "HeritageandCulture",
     COUNT(CASE
-        WHEN cal.theme = 'Quality Education' THEN 1
-    END) AS QualityEducation,
+        WHEN cal.theme = "MedTech or BioTech or HealthTech" THEN 1
+    END) AS "MedTechorBioTechorHealthTech",
     COUNT(CASE
-        WHEN cal.theme = 'Economic Empowerment' THEN 1
-    END) AS EconomicEmpowerment,
+        WHEN cal.theme = "Agriculture, and Rural Development" THEN 1
+    END) AS "Agriculture,andRuralDevelopment",
     COUNT(CASE
-        WHEN cal.theme = 'Smart and Resilient Communities' THEN 1
-    END) AS SmartandResilientCommunities,
+        WHEN cal.theme = "Smart Vehicles" THEN 1
+    END) AS "SmartVehicles",
     COUNT(CASE
-        WHEN cal.theme = 'Agriculture and Rural Development' THEN 1
-    END) AS AgricultureandRuralDevelopment,
+        WHEN cal.theme = "Transportation and Logistics" THEN 1
+    END) AS "TransportationandLogistics",
+    COUNT(CASE
+        WHEN cal.theme = "Robotics and Drones" THEN 1
+    END) AS "RoboticsandDrones",
+    COUNT(CASE
+        WHEN cal.theme = "Clean and Green Technology" THEN 1
+    END) AS "CleanandGreenTechnology",
+    COUNT(CASE
+        WHEN cal.theme = "Tourism" THEN 1
+    END) AS "Tourism",
+    COUNT(CASE
+        WHEN cal.theme = "Renewable and sustainable Energy" THEN 1
+    END) AS "RenewableandsustainableEnergy",
+    COUNT(CASE
+        WHEN cal.theme = "Blockchain and Cybersecurity" THEN 1
+    END) AS "BlockchainandCybersecurity",
+    COUNT(CASE
+        WHEN cal.theme = "Smart Education" THEN 1
+    END) AS "SmartEducation",
+    COUNT(CASE
+        WHEN cal.theme = "Disaster Management" THEN 1
+    END) AS "DisasterManagement",
+    COUNT(CASE
+        WHEN cal.theme = "Toys and Games" THEN 1
+    END) AS "ToysandGames",
+    COUNT(CASE
+        WHEN cal.theme = "Miscellaneous" THEN 1
+    END) AS "Miscellaneous",
+    COUNT(CASE
+        WHEN cal.theme = "Space Technology" THEN 1
+    END) AS "SpaceTechnology",
+    COUNT(CASE
+        WHEN cal.theme = "Financial Inclusion and FinTech" THEN 1
+    END) AS "FinancialInclusionandFinTech",
+    COUNT(CASE
+        WHEN cal.theme = "Rural Innovation and Development" THEN 1
+    END) AS "RuralInnovationandDevelopment",
+    COUNT(CASE
+        WHEN cal.theme = "Public Governance and CivicTech" THEN 1
+    END) AS "PublicGovernanceandCivicTech",
     COUNT(CASE
         WHEN cal.theme = 'Others' THEN 1
     END) AS OTHERS
