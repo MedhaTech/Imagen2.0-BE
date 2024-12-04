@@ -48,6 +48,7 @@ export const speeches = {
     USER_ALREADY_EXISTED: "User already existed with the Email and Phone Number.",
     USER_FULLNAME_EXISTED: "Student full name already existed",
     USER_EMAIL_EXISTED: "Student email already existed",
+    USER_MOBILE_EXISTED: "Student mobile number already existed",
     USER_REGISTERED_SUCCESSFULLY: "User registered successfully",
     USER_LOGIN_SUCCESS: "Login Successful",
     USER_BADGES_LINKED: "Badge added to user successfully",

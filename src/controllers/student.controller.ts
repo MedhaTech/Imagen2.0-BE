@@ -53,7 +53,7 @@ export default class StudentController extends BaseController {
         let result;
         req.body['role'] = 'STUDENT'
         result = await this.authService.login(req.body);
-    
+
         if (!result) {
             return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
         } else if (result.error) {
@@ -189,6 +189,23 @@ WHERE
                 };
                 const user_data = await this.crudService.update(user, {
                     username: username
+                }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
+                if (!user_data) {
+                    throw internal()
+                }
+                if (user_data instanceof Error) {
+                    throw user_data;
+                }
+            }
+            if (req.body.mobile) {
+                const mobile = req.body.mobile;
+                const studentDetails = await this.crudService.findOne(student, { where: { mobile: mobile } });
+                if (studentDetails) {
+                    if (studentDetails.dataValues.mobile == mobile) throw badRequest(speeches.USER_MOBILE_EXISTED);
+                    if (studentDetails instanceof Error) throw studentDetails;
+                };
+                const user_data = await this.crudService.update(student, {
+                    mobile: mobile
                 }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
                 if (!user_data) {
                     throw internal()
@@ -547,7 +564,7 @@ WHERE
             if (!username) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
             }
-            const result = await this.authService.emailotp(req.body,student);
+            const result = await this.authService.emailotp(req.body, student);
             if (result.error) {
                 if (result && result.error.output && result.error.output.payload && result.error.output.payload.message == 'Email') {
                     return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
