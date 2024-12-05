@@ -8,10 +8,7 @@ export class reflective_quiz_question extends Model<InferAttributes<reflective_q
     declare video_id: ForeignKey<number>;
     declare question_no: number;
     declare question: string;
-    declare option_a: string;
-    declare option_b: string;
-    declare option_c: string;
-    declare option_d: string;
+    declare options: string;
     declare correct_ans: string;
     declare level: Enumerator;
     declare type: Enumerator;
@@ -45,19 +42,7 @@ reflective_quiz_question.init(
             type: DataTypes.TEXT,
             allowNull: false
         },
-        option_a: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        option_b: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        option_c: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        option_d: {
+        options: {
             type: DataTypes.TEXT,
             allowNull: true
         },

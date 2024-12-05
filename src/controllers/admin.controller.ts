@@ -26,6 +26,7 @@ export default class AdminController extends BaseController {
         this.router.get(`${this.path}/logout`, this.logout.bind(this));
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         this.router.get(`${this.path}/knowqueryparm`, this.getknowqueryparm.bind(this));
+        this.router.post(`${this.path}/createqueryparm`, this.getcreatequeryparm.bind(this));
         super.initializeRoutes();
     }
     protected async createData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -172,5 +173,24 @@ export default class AdminController extends BaseController {
         } else {
             return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
         }
+    }
+    private async getcreatequeryparm(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN') {
+            throw unauthorized(speeches.ROLE_ACCES_DECLINE)
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.value) {
+                newREQQuery['value'] = await this.authService.encryptGlobal(req.query.value);
+            }
+            if (req.body) {
+                newREQQuery['body'] = await this.authService.encryptGlobal(JSON.stringify(req.body));
+            }
+            return res.status(200).send(dispatcher(res, newREQQuery, 'success'));
+        } catch (error) {
+            console.log(error)
+            next(error);
+        }
+
     }
 };

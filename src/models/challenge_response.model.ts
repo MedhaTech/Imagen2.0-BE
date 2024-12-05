@@ -5,10 +5,8 @@ import db from '../utils/dbconnection.util';
 export class challenge_response extends Model<InferAttributes<challenge_response>, InferCreationAttributes<challenge_response>> {
     declare challenge_response_id: CreationOptional<number>;
     declare challenge_id: ForeignKey<number>;
-    declare team_id: ForeignKey<number>;
+    declare student_id: ForeignKey<number>;
     declare others: String;
-    declare sdg: String;
-    declare response: string;
     declare initiated_by: String;
     declare submitted_at: String;
     declare evaluated_by: String;
@@ -24,7 +22,24 @@ export class challenge_response extends Model<InferAttributes<challenge_response
     declare created_at: Date;
     declare updated_by: number;
     declare updated_at: Date;
-    declare sub_category: String;
+    declare theme: String;
+    declare idea_describe : String;
+    declare title: String;
+    declare solve: String;
+    declare customer: String;
+    declare detail: String;
+    declare stage: String;
+    declare unique: String;
+    declare similar: String;
+    declare revenue: String;
+    declare society: String;
+    declare confident: String;
+    declare prototype_image: String;
+    declare prototype_link: String;
+    declare support: String;
+    declare verified_status: Enumerator;
+    declare verified_at: Date;
+    declare mentor_rejected_reason: String;
 }
 
 challenge_response.init(
@@ -55,20 +70,65 @@ challenge_response.init(
             type: DataTypes.STRING,
             allowNull: true
         },
-        sdg: {
+        theme: {
             type: DataTypes.STRING,
             allowNull: true
         },
-        sub_category: {
+        idea_describe: {
             type: DataTypes.STRING,
             allowNull: true
         },
-        team_id: {
+        title: {
+            type: DataTypes.STRING
+        },
+        solve: {
+            type: DataTypes.STRING
+        },
+        customer: {
+            type: DataTypes.STRING
+        },
+        detail: {
+            type: DataTypes.STRING
+        },
+        stage: {
+            type: DataTypes.STRING
+        },
+        unique: {
+            type: DataTypes.STRING
+        },
+        similar: {
+            type: DataTypes.STRING
+        },
+        revenue: {
+            type: DataTypes.STRING
+        },
+        society: {
+            type: DataTypes.STRING
+        },
+        confident: {
+            type: DataTypes.STRING
+        },
+        prototype_image: {
+            type: DataTypes.STRING
+        },
+        prototype_link: {
+            type: DataTypes.STRING
+        },
+        support: {
+            type: DataTypes.STRING
+        },
+        verified_status: {
+            type: DataTypes.ENUM(...Object.values(constents.verified_status_flags.list)),
+            defaultValue: constents.verified_status_flags.default
+        },
+        verified_at: {
+            type: DataTypes.STRING
+        },
+        mentor_rejected_reason: {
+            type: DataTypes.STRING
+        },
+        student_id: {
             type: DataTypes.INTEGER,
-            allowNull: false
-        },
-        response: {
-            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         initiated_by: {

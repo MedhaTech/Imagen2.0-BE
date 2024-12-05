@@ -1,67 +1,45 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
-import { constents } from '../configs/constents.config';
 import db from '../utils/dbconnection.util';
+import { constents } from '../configs/constents.config';
 
-export class dashboard_map_stat extends Model<InferAttributes<dashboard_map_stat>, InferCreationAttributes<dashboard_map_stat>> {
-    declare dashboard_map_stat_id: CreationOptional<number>;
-    declare district_name: string;
-    declare overall_schools: string;
-    declare reg_schools: string;
-    declare reg_mentors: string;
-    declare schools_with_teams: string;
-    declare teams: string;
-    declare ideas: string;
-    declare students: string;
+export class evaluation_process extends Model<InferAttributes<evaluation_process>, InferCreationAttributes<evaluation_process>> {
+    declare evaluation_process_id: CreationOptional<number>;
+    declare level_name: string;
+    declare no_of_evaluation: number;
+    declare eval_schema: Enumerator;
+    declare state: string;
     declare status: Enumerator;
     declare created_by: number;
     declare created_at: Date;
     declare updated_by: number;
     declare updated_at: Date;
-}
 
-dashboard_map_stat.init(
-    {
-        dashboard_map_stat_id: {
+    static modelTableName = "evaluation_process";
+    static structure: any = {
+        evaluation_process_id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true
         },
-        district_name: {
+        level_name: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        overall_schools: {
-            type: DataTypes.STRING,
+        no_of_evaluation: {
+            type: DataTypes.INTEGER,
             allowNull: false
         },
-        reg_mentors: {
-            type: DataTypes.STRING,
-            allowNull: false
+        eval_schema: {
+            type: DataTypes.ENUM(...Object.values(constents.evaluation_process_status_flags.list)),
+            defaultValue: constents.evaluation_process_status_flags.default
         },
-        reg_schools: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        schools_with_teams: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        teams: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        ideas: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        students: {
-            type: DataTypes.STRING,
+        state: {
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         status: {
             type: DataTypes.ENUM(...Object.values(constents.common_status_flags.list)),
-            allowNull: false,
-            defaultValue: constents.common_status_flags.default
+            defaultValue: constents.common_status_flags.list.INACTIVE
         },
         created_by: {
             type: DataTypes.INTEGER,
@@ -84,12 +62,16 @@ dashboard_map_stat.init(
             defaultValue: DataTypes.NOW,
             onUpdate: new Date().toLocaleString()
         }
-    },
+    };
+}
+
+evaluation_process.init(
+    evaluation_process.structure,
     {
         sequelize: db,
-        tableName: 'dashboard_map_stats',
+        tableName: evaluation_process.modelTableName,
         timestamps: true,
+        updatedAt: 'updated_at',
         createdAt: 'created_at',
-        updatedAt: 'updated_at'
     }
 );

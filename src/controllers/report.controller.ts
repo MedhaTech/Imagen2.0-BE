@@ -22,163 +22,33 @@ export default class ReportController extends BaseController {
     protected initializeValidations(): void {
     }
     protected initializeRoutes(): void {
-        this.router.get(this.path + "/mentorsummary", this.mentorsummary.bind(this));
-        this.router.get(this.path + "/mentorRegList", this.getMentorRegList.bind(this));
-        this.router.get(this.path + "/notRegistered", this.notRegistered.bind(this));
-        this.router.get(`${this.path}/mentordetailstable`, this.getmentorDetailstable.bind(this));
-        this.router.get(`${this.path}/mentordetailsreport`, this.getmentorDetailsreport.bind(this));
+        this.router.get(this.path + "/studentsummary", this.studentsummary.bind(this));
+        this.router.get(this.path + "/studentRegList", this.studentRegDetails.bind(this));
+        this.router.get(this.path + "/instsummary", this.instsummary.bind(this));
+        this.router.get(this.path + "/instRegList", this.institutionRegDetails.bind(this));
+        this.router.get(`${this.path}/instdetailstable`, this.getmentorDetailstable.bind(this));
+        this.router.get(`${this.path}/instdetailsreport`, this.getmentorDetailsreport.bind(this));
         this.router.get(`${this.path}/studentdetailstable`, this.getstudentDetailstable.bind(this));
         this.router.get(`${this.path}/studentdetailsreport`, this.getstudentDetailsreport.bind(this));
+        this.router.get(`${this.path}/ideadeatilreport`, this.getideaReport.bind(this));
+        this.router.get(`${this.path}/ideaReportTable`, this.getideaReportTable.bind(this));
     }
-    protected async mentorsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
             let data: any = {}
-            let newREQQuery: any = {}
-            if (req.query.Data) {
-                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-                newREQQuery = JSON.parse(newQuery);
-            } else if (Object.keys(req.query).length !== 0) {
-                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-            }
-            const state = newREQQuery.state;
-            let summary
-            if (state) {
-                summary = await db.query(`SELECT 
-                org.state,
-                org.ATL_Count,
-                org.ATL_Reg_Count,
-                (org.ATL_Count - org.ATL_Reg_Count) AS total_not_Reg_ATL,
-                org.NONATL_Reg_Count,
-                org.male_mentor_count,
-                org.female_mentor_count,
-                org.male_mentor_count + org.female_mentor_count AS total_registered_teachers
+            let cat_gender
+            const categorydata = await db.query(`SELECT DISTINCT
+                college_type
             FROM
-                (SELECT 
-                    o.state,
-                        COUNT(CASE
-                            WHEN o.category = 'ATL' THEN 1
-                        END) AS ATL_Count,
-                        COUNT(CASE
-                            WHEN
-                                m.mentor_id <> 'null'
-                                    AND o.category = 'ATL'
-                            THEN
-                                1
-                        END) AS ATL_Reg_Count,
-                        COUNT(CASE
-                            WHEN
-                                m.mentor_id <> 'null'
-                                    AND o.category = 'Non ATL'
-                            THEN
-                                1
-                        END) AS NONATL_Reg_Count,
-                        SUM(CASE
-                            WHEN m.gender = 'Male' THEN 1
-                            ELSE 0
-                        END) AS male_mentor_count,
-                        SUM(CASE
-                            WHEN m.gender = 'Female' THEN 1
-                            ELSE 0
-                        END) AS female_mentor_count
-                FROM
-                    organizations o
-                LEFT JOIN mentors m ON o.organization_code = m.organization_code
-                WHERE
-                    o.status = 'ACTIVE' && o.state= '${state}'
-                GROUP BY o.state) AS org`, { type: QueryTypes.SELECT });
-
-            } else {
-                summary = await db.query(`SELECT 
-            org.state,
-            org.ATL_Count,
-            org.ATL_Reg_Count,
-            (org.ATL_Count - org.ATL_Reg_Count) AS total_not_Reg_ATL,
-            org.NONATL_Reg_Count,
-            org.male_mentor_count,
-            org.female_mentor_count,
-            org.male_mentor_count + org.female_mentor_count AS total_registered_teachers
-        FROM
-            (SELECT 
-                o.state,
-                    COUNT(CASE
-                        WHEN o.category = 'ATL' THEN 1
-                    END) AS ATL_Count,
-                    COUNT(CASE
-                        WHEN
-                            m.mentor_id <> 'null'
-                                AND o.category = 'ATL'
-                        THEN
-                            1
-                    END) AS ATL_Reg_Count,
-                    COUNT(CASE
-                        WHEN
-                            m.mentor_id <> 'null'
-                                AND o.category = 'Non ATL'
-                        THEN
-                            1
-                    END) AS NONATL_Reg_Count,
-                    SUM(CASE
-                        WHEN m.gender = 'Male' THEN 1
-                        ELSE 0
-                    END) AS male_mentor_count,
-                    SUM(CASE
-                        WHEN m.gender = 'Female' THEN 1
-                        ELSE 0
-                    END) AS female_mentor_count
-            FROM
-                organizations o
-            LEFT JOIN mentors m ON o.organization_code = m.organization_code
-            WHERE
-                o.status = 'ACTIVE'
-            GROUP BY o.state) AS org 
-        UNION ALL SELECT 
-            'Total',
-            SUM(ATL_Count),
-            SUM(ATL_Reg_Count),
-            SUM(ATL_Count - ATL_Reg_Count),
-            SUM(NONATL_Reg_Count),
-            SUM(male_mentor_count),
-            SUM(female_mentor_count),
-            SUM(male_mentor_count + female_mentor_count)
-        FROM
-            (SELECT 
-                o.state,
-                    COUNT(CASE
-                        WHEN o.category = 'ATL' THEN 1
-                    END) AS ATL_Count,
-                    COUNT(CASE
-                        WHEN
-                            m.mentor_id <> 'null'
-                                AND o.category = 'ATL'
-                        THEN
-                            1
-                    END) AS ATL_Reg_Count,
-                    COUNT(CASE
-                        WHEN
-                            m.mentor_id <> 'null'
-                                AND o.category = 'Non ATL'
-                        THEN
-                            1
-                    END) AS NONATL_Reg_Count,
-                    SUM(CASE
-                        WHEN m.gender = 'Male' THEN 1
-                        ELSE 0
-                    END) AS male_mentor_count,
-                    SUM(CASE
-                        WHEN m.gender = 'Female' THEN 1
-                        ELSE 0
-                    END) AS female_mentor_count
-            FROM
-                organizations o
-            LEFT JOIN mentors m ON o.organization_code = m.organization_code
-            WHERE
-                o.status = 'ACTIVE'
-            GROUP BY o.state) AS org;`, { type: QueryTypes.SELECT });
-            }
-            data = summary;
+                students;`, { type: QueryTypes.SELECT });
+            const querystring: any = await this.authService.combinecategory(categorydata);
+            cat_gender = await db.query(`
+                                SELECT district,${querystring.combilequery} count(student_id) as studentReg FROM students group by district;
+                                `, { type: QueryTypes.SELECT });
+            data = cat_gender
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
@@ -190,12 +60,11 @@ export default class ReportController extends BaseController {
             next(err)
         }
     }
-    protected async getMentorRegList(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    protected async studentRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
-
             let newREQQuery: any = {}
             if (req.query.Data) {
                 let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
@@ -203,89 +72,73 @@ export default class ReportController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { page, size, status, district, category, state } = newREQQuery;
-            const { limit, offset } = this.getPagination(page, size);
-            const paramStatus: any = newREQQuery.status;
-            let whereClauseStatusPart: any = {};
-            let addWhereClauseStatusPart = false
-            if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
-                if (paramStatus === 'ALL') {
-                    whereClauseStatusPart = {};
-                    addWhereClauseStatusPart = false;
-                } else {
-                    whereClauseStatusPart = { "status": paramStatus };
-                    addWhereClauseStatusPart = true;
-                }
-            } else {
-                whereClauseStatusPart = { "status": "ACTIVE" };
-                addWhereClauseStatusPart = true;
+            const { district, college_type } = newREQQuery;
+
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
             }
-            let districtFilter: any = {}
-            if (district !== 'All Districts' && category !== 'All Categories' && state !== 'All States') {
-                districtFilter = { category, district, status, state }
-            } else if (district !== 'All Districts') {
-                districtFilter = { district, status }
-            } else if (category !== 'All Categories') {
-                districtFilter = { category, status }
-            } else if (state !== 'All States') {
-                districtFilter = { status, state }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
             }
-            else {
-                districtFilter = { status }
-            }
-            const mentorsResult = await mentor.findAll({
-                attributes: [
-                    "full_name",
-                    "gender",
-                    "mobile",
-                    "whatapp_mobile",
-                ],
-                raw: true,
-                where: {
-                    [Op.and]: [
-                        whereClauseStatusPart
-                    ]
-                },
-                include: [
-                    {
-                        where: districtFilter,
-                        model: organization,
-                        attributes: [
-                            "organization_code",
-                            "unique_code",
-                            "organization_name",
-                            "category",
-                            "state",
-                            "district",
-                            "city",
-                            "pin_code",
-                            "address",
-                            "principal_name",
-                            "principal_mobile"
-                        ]
-                    },
-                    {
-                        model: user,
-                        attributes: [
-                            "username",
-                            "user_id"
-                        ]
-                    }
-                ],
-                limit, offset
-            });
-            if (!mentorsResult) {
+
+            const stuReglist = await db.query(`SELECT 
+    s.full_name,
+    mobile,
+    username,
+    district,
+    college_type,
+    college_name,
+    roll_number,
+    id_number,
+    branch,
+    year_of_study
+FROM
+    students AS s
+        LEFT JOIN
+    users AS u ON s.user_id = u.user_id
+    where s.status='ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter};`, { type: QueryTypes.SELECT });
+            if (!stuReglist) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
-            if (mentorsResult instanceof Error) {
-                throw mentorsResult
+            if (stuReglist instanceof Error) {
+                throw stuReglist
             }
-            res.status(200).send(dispatcher(res, mentorsResult, "success"))
+            res.status(200).send(dispatcher(res, stuReglist, "success"))
         } catch (err) {
             next(err)
         }
     }
-    protected async notRegistered(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    protected async instsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let cat_gender
+            const categorydata = await db.query(`SELECT DISTINCT
+                college_type
+            FROM
+                mentors;`, { type: QueryTypes.SELECT });
+            const querystring: any = await this.authService.combinecategory(categorydata);
+            cat_gender = await db.query(`
+                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district;
+                                `, { type: QueryTypes.SELECT });
+            data = cat_gender
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async institutionRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
@@ -297,56 +150,38 @@ export default class ReportController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { district, category, state } = newREQQuery;
+            const { district, college_type } = newREQQuery;
 
-            let districtFilter: any = ''
-            let categoryFilter: any = ''
-            let stateFilter: any = ''
-            if (district !== 'All Districts' && category !== 'All Categories' && state !== 'All States') {
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+
+            if (district !== 'All Districts' && district !== undefined) {
                 districtFilter = `'${district}'`
-                categoryFilter = `'${category}'`
-                stateFilter = `'${state}'`
-            } else if (district !== 'All Districts') {
-                districtFilter = `'${district}'`
-                categoryFilter = `'%%'`
-                stateFilter = `'%%'`
-            } else if (category !== 'All Categories') {
-                categoryFilter = `'${category}'`
-                districtFilter = `'%%'`
-                stateFilter = `'%%'`
-            } else if (state !== 'All States') {
-                stateFilter = `'${state}'`
-                districtFilter = `'%%'`
-                categoryFilter = `'%%'`
             }
-            else {
-                districtFilter = `'%%'`
-                categoryFilter = `'%%'`
-                stateFilter = `'%%'`
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
             }
-            const mentorsResult = await db.query(`SELECT 
-            organization_id,
-            organization_code,
-            unique_code,
-            organization_name,
-            district,
-            state,
-            category,
-            city,
-            state,
-            country,
-            pin_code,
-            address,
-            principal_name,
-            principal_mobile,
-            principal_email FROM organizations WHERE status='ACTIVE' && district LIKE ${districtFilter} && category LIKE ${categoryFilter} && state LIKE ${stateFilter} && NOT EXISTS(SELECT mentors.organization_code  from mentors WHERE organizations.organization_code = mentors.organization_code) `, { type: QueryTypes.SELECT });
-            if (!mentorsResult) {
+
+            const insReglist = await db.query(`SELECT 
+    m.full_name,
+    username,
+    mobile,
+    district,
+    college_type,
+    college_name
+FROM
+    mentors AS m
+        JOIN
+    users AS u ON m.user_id = u.user_id
+WHERE
+    m.status = 'ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter};`, { type: QueryTypes.SELECT });
+            if (!insReglist) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
-            if (mentorsResult instanceof Error) {
-                throw mentorsResult
+            if (insReglist instanceof Error) {
+                throw insReglist
             }
-            res.status(200).send(dispatcher(res, mentorsResult, "success"))
+            res.status(200).send(dispatcher(res, insReglist, "success"))
         } catch (err) {
             next(err)
         }
@@ -356,93 +191,22 @@ export default class ReportController extends BaseController {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
-            let data: any = {}
-            let newREQQuery: any = {}
-            if (req.query.Data) {
-                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-                newREQQuery = JSON.parse(newQuery);
-            } else if (Object.keys(req.query).length !== 0) {
-                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-            }
-            const state = newREQQuery.state;
-            let wherefilter = '';
-            if (state) {
-                wherefilter = `&& og.state= '${state}'`;
-            }
-            const summary = await db.query(`SELECT 
-            og.state, COUNT(mn.mentor_id) AS totalReg
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-            WHERE og.status='ACTIVE' ${wherefilter}
-        GROUP BY og.state;`, { type: QueryTypes.SELECT });
-            const teamCount = await db.query(`SELECT 
-        og.state, COUNT(t.team_id) AS totalTeams
-    FROM
-        organizations AS og
-            LEFT JOIN
-        mentors AS mn ON og.organization_code = mn.organization_code
-            INNER JOIN
-        teams AS t ON mn.mentor_id = t.mentor_id
-        WHERE og.status='ACTIVE' ${wherefilter}
-    GROUP BY og.state;`, { type: QueryTypes.SELECT });
-            const studentCountDetails = await db.query(`SELECT 
-        og.state,
-        COUNT(st.student_id) AS totalstudent,
-        SUM(CASE
-            WHEN st.gender = 'MALE' THEN 1
-            ELSE 0
-        END) AS male,
-        SUM(CASE
-            WHEN st.gender = 'FEMALE' THEN 1
-            ELSE 0
-        END) AS female
-    FROM
-        organizations AS og
-            LEFT JOIN
-        mentors AS mn ON og.organization_code = mn.organization_code
-            INNER JOIN
-        teams AS t ON mn.mentor_id = t.mentor_id
-            INNER JOIN
-        students AS st ON st.team_id = t.team_id
-        WHERE og.status='ACTIVE' ${wherefilter}
-    GROUP BY og.state;`, { type: QueryTypes.SELECT });
-            const courseINcompleted = await db.query(`select state,count(*) as courseIN from (SELECT 
-            state,cou
-        FROM
-            organizations AS og
-                LEFT JOIN
-            (SELECT 
-                organization_code, cou
-            FROM
-                mentors AS mn
-            LEFT JOIN (SELECT 
-                user_id, COUNT(*) AS cou
-            FROM
-                mentor_topic_progress
-            GROUP BY user_id having count(*)<${baseConfig.MENTOR_COURSE}) AS t ON mn.user_id = t.user_id ) AS c ON c.organization_code = og.organization_code WHERE og.status='ACTIVE' ${wherefilter}
-        group by organization_id having cou<${baseConfig.MENTOR_COURSE}) as final group by state;`, { type: QueryTypes.SELECT });
-            const courseCompleted = await db.query(`select state,count(*) as courseCMP from (SELECT 
-            state,cou
-        FROM
-            organizations AS og
-                LEFT JOIN
-            (SELECT 
-                organization_code, cou
-            FROM
-                mentors AS mn
-            LEFT JOIN (SELECT 
-                user_id, COUNT(*) AS cou
-            FROM
-                mentor_topic_progress
-            GROUP BY user_id having count(*)>=${baseConfig.MENTOR_COURSE}) AS t ON mn.user_id = t.user_id ) AS c ON c.organization_code = og.organization_code WHERE og.status='ACTIVE' ${wherefilter}
-        group by organization_id having cou>=${baseConfig.MENTOR_COURSE}) as final group by state`, { type: QueryTypes.SELECT });
-            data['summary'] = summary;
-            data['teamCount'] = teamCount;
-            data['studentCountDetails'] = studentCountDetails;
-            data['courseCompleted'] = courseCompleted;
-            data['courseINcompleted'] = courseINcompleted;
+
+            const data = await db.query(`SELECT 
+    m.district,
+    COUNT(DISTINCT mentor_id) AS insReg,
+    COUNT(student_id) AS studentReg,
+    COUNT(CASE
+        WHEN s.type = 0 THEN 1
+    END) AS 'teamCount'
+FROM
+    mentors AS m
+        LEFT JOIN
+    students AS s ON m.college_name = s.college_name
+WHERE
+    m.status = 'ACTIVE'
+GROUP BY m.district`, { type: QueryTypes.SELECT });
+
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
@@ -461,106 +225,57 @@ export default class ReportController extends BaseController {
         }
         try {
             let data: any = {}
-            let newREQQuery: any = {}
-            if (req.query.Data) {
-                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-                newREQQuery = JSON.parse(newQuery);
-            } else if (Object.keys(req.query).length !== 0) {
-                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-            }
-            const state = newREQQuery.state;
-            let wherefilter = '';
-            if (state) {
-                wherefilter = `&& og.state= '${state}'`;
-            }
             const summary = await db.query(`SELECT 
-            og.state, COUNT(t.team_id) AS totalTeams
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-                LEFT JOIN
-            teams AS t ON mn.mentor_id = t.mentor_id
-            WHERE og.status='ACTIVE' ${wherefilter}
-        GROUP BY og.state;`, { type: QueryTypes.SELECT });
-            const studentCountDetails = await db.query(`SELECT 
-            og.state,
-            COUNT(st.student_id) AS totalstudent
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-                INNER JOIN
-            teams AS t ON mn.mentor_id = t.mentor_id
-                INNER JOIN
-            students AS st ON st.team_id = t.team_id where og.status = 'ACTIVE' ${wherefilter}
-        GROUP BY og.state;`, { type: QueryTypes.SELECT });
+    district, COUNT(student_id) AS totalstudent
+FROM
+    students
+GROUP BY district`, { type: QueryTypes.SELECT });
+
             const courseCompleted = await db.query(`SELECT 
-            og.state,count(st.student_id) as studentCourseCMP
+            st.district,count(st.student_id) as studentCourseCMP
         FROM
             students AS st
-                JOIN
-            teams AS te ON st.team_id = te.team_id
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
                 JOIN
             (SELECT 
                 user_id, COUNT(*)
             FROM
                 user_topic_progress
             GROUP BY user_id
-            HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+            HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const courseINprogesss = await db.query(`SELECT 
-            og.state,count(st.student_id) as studentCourseIN
+            st.district,count(st.student_id) as studentCourseIN
         FROM
             students AS st
-                JOIN
-            teams AS te ON st.team_id = te.team_id
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
                 JOIN
             (SELECT 
                 user_id, COUNT(*)
             FROM
                 user_topic_progress
             GROUP BY user_id
-            HAVING COUNT(*) < ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+            HAVING COUNT(*) < ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const submittedCount = await db.query(`SELECT 
-            og.state,count(te.team_id) as submittedCount
+            st.district,count(st.student_id) as submittedCount
         FROM
-            teams AS te
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
+            students AS st
                 JOIN
             (SELECT 
-                team_id, status
+                student_id, status
             FROM
                 challenge_responses
             WHERE
-                status = 'SUBMITTED') AS temp ON te.team_id = temp.team_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+                status = 'SUBMITTED') AS temp ON st.student_id = temp.student_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             const draftCount = await db.query(`SELECT 
-            og.state,count(te.team_id) as draftCount
+            st.district,count(st.student_id) as draftCount
         FROM
-            teams AS te
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
+            students AS st
                 JOIN
             (SELECT 
-                team_id, status
+                student_id, status
             FROM
                 challenge_responses
             WHERE
-                status = 'DRAFT') AS temp ON te.team_id = temp.team_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+                status = 'DRAFT') AS temp ON st.student_id = temp.student_id WHERE st.status='ACTIVE' group by st.district`, { type: QueryTypes.SELECT });
             data['summary'] = summary;
-            data['studentCountDetails'] = studentCountDetails;
             data['courseCompleted'] = courseCompleted;
             data['courseINprogesss'] = courseINprogesss;
             data['submittedCount'] = submittedCount;
@@ -589,132 +304,87 @@ export default class ReportController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const state = newREQQuery.state;
-            let wherefilter = '';
-            if (state) {
-                wherefilter = `&& og.state= '${state}'`;
+            const { college_type, district } = newREQQuery;
+            let districtFilter: any = ''
+            let categoryFilter: any = ''
+            if (district !== 'All Districts' && college_type !== 'All Types') {
+                districtFilter = `'${district}'`
+                categoryFilter = `'${college_type}'`
+            } else if (district !== 'All Districts') {
+                districtFilter = `'${district}'`
+                categoryFilter = `'%%'`
+            } else if (college_type !== 'All Types') {
+                categoryFilter = `'${college_type}'`
+                districtFilter = `'%%'`
+            }
+            else {
+                districtFilter = `'%%'`
+                categoryFilter = `'%%'`
             }
             const summary = await db.query(`SELECT 
-    mn.mentor_id,
-    mn.user_id,
-    og.organization_code,
-    og.organization_name,
-    og.district,
-    og.category,
-    og.city,
-    og.principal_name,
-    og.principal_mobile,
-    mn.full_name,
-    mn.gender,
-    mn.mobile,
-    mn.whatapp_mobile,
-    og.state,
-    og.unique_code
+    college_name,
+    college_type,
+    district,
+    m.full_name,
+    mobile,
+    username
 FROM
-    (mentors AS mn)
-        LEFT JOIN
-    organizations AS og ON mn.organization_code = og.organization_code
+    mentors AS m
+        JOIN
+    users AS u ON m.user_id = u.user_id
 WHERE
-    og.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
-            const preSurvey = await db.query(`SELECT 
-        CASE
-            WHEN status = 'ACTIVE' THEN 'Completed'
-        END AS 'pre_survey_status',
-        user_id
-    FROM
-        quiz_survey_responses
-    WHERE
-        quiz_survey_id = 1`, { type: QueryTypes.SELECT });
-            const postSurvey = await db.query(`SELECT 
-    CASE
-        WHEN status = 'ACTIVE' THEN 'Completed'
-    END AS 'post_survey_status',
-    user_id
-FROM
-    quiz_survey_responses
-WHERE
-    quiz_survey_id = 3`, { type: QueryTypes.SELECT });
-            const Course = await db.query(`SELECT 
-    CASE
-        WHEN COUNT(mentor_course_topic_id) >= ${baseConfig.MENTOR_COURSE} THEN 'Completed'
-        ELSE 'In Progress'
-    END AS 'course_status',
-    user_id
-FROM
-    mentor_topic_progress
-GROUP BY user_id`, { type: QueryTypes.SELECT });
-            const teamCount = await db.query(`SELECT 
-    COUNT(*) AS team_count, mentor_id
-FROM
-    teams
-GROUP BY mentor_id`, { type: QueryTypes.SELECT });
+    m.status = 'ACTIVE' && m.district LIKE ${districtFilter} && m.college_type LIKE ${categoryFilter}
+            ORDER BY m.district,m.full_name;`, { type: QueryTypes.SELECT });
             const studentCount = await db.query(`SELECT 
-    COUNT(*) AS student_count, mentor_id
+    college_name, COUNT(student_id) as stuCount, COUNT(CASE
+        WHEN type = 0 THEN 1
+    END) AS 'teamCount'
 FROM
-    teams
-        JOIN
-    students ON teams.team_id = students.team_id
-GROUP BY mentor_id`, { type: QueryTypes.SELECT });
+    students
+GROUP BY college_name;`, { type: QueryTypes.SELECT });
             const StudentCourseCmp = await db.query(`SELECT 
-    COUNT(*) AS countop, mentor_id
+    COUNT(*) AS countop, college_name
 FROM
     (SELECT 
-        mentor_id, student_id, COUNT(*), students.user_id
+        utp.user_id, COUNT(user_topic_progress_id), college_name
     FROM
-        teams
-    LEFT JOIN students ON teams.team_id = students.team_id
-    JOIN user_topic_progress ON students.user_id = user_topic_progress.user_id
-    GROUP BY student_id
-    HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS total
-GROUP BY mentor_id`, { type: QueryTypes.SELECT });
+        user_topic_progress AS utp
+    JOIN students AS s ON utp.user_id = s.user_id
+    GROUP BY user_id
+    HAVING COUNT(user_topic_progress_id) >= ${baseConfig.STUDENT_COURSE}) AS total
+GROUP BY college_name`, { type: QueryTypes.SELECT });
             const StudentCourseINpro = await db.query(`SELECT 
-    COUNT(*) AS courseinprogess, mentor_id
+    COUNT(*) AS countIN, college_name
 FROM
     (SELECT 
-        mentor_id, student_id, COUNT(*), students.user_id
+        utp.user_id, COUNT(user_topic_progress_id), college_name
     FROM
-        teams
-    LEFT JOIN students ON teams.team_id = students.team_id
-    JOIN user_topic_progress ON students.user_id = user_topic_progress.user_id
-    GROUP BY student_id
-    HAVING COUNT(*) < ${baseConfig.STUDENT_COURSE}) AS total
-GROUP BY mentor_id`, { type: QueryTypes.SELECT });
+        user_topic_progress AS utp
+    JOIN students AS s ON utp.user_id = s.user_id
+    GROUP BY user_id
+    HAVING COUNT(user_topic_progress_id) < ${baseConfig.STUDENT_COURSE}) AS total
+GROUP BY college_name`, { type: QueryTypes.SELECT });
             const StuIdeaSubCount = await db.query(`SELECT 
-    COUNT(*) AS submittedcout, mentor_id
+    COUNT(challenge_response_id) AS submittedcout, college_name
 FROM
-    teams
-        JOIN
-    challenge_responses ON teams.team_id = challenge_responses.team_id
+    challenge_responses as cr join students as s ON cr.student_id = s.student_id
 WHERE
-    challenge_responses.status = 'SUBMITTED'
-GROUP BY mentor_id`, { type: QueryTypes.SELECT });
+    cr.status = 'SUBMITTED'
+GROUP BY college_name`, { type: QueryTypes.SELECT });
             const StuIdeaDraftCount = await db.query(`SELECT 
-    COUNT(*) AS draftcout, mentor_id
+    COUNT(challenge_response_id) AS draftcout, college_name
 FROM
-    teams
-        JOIN
-    challenge_responses ON teams.team_id = challenge_responses.team_id
+    challenge_responses as cr join students as s ON cr.student_id = s.student_id
 WHERE
-    challenge_responses.status = 'DRAFT'
-GROUP BY mentor_id`, { type: QueryTypes.SELECT });
-            const Username = await db.query(`SELECT 
-    user_id, username
-FROM
-    users
-WHERE
-    role = 'MENTOR'`, { type: QueryTypes.SELECT });
+    cr.status = 'DRAFT'
+GROUP BY college_name`, { type: QueryTypes.SELECT });
+
             data['summary'] = summary;
-            data['preSurvey'] = preSurvey;
-            data['postSurvey'] = postSurvey;
-            data['Course'] = Course;
-            data['teamCount'] = teamCount;
             data['studentCount'] = studentCount;
             data['StudentCourseCmp'] = StudentCourseCmp;
             data['StudentCourseINpro'] = StudentCourseINpro;
             data['StuIdeaSubCount'] = StuIdeaSubCount;
             data['StuIdeaDraftCount'] = StuIdeaDraftCount;
-            data['Username'] = Username;
-
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
@@ -739,54 +409,39 @@ WHERE
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const state = newREQQuery.state;
-            let wherefilter = '';
-            if (state) {
-                wherefilter = `&& og.state= '${state}'`;
+            const { college_type, district } = newREQQuery;
+            let districtFilter: any = ''
+            let categoryFilter: any = ''
+            if (district !== 'All Districts' && college_type !== 'All Types') {
+                districtFilter = `'${district}'`
+                categoryFilter = `'${college_type}'`
+            } else if (district !== 'All Districts') {
+                districtFilter = `'${district}'`
+                categoryFilter = `'%%'`
+            } else if (college_type !== 'All Types') {
+                categoryFilter = `'${college_type}'`
+                districtFilter = `'%%'`
+            }
+            else {
+                districtFilter = `'%%'`
+                categoryFilter = `'%%'`
             }
             const summary = await db.query(`SELECT 
     student_id,
-    full_name,
-    Age,
-    gender,
-    Grade,
-    team_id,
-    user_id,
-    disability
+    s.full_name as studentfullname,
+    s.user_id,
+    mobile,
+    district,
+    college_type,
+    college_name,
+    roll_number,
+    id_number,
+    branch,
+    year_of_study
 FROM
-    students;`, { type: QueryTypes.SELECT });
-            const teamData = await db.query(`SELECT 
-    team_id, team_name, mentor_id
-FROM
-    teams`, { type: QueryTypes.SELECT });
-            const mentorData = await db.query(`SELECT 
-    mn.mentor_id,
-    mn.user_id,
-    og.organization_code,
-    og.organization_name,
-    og.district,
-    og.category,
-    og.city,
-    og.principal_name,
-    og.principal_mobile,
-    mn.full_name,
-    mn.gender,
-    mn.mobile,
-    mn.whatapp_mobile,
-    og.state,
-    og.unique_code
-FROM
-    (mentors AS mn)
-        LEFT JOIN
-    organizations AS og ON mn.organization_code = og.organization_code
+    students as s
 WHERE
-    og.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
-            const mentorUsername = await db.query(`SELECT 
-               user_id, username
-           FROM
-               users
-           WHERE
-               role = 'MENTOR'`, { type: QueryTypes.SELECT });
+    s.status = 'ACTIVE' && s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} order by s.district`, { type: QueryTypes.SELECT });
             const preSurvey = await db.query(`SELECT 
                 CASE
                     WHEN status = 'ACTIVE' THEN 'Completed'
@@ -806,7 +461,7 @@ FROM
 WHERE
     quiz_survey_id = 4`, { type: QueryTypes.SELECT });
             const ideaStatusData = await db.query(`SELECT 
-    team_id, status
+    student_id, status
 FROM
     challenge_responses`, { type: QueryTypes.SELECT });
             const userTopicData = await db.query(`SELECT 
@@ -816,9 +471,6 @@ FROM
 GROUP BY user_id`, { type: QueryTypes.SELECT });
 
             data['summary'] = summary;
-            data['teamData'] = teamData;
-            data['mentorData'] = mentorData;
-            data['mentorUsername'] = mentorUsername;
             data['preSurvey'] = preSurvey;
             data['postSurvey'] = postSurvey;
             data['ideaStatusData'] = ideaStatusData;
@@ -835,5 +487,168 @@ GROUP BY user_id`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    protected async getideaReportTable(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let summary
+            summary = await db.query(`SELECT 
+    s.district,
+    COUNT(*) AS totalSubmited,
+    COUNT(CASE
+        WHEN cal.theme = "Smart Automation" THEN 1
+    END) AS "SmartAutomation",
+    COUNT(CASE
+        WHEN cal.theme = "Fitness and Sports" THEN 1
+    END) AS "FitnessandSports",
+    COUNT(CASE
+        WHEN cal.theme = "Heritage and Culture" THEN 1
+    END) AS "HeritageandCulture",
+    COUNT(CASE
+        WHEN cal.theme = "MedTech or BioTech or HealthTech" THEN 1
+    END) AS "MedTechorBioTechorHealthTech",
+    COUNT(CASE
+        WHEN cal.theme = "Agriculture, and Rural Development" THEN 1
+    END) AS "AgricultureandRuralDevelopment",
+    COUNT(CASE
+        WHEN cal.theme = "Smart Vehicles" THEN 1
+    END) AS "SmartVehicles",
+    COUNT(CASE
+        WHEN cal.theme = "Transportation and Logistics" THEN 1
+    END) AS "TransportationandLogistics",
+    COUNT(CASE
+        WHEN cal.theme = "Robotics and Drones" THEN 1
+    END) AS "RoboticsandDrones",
+    COUNT(CASE
+        WHEN cal.theme = "Clean and Green Technology" THEN 1
+    END) AS "CleanandGreenTechnology",
+    COUNT(CASE
+        WHEN cal.theme = "Tourism" THEN 1
+    END) AS "Tourism",
+    COUNT(CASE
+        WHEN cal.theme = "Renewable and sustainable Energy" THEN 1
+    END) AS "RenewableandsustainableEnergy",
+    COUNT(CASE
+        WHEN cal.theme = "Blockchain and Cybersecurity" THEN 1
+    END) AS "BlockchainandCybersecurity",
+    COUNT(CASE
+        WHEN cal.theme = "Smart Education" THEN 1
+    END) AS "SmartEducation",
+    COUNT(CASE
+        WHEN cal.theme = "Disaster Management" THEN 1
+    END) AS "DisasterManagement",
+    COUNT(CASE
+        WHEN cal.theme = "Toys and Games" THEN 1
+    END) AS "ToysandGames",
+    COUNT(CASE
+        WHEN cal.theme = "Miscellaneous" THEN 1
+    END) AS "Miscellaneous",
+    COUNT(CASE
+        WHEN cal.theme = "Space Technology" THEN 1
+    END) AS "SpaceTechnology",
+    COUNT(CASE
+        WHEN cal.theme = "Financial Inclusion and FinTech" THEN 1
+    END) AS "FinancialInclusionandFinTech",
+    COUNT(CASE
+        WHEN cal.theme = "Rural Innovation and Development" THEN 1
+    END) AS "RuralInnovationandDevelopment",
+    COUNT(CASE
+        WHEN cal.theme = "Public Governance and CivicTech" THEN 1
+    END) AS "PublicGovernanceandCivicTech",
+    COUNT(CASE
+        WHEN cal.theme = 'Others' THEN 1
+    END) AS OTHERS
+FROM
+    challenge_responses AS cal
+        JOIN
+    students AS s ON cal.student_id = s.student_id
+WHERE
+    cal.status = 'SUBMITTED'
+GROUP BY s.district`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getideaReport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, theme, college_type } = newREQQuery;
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+            let themesFilter: any = `'%%'`
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+            if (theme !== 'All Themes' && theme !== undefined) {
+                themesFilter = `'${theme}'`
+            }
 
+            const summary = await db.query(`SELECT 
+    theme,
+    idea_describe,
+    title,
+    solve,
+    customer,
+    detail,
+    stage,
+\`unique\`,
+    similar,
+    revenue,
+    society,
+    confident,
+    support,
+    prototype_image,
+    prototype_link,
+    cal.status,
+    cal.student_id,
+    s.full_name as studentfullname,
+    mobile,
+    s.district,
+    college_type,
+    college_name,
+    roll_number,
+    id_number,
+    branch,
+    year_of_study
+FROM
+    challenge_responses as cal join students as s on cal.student_id = s.student_id 
+WHERE
+   s.status = 'ACTIVE' && cal.status = 'SUBMITTED' && s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} && cal.theme LIKE ${themesFilter};`, { type: QueryTypes.SELECT });
+
+            data['summary'] = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
 }

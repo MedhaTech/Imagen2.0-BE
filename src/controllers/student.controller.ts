@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { customAlphabet } from 'nanoid';
 import { speeches } from '../configs/speeches.config';
 import dispatcher from '../utils/dispatch.util';
-import { studentSchema, studentUpdateSchema } from '../validations/student.validationa';
+import { studentLoginSchema, studentSchema, studentSchemaAddstudent, studentUpdateSchema } from '../validations/student.validationa';
 import bcrypt from 'bcrypt';
 import authService from '../services/auth.service';
 import BaseController from './base.controller';
@@ -34,14 +34,40 @@ export default class StudentController extends BaseController {
         this.validations = new ValidationsHolder(studentSchema, studentUpdateSchema);
     }
     protected initializeRoutes(): void {
-        this.router.post(`${this.path}/addStudent`, validationMiddleware(studentSchema), this.register.bind(this));
-        this.router.post(`${this.path}/bulkCreateStudent`, this.bulkCreateStudent.bind(this));
+        this.router.post(`${this.path}/register`, validationMiddleware(studentSchema), this.register.bind(this));
+        this.router.post(`${this.path}/addStudent`, validationMiddleware(studentSchemaAddstudent), this.addStudent.bind(this));
+        // this.router.post(`${this.path}/bulkCreateStudent`, this.bulkCreateStudent.bind(this));
         this.router.get(`${this.path}/:student_user_id/studentCertificate`, this.studentCertificate.bind(this));
         this.router.post(`${this.path}/:student_user_id/badges`, this.addBadgeToStudent.bind(this));
         this.router.get(`${this.path}/:student_user_id/badges`, this.getStudentBadges.bind(this));
-        //this.router.post(`${this.path}/stuIdeaSubmissionEmail`, this.stuIdeaSubmissionEmail.bind(this));
-        this.router.get(`${this.path}/studentsList/:teamId`, this.getStudentsList.bind(this));
+        this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
+        this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
+        this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
+        this.router.delete(`${this.path}/:student_id/deleteAllData`, this.deleteAllData.bind(this));
+        this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
+        this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         super.initializeRoutes();
+    }
+    private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        // let studentDetails: any;
+        let result;
+        req.body['role'] = 'STUDENT'
+        result = await this.authService.login(req.body);
+
+        if (!result) {
+            return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
+        } else if (result.error) {
+            return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
+        } else {
+            //studentDetails = await this.authService.getServiceDetails('student', { user_id: result.data.user_id });
+            const studentData = await this.authService.crudService.findOne(student, {
+                where: { user_id: result.data.user_id }
+            });
+            result.data['type_id'] = studentData.dataValues.type;
+            result.data['student_id'] = studentData.dataValues.student_id;
+            result.data['district'] = studentData.dataValues.district;
+            return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
+        }
     }
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
@@ -55,44 +81,13 @@ export default class StudentController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            let data: any;
-            const { model, id } = req.params;
-            const paramStatus: any = newREQQuery.status;
-            if (model) {
-                this.model = model;
-            };
-            // pagination
-            const { page, size, adult } = newREQQuery;
-            let condition = adult ? { UUID: null } : { UUID: { [Op.like]: `%%` } };
-            const { limit, offset } = this.getPagination(page, size);
-            const modelClass = await this.loadModel(model).catch(error => {
-                next(error)
-            });
-            const where: any = {};
-            let whereClauseStatusPart: any = {}
-            let boolStatusWhereClauseRequired = false;
-            if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
-                if (paramStatus === 'ALL') {
-                    whereClauseStatusPart = {};
-                    boolStatusWhereClauseRequired = false;
-                } else {
-                    whereClauseStatusPart = { "status": paramStatus };
-                    boolStatusWhereClauseRequired = true;
-                }
-            } else {
-                whereClauseStatusPart = { "status": "ACTIVE" };
-                boolStatusWhereClauseRequired = true;
-            };
-            let state: any = newREQQuery.state;
-            let stateFilter: any = {}
-            if (state) {
-                stateFilter['whereClause'] = state && typeof state == 'string' && state !== 'All States' ? { state } : {}
-                stateFilter["liter"] = state && typeof state == 'string' && state !== 'All States' ? db.literal('`team->mentor->organization`.`state` = ' + JSON.stringify(state)) : {}
-            }
-            if (id) {
+            let data: any = {}
+            let where: any = { 'status': 'ACTIVE' }
+            let { district, team, student_id } = newREQQuery
+            if (req.params.id) {
                 const newParamId = await this.authService.decryptGlobal(req.params.id);
-                where[`${this.model}_id`] = newParamId;
-                data = await this.crudService.findOne(modelClass, {
+                where[`student_id`] = newParamId;
+                data = await this.crudService.findOne(student, {
                     attributes: {
                         include: [
                             [
@@ -102,50 +97,38 @@ export default class StudentController extends BaseController {
                     },
                     where: {
                         [Op.and]: [
-                            whereClauseStatusPart,
                             where,
                         ],
-                    },
-                    include: {
-                        model: team,
-                        attributes: [
-                            'team_id',
-                            'team_name',
-                            'mentor_id',
-                            'team_email'
-                        ],
-                        include: {
-                            model: mentor,
-                            attributes: [
-                                'organization_code',
-                                'full_name',
-                                'gender',
-                                'mobile',
-                            ],
-                            include: {
-                                model: organization,
-                                attributes: [
-                                    "organization_name",
-                                    'organization_code',
-                                    "unique_code",
-                                    "pin_code",
-                                    "category",
-                                    "principal_name",
-                                    "principal_mobile",
-                                    "city",
-                                    "district",
-                                    "state",
-                                    "country",
-                                    'address'
-                                ],
-                            },
-
-                        },
-                    },
+                    }
                 });
-            } else {
+            } else if (team) {
+                data = await db.query(`SELECT 
+    student_id,
+    s.user_id,
+    s.full_name,
+    mobile,
+    district,
+    college_type,
+    college_name,
+    roll_number,
+    id_number,
+    branch,
+    year_of_study,
+    type,
+    username
+FROM
+    students AS s
+      INNER JOIN
+    users AS u ON s.user_id = u.user_id
+WHERE
+    s.status = 'ACTIVE' and (student_id = ${student_id} || type = ${student_id});`, { type: QueryTypes.SELECT })
+            }
+            else {
                 try {
-                    const responseOfFindAndCountAll = await this.crudService.findAndCountAll(modelClass, {
+                    if (district !== 'All Districts' && typeof district == 'string') {
+                        where[`district`] = district;
+                    }
+                    const responseOfFindAndCountAll = await this.crudService.findAndCountAll(student, {
                         attributes: {
                             include: [
                                 [
@@ -155,75 +138,22 @@ export default class StudentController extends BaseController {
                         },
                         where: {
                             [Op.and]: [
-                                whereClauseStatusPart,
-                               // condition,
-                                stateFilter.liter
+                                where
                             ]
-                        },
-                        include: {
-                            model: team,
-                            attributes: [
-                                'team_id',
-                                'team_name',
-                                'team_email'
-                            ],
-                            include: {
-                                model: mentor,
-                                attributes: [
-                                    'mentor_id',
-                                    'full_name'
-                                ],
-                                include: {
-                                    where: stateFilter.whereClause,
-                                    required: false,
-                                    model: organization,
-                                    attributes: [
-                                        "organization_name",
-                                        'organization_code',
-                                        "unique_code",
-                                        "pin_code",
-                                        "category",
-                                        "city",
-                                        "district",
-                                        "state",
-                                        'address'
-                                    ]
-                                }
-                            }
-                        }, limit, offset
+                        }
                     });
-                    const result = this.getPagingData(responseOfFindAndCountAll, page, limit);
-                    data = result;
+                    data = responseOfFindAndCountAll;
                 } catch (error: any) {
                     return res.status(500).send(dispatcher(res, data, 'error'))
                 }
-
             }
-            // if (!data) {
-            //     return res.status(404).send(dispatcher(res,data, 'error'));
-            // }
-            if (!data || data instanceof Error) {
-                if (data != null) {
-                    throw notFound(data.message)
-                } else {
-                    throw notFound()
-                }
-                res.status(200).send(dispatcher(res, null, "error", speeches.DATA_NOT_FOUND));
-                // if(data!=null){
-                //     throw 
-                (data.message)
-                // }else{
-                //     throw notFound()
-                // }
-            }
-
             return res.status(200).send(dispatcher(res, data, 'success'));
         } catch (error) {
             next(error);
         }
     }
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
@@ -231,7 +161,6 @@ export default class StudentController extends BaseController {
             if (model) {
                 this.model = model;
             };
-            const user_id = res.locals.user_id
             const newParamId: any = await this.authService.decryptGlobal(req.params.id);
             const studentTableDetails = await student.findOne(
                 {
@@ -251,36 +180,43 @@ export default class StudentController extends BaseController {
             where[`${this.model}_id`] = JSON.parse(newParamId);
             const modelLoaded = await this.loadModel(model);
             const payload = this.autoFillTrackingColumns(req, res, modelLoaded);
-            // if (req.body.username) {
-            //     const cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
-            //     const username = req.body.username;
-            //     const studentDetails = await this.crudService.findOne(user, { where: { username: username } });
-            //     if (studentDetails) {
-            //         if (studentDetails.dataValues.username == username) throw badRequest(speeches.USER_EMAIL_EXISTED);
-            //         if (studentDetails instanceof Error) throw studentDetails;
-            //     };
-            //     const user_data = await this.crudService.update(user, {
-            //         full_name: payload.full_name,
-            //         username: username,
-            //         password: await bcrypt.hashSync(cryptoEncryptedString, process.env.SALT || baseConfig.SALT),
-            //     }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
-            //     if (!user_data) {
-            //         throw internal()
-            //     }
-            //     if (user_data instanceof Error) {
-            //         throw user_data;
-            //     }
-            // }
-            if (req.body.full_name) {
-                const username = `${req.body.team_id}_${req.body.full_name.trim()}`
+            if (req.body.username) {
+                const username = req.body.username;
                 const studentDetails = await this.crudService.findOne(user, { where: { username: username } });
                 if (studentDetails) {
-                    if (studentDetails.dataValues.username == username) throw badRequest("Same named student already exists in this team");
+                    if (studentDetails.dataValues.username == username) throw badRequest(speeches.USER_EMAIL_EXISTED);
                     if (studentDetails instanceof Error) throw studentDetails;
                 };
                 const user_data = await this.crudService.update(user, {
-                    full_name: payload.full_name,
-                    username: username,
+                    username: username
+                }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
+                if (!user_data) {
+                    throw internal()
+                }
+                if (user_data instanceof Error) {
+                    throw user_data;
+                }
+            }
+            if (req.body.mobile) {
+                const mobile = req.body.mobile;
+                const studentDetails = await this.crudService.findOne(student, { where: { mobile: mobile } });
+                if (studentDetails) {
+                    if (studentDetails.dataValues.mobile == mobile) throw badRequest(speeches.USER_MOBILE_EXISTED);
+                    if (studentDetails instanceof Error) throw studentDetails;
+                };
+                const user_data = await this.crudService.update(student, {
+                    mobile: mobile
+                }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
+                if (!user_data) {
+                    throw internal()
+                }
+                if (user_data instanceof Error) {
+                    throw user_data;
+                }
+            }
+            if (req.body.full_name) {
+                const user_data = await this.crudService.update(user, {
+                    full_name: payload.full_name
                 }, { where: { user_id: studentTableDetails.getDataValue("user_id") } });
                 if (!user_data) {
                     throw internal()
@@ -296,14 +232,13 @@ export default class StudentController extends BaseController {
             if (student_data instanceof Error) {
                 throw student_data;
             }
-
             return res.status(200).send(dispatcher(res, student_data, 'updated'));
         } catch (error) {
             next(error);
         }
     }
     protected async deleteData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
@@ -323,71 +258,112 @@ export default class StudentController extends BaseController {
             next(error);
         }
     }
-    private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        try {
-            // const randomGeneratedSixDigitID = this.nanoid();
-            const { team_id } = req.body;
-            const cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
-            req.body.username = `${req.body.team_id}_${req.body.full_name.trim()}`
-            if (!req.body.role || req.body.role !== 'STUDENT') return res.status(406).send(dispatcher(res, null, 'error', speeches.USER_ROLE_REQUIRED, 406));
-            if (!req.body.team_id) return res.status(406).send(dispatcher(res, null, 'error', speeches.USER_TEAMID_REQUIRED, 406));
-            if (team_id) {
-                const teamCanAddMember = await this.authService.checkIfTeamHasPlaceForNewMember(team_id)
-                if (!teamCanAddMember) {
-                    throw badRequest(speeches.TEAM_MAX_MEMBES_EXCEEDED)
-                }
-                if (teamCanAddMember instanceof Error) {
-                    throw teamCanAddMember;
-                }
-            }
-            const teamDetails = await this.authService.crudService.findOne(team, { where: { team_id } });
-            if (!teamDetails) return res.status(406).send(dispatcher(res, null, 'error', speeches.TEAM_NOT_FOUND, 406));
-
-            if (!req.body.password || req.body.password === "") req.body.password = cryptoEncryptedString;
-            const payload = this.autoFillTrackingColumns(req, res, student)
-            const result = await this.authService.register(payload);
-            if (result.user_res) return res.status(406).send(dispatcher(res, result.user_res.dataValues, 'error', speeches.STUDENT_EXISTS, 406));
-            return res.status(201).send(dispatcher(res, result.profile.dataValues, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
-        } catch (err) {
-            next(err)
+    protected async deleteAllData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
-    }
-    private async bulkCreateStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            for (let student in req.body) {
-                if (!req.body[student].team_id) throw notFound(speeches.USER_TEAMID_REQUIRED);
-                const team_id = req.body[student].team_id
-                if (team_id) {
-                    const teamCanAddMember = await this.authService.checkIfTeamHasPlaceForNewMember(team_id)
-                    if (!teamCanAddMember) {
-                        throw badRequest(speeches.TEAM_MAX_MEMBES_EXCEEDED)
+            const { model, id } = req.params;
+            if (model) this.model = model;
+            const where: any = {};
+            const newParamId = await this.authService.decryptGlobal(req.params.student_id);
+            where[`${this.model}_id`] = newParamId;
+            const getUserIdFromStudentData = await this.crudService.findOne(student, { where: { student_id: where.student_id } });
+            if (!getUserIdFromStudentData) throw notFound(speeches.USER_NOT_FOUND);
+            if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
+            const user_id = getUserIdFromStudentData.dataValues.user_id;
+            const getteamuserIdfromstudentdata = await this.crudService.findAll(student, { where: { type: where.student_id } });
+
+            if (getteamuserIdfromstudentdata && !(getteamuserIdfromstudentdata instanceof Error)) {
+                const arrayOfStudentuserIds = getteamuserIdfromstudentdata.map((student: any) => student.user_id)
+                for (var i = 0; i < arrayOfStudentuserIds.length; i++) {
+                    const deletStudentResponseData = await this.authService.deleteStudentAndStudentResponse(arrayOfStudentuserIds[i])
+                    if (deletStudentResponseData instanceof Error) {
+                        throw deletStudentResponseData;
                     }
-                    if (teamCanAddMember instanceof Error) {
-                        throw teamCanAddMember;
-                    }
-                }
+                };
             }
-            let cryptoEncryptedString: any;
-            const teamName = await this.authService.crudService.findOne(team, {
-                attributes: ["team_name"], where: { team_id: req.body[0].team_id }
-            });
-            if (!teamName) throw notFound(speeches.TEAM_NOT_FOUND, 406);
-            if (teamName instanceof Error) throw teamName;
-            for (let student in req.body) {
-                cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
-                req.body[student].username = `${req.body[student].team_id}_${req.body[student].full_name.trim()}`;
-                req.body[student].full_name = req.body[student].full_name.trim();
-                req.body[student].role = 'STUDENT';
-                req.body[student].password = cryptoEncryptedString;
-                req.body[student].created_by = res.locals.user_id
-                req.body[student].updated_by = res.locals.user_id
-            }
-            const responseFromService = await this.authService.bulkCreateStudentService(req.body);
-            return res.status(201).send(dispatcher(res, responseFromService, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+
+            const deleteUserStudentAndRemoveAllResponses = await this.authService.deleteStudentAndStudentResponse(user_id);
+            const data = deleteUserStudentAndRemoveAllResponses
+            return res.status(200).send(dispatcher(res, data, 'deleted'));
         } catch (error) {
             next(error);
         }
     }
+    private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            req.body.password = req.body.confirmPassword;
+            req.body.role = 'STUDENT';
+            req.body.type = 0;
+            const payload = this.autoFillTrackingColumns(req, res, student);
+            const result = await this.authService.studentRegister(payload);
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
+            }
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
+            }
+            const data = result.dataValues;
+            return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+        } catch (err) {
+            next(err)
+        }
+    }
+    private async addStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            req.body.password = req.body.confirmPassword;
+            req.body.role = 'STUDENT';
+            const payload = this.autoFillTrackingColumns(req, res, student);
+            const result = await this.authService.studentRegister(payload);
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
+            }
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
+            }
+            const data = result.dataValues;
+            return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+        } catch (err) {
+            next(err)
+        }
+    }
+    // private async bulkCreateStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     try {
+    //         for (let student in req.body) {
+    //             if (!req.body[student].team_id) throw notFound(speeches.USER_TEAMID_REQUIRED);
+    //             //const team_id = req.body[student].team_id
+    //             // if (team_id) {
+    //             //     const teamCanAddMember = await this.authService.checkIfTeamHasPlaceForNewMember(team_id)
+    //             //     if (!teamCanAddMember) {
+    //             //         throw badRequest(speeches.TEAM_MAX_MEMBES_EXCEEDED)
+    //             //     }
+    //             //     if (teamCanAddMember instanceof Error) {
+    //             //         throw teamCanAddMember;
+    //             //     }
+    //             // }
+    //         }
+    //         let cryptoEncryptedString: any;
+    //         const teamName = await this.authService.crudService.findOne(team, {
+    //             attributes: ["team_name"], where: { team_id: req.body[0].team_id }
+    //         });
+    //         if (!teamName) throw notFound(speeches.TEAM_NOT_FOUND, 406);
+    //         if (teamName instanceof Error) throw teamName;
+    //         for (let student in req.body) {
+    //             cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
+    //             req.body[student].username = `${req.body[student].team_id}_${req.body[student].full_name.trim()}`;
+    //             req.body[student].full_name = req.body[student].full_name.trim();
+    //             req.body[student].role = 'STUDENT';
+    //             req.body[student].password = cryptoEncryptedString;
+    //             req.body[student].created_by = res.locals.user_id
+    //             req.body[student].updated_by = res.locals.user_id
+    //         }
+    //         const responseFromService = await this.authService.bulkCreateStudentService(req.body);
+    //         return res.status(201).send(dispatcher(res, responseFromService, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
     private async addBadgeToStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -582,134 +558,96 @@ export default class StudentController extends BaseController {
             next(error);
         }
     }
-    private async stuIdeaSubmissionEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
+    private async emailOtp(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const { mentor_id, team_id, team_name, title } = req.body;
-            let data: any = {}
-            const contentText = `
-            <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-        <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
-        <div style="padding: 1% 5%;">
-        <h3> Dear ${team_name} team,</h3>
-
-            <p>Your project has been successfully submitted in ATL Marathon 23-24.</p>
-            
-            <p>Project Titled: ${title}</p>
-            <p>We have received your project and it is currently in our review process. Our team will assess your work, and we will notify you of the evaluation results.</p>
-            
-            <p>We appreciate your hard work and dedication to this project, and we look forward to providing you with feedback and results as soon as possible.</p>
-            <p>Thank you for participating In ATL Marathon.</p>
-            <p>
-            <strong>
-            Regards,<br>
-            ATL Marathon</strong></p></div></body>`;
-            const subject = `ATL marathon - Idea submission successful`
-            const summary = await db.query(`SELECT GROUP_CONCAT(username SEPARATOR ', ') AS all_usernames
-            FROM (
-                    SELECT 
-                    u.username
-                FROM
-                    mentors AS m
-                        JOIN
-                    users AS u ON m.user_id = u.user_id
-                WHERE
-                    m.mentor_id = ${mentor_id}
-                UNION ALL
-                    SELECT 
-                    u.username
-                FROM
-                    students AS s
-                        JOIN
-                    users AS u ON s.user_id = u.user_id
-                WHERE
-                    s.team_id = ${team_id}
-            ) AS combined_usernames;`, { type: QueryTypes.SELECT });
-            data = summary;
-            const usernameArray = data[0].all_usernames;
-            let arrayOfUsernames = usernameArray.split(', ');
-            const result = await this.authService.triggerBulkEmail(arrayOfUsernames, contentText, subject);
-
-            return res.status(200).send(dispatcher(res, result, 'Email sent'));
-        } catch (error) {
-            next(error);
-        }
-    }
-    protected async getStudentsList(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'TEAM') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            let data: any;
-            const where: any = {};
-            const { teamId } = req.params;
-            console.log(teamId);
-            if (teamId) {
-                const newParamId = await this.authService.decryptGlobal(req.params.teamId);
-                console.log(newParamId);
-                where[`team_id`] = newParamId;
-                data = await this.crudService.findAll(student, {
-                    attributes: {
-                        include: [
-                            [
-                                db.literal(`( SELECT role FROM users AS u WHERE u.user_id = \`student\`.\`user_id\`)`), 'role'
-                            ],
-
-                        ]
-                    },
-                    where: {
-                        [Op.and]: [
-                            where
-                        ],
-                    },
-                    // include: {
-                    //     model: team,
-                    //     attributes: [
-                    //         'team_id',
-                    //         'team_name',
-                    //     ],
-                    //     include: {
-                    //         model: mentor,
-                    //         attributes: [
-                    //             'organization_code',
-                    //             'full_name',
-                    //             'gender',
-                    //             'mobile',
-                    //         ],
-                    //         include: {
-                    //             model: organization,
-                    //             attributes: [
-                    //                 "organization_name",
-                    //                 'organization_code',
-                    //                 "unique_code",
-                    //                 "pin_code",
-                    //                 "category",
-                    //                 "principal_name",
-                    //                 "principal_mobile",
-                    //                 "city",
-                    //                 "district",
-                    //                 "state",
-                    //                 "country",
-                    //                 'address'
-                    //             ],
-                    //         },
-
-                    //     },
-                    // },
-                });
+            const { username } = req.body;
+            if (!username) {
+                throw badRequest(speeches.USER_EMAIL_REQUIRED);
             }
-            if (!data || data instanceof Error) {
-                if (data != null) {
-                    throw notFound(data.message)
-                } else {
-                    throw notFound()
+            const result = await this.authService.emailotp(req.body, student);
+            if (result.error) {
+                if (result && result.error.output && result.error.output.payload && result.error.output.payload.message == 'Email') {
+                    return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
+                } else if (result && result.error.output && result.error.output.payload && result.error.output.payload.message == 'Mobile') {
+                    return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
                 }
+                else {
+                    return res.status(404).send(dispatcher(res, result.error, 'error', result.error));
+                }
+            } else {
+                return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.OTP_SEND_EMAIL, 202));
             }
-            return res.status(200).send(dispatcher(res, data, 'success'));
         } catch (error) {
-            next(error);
+            next(error)
         }
     }
+    private async getPilotStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { college_name } = newREQQuery
+            let result: any = {};
+            result = await db.query(`SELECT 
+    Smain.student_id,
+    Smain.full_name,
+    IFNULL(CONCAT('[', 
+           GROUP_CONCAT(
+               CONCAT('{"full_name": "', sub.full_name, '", "student_id": "', sub.student_id, '"}')
+               ORDER BY sub.student_id SEPARATOR ', '), 
+           ']'), '[]') AS crewDetails,
+           count(sub.student_id) as crewCount
+FROM
+    students AS Smain
+LEFT JOIN 
+    students AS sub ON sub.type = Smain.student_id
+WHERE
+    Smain.type = 0 && Smain.college_name = '${college_name}'
+GROUP BY 
+    Smain.student_id, Smain.full_name;
+`, { type: QueryTypes.SELECT });
+            res.status(200).send(dispatcher(res, result, 'done'))
+        } catch (error) {
+            next(error)
+        }
+    }
+    private async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                throw badRequest(speeches.USER_EMAIL_REQUIRED);
+            }
+            const result = await this.authService.studentResetPassword(req.body);
+            if (!result) {
+                return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_NOT_FOUND));
+            } else if (result.error) {
+                return res.status(404).send(dispatcher(res, result.error, 'error', result.error));
+            } else {
+                return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASS_UPDATE, 202));
+            }
+        } catch (error) {
+            next(error)
+        }
+    }
+    private async changePassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        const result = await this.authService.changePassword(req.body, res);
+        if (!result) {
+            return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_NOT_FOUND));
+        } else if (result.error) {
+            return res.status(404).send(dispatcher(res, result.error, 'error', result.error));
+        }
+        else if (result.match) {
+            return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_PASSWORD));
+        } else {
+            return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
+        }
+    }
+
 }

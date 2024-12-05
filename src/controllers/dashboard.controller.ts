@@ -13,6 +13,7 @@ import { student } from '../models/student.model';
 import { challenge_response } from '../models/challenge_response.model';
 import StudentService from '../services/students.service';
 import { baseConfig } from "../configs/base.config";
+import { Op } from 'sequelize';
 
 
 export default class DashboardController extends BaseController {
@@ -36,7 +37,7 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/stuBadgesStats`, this.getStudentBadges.bind(this));
         this.router.get(`${this.path}/stuPrePostStats`, this.getStudentPREPOST.bind(this));
         //team stats..
-        this.router.get(`${this.path}/teamStats/:team_id`, this.getTeamStats.bind(this));
+        this.router.get(`${this.path}/teamStats/:student_id`, this.getTeamStats.bind(this));
         //evaluator stats..
         this.router.get(`${this.path}/evaluatorStats`, this.getEvaluatorStats.bind(this));
         //quizscore
@@ -54,15 +55,16 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/studentCourseCount`, this.getstudentCourseCount.bind(this));
         this.router.get(`${this.path}/ideasCount`, this.getideasCount.bind(this));
         this.router.get(`${this.path}/mentorCount`, this.getmentorCount.bind(this));
-        this.router.get(`${this.path}/studentCountbygender`, this.getstudentCountbygender.bind(this));
-        this.router.get(`${this.path}/schoolCount`, this.getSchoolCount.bind(this));
-        this.router.get(`${this.path}/mentorCourseCount`, this.getmentorCourseCount.bind(this));
-        this.router.get(`${this.path}/ATLNonATLRegCount`, this.getATLNonATLRegCount.bind(this));
+        //this.router.get(`${this.path}/studentCountbygender`, this.getstudentCountbygender.bind(this));
+        //this.router.get(`${this.path}/schoolCount`, this.getSchoolCount.bind(this));
+        //this.router.get(`${this.path}/mentorCourseCount`, this.getmentorCourseCount.bind(this));
+        //this.router.get(`${this.path}/ATLNonATLRegCount`, this.getATLNonATLRegCount.bind(this));
+        this.router.get(`${this.path}/totalQuizSurveys`, this.getTotalQuizSurveys.bind(this));
         //State DashBoard stats
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
     }
 
-    
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     ///////// TEAM STATS
     ///////// PS: this assumes that there is only course in the systems and hence alll topics inside topics table are taken for over counts
@@ -72,8 +74,8 @@ export default class DashboardController extends BaseController {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
-            const newParams: any = await this.authService.decryptGlobal(req.params.team_id);
-            const team_id = JSON.parse(newParams);
+            const newParams: any = await this.authService.decryptGlobal(req.params.student_id);
+            const student_id = JSON.parse(newParams);
             let newREQQuery: any = {}
             if (req.query.Data) {
                 let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
@@ -93,7 +95,12 @@ export default class DashboardController extends BaseController {
 
             const serviceDashboard = new DashboardService();
             const studentStatsResul: any = await student.findAll({
-                where: { team_id },
+                where: {
+                    [Op.or]: [
+                        { student_id: student_id },
+                        { type: student_id }
+                    ]
+                },
                 raw: true,
                 attributes: [
                     [
@@ -198,8 +205,6 @@ export default class DashboardController extends BaseController {
             }
             studentStatsResul["badges_earned_count"] = badgesCount;
 
-
-
             res.status(200).send(dispatcher(res, studentStatsResul, "success"))
 
         } catch (err) {
@@ -223,13 +228,32 @@ export default class DashboardController extends BaseController {
     private async getMapStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             this.model = dashboard_map_stat.name
-            return await this.getData(req, res, next, [],
-                [
-                    [db.fn('DISTINCT', db.col('state_name')), 'state_name'],
-                    `dashboard_map_stat_id`,
-                    `overall_schools`, `reg_schools`,  `reg_mentors`,`schools_with_teams`, `teams`, `ideas`, `students`, `status`, `created_by`, `created_at`, `updated_by`, `updated_at`
-                ]
+            const result = await this.crudService.findAll(dashboard_map_stat,{
+                attributes: [
+                    "dashboard_map_stat_id",
+                    "district_name",
+                    "reg_mentors",
+                    "teams",
+                    "students",
+                    "ideas"
+                ],
+            }
             )
+            const TotalObj: any = {
+                reg_mentors:0,
+                teams:0,
+                students:0,
+                ideas:0,
+                district_name: "all"
+            };
+            result.map((student: any) => {
+                TotalObj.reg_mentors +=Number(student.reg_mentors)
+                TotalObj.teams +=Number(student.teams)
+                TotalObj.students +=Number(student.students)
+                TotalObj.ideas +=Number(student.ideas)
+            })
+            const totalResult = [...result,TotalObj]
+            return res.status(200).send(dispatcher(res, totalResult, 'success'));
         } catch (error) {
             next(error);
         }
@@ -340,20 +364,24 @@ export default class DashboardController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { mentor_id } = newREQQuery
-            if (mentor_id) {
-                result = await db.query(`SELECT count(*) as teams_count FROM teams where mentor_id = ${mentor_id}`, { type: QueryTypes.SELECT });
+            const { college_name } = newREQQuery
+            if (college_name) {
+                result = await db.query(`SELECT 
+     COUNT(CASE
+        WHEN type = 0 THEN 1
+    END) AS 'teamCount'
+FROM
+    students where college_name = '${college_name}'`, { type: QueryTypes.SELECT });
             }
             else {
                 result = await db.query(`SELECT 
-                COUNT(t.team_id) AS teams_count
-            FROM
-                organizations AS og
-                    LEFT JOIN
-                mentors AS mn ON og.organization_code = mn.organization_code
-                    INNER JOIN
-                teams AS t ON mn.mentor_id = t.mentor_id
-                WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
+    COUNT(CASE
+        WHEN type = 0 THEN 1
+    END) AS 'teamCount'
+FROM
+    students
+WHERE
+    status = 'ACTIVE';`, { type: QueryTypes.SELECT });
 
             }
             res.status(200).send(dispatcher(res, result, 'done'))
@@ -375,23 +403,12 @@ export default class DashboardController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { mentor_id } = newREQQuery
-            if (mentor_id) {
-                result = await db.query(`SELECT count(*) as student_count FROM students join teams on students.team_id = teams.team_id  where mentor_id = ${mentor_id};`, { type: QueryTypes.SELECT });
+            const { college_name } = newREQQuery
+            if (college_name) {
+                result = await db.query(`SELECT count(student_id) as student_count FROM students where college_name = '${college_name}';`, { type: QueryTypes.SELECT });
             }
             else {
-                result = await db.query(`SELECT 
-                COUNT(st.student_id) AS student_count
-            FROM
-                organizations AS og
-                    LEFT JOIN
-                mentors AS mn ON og.organization_code = mn.organization_code
-                    INNER JOIN
-                teams AS t ON mn.mentor_id = t.mentor_id
-                    INNER JOIN
-                students AS st ON st.team_id = t.team_id
-                WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
-
+                result = await db.query(`SELECT count(student_id) as student_count FROM students where status = "ACTIVE"`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
@@ -412,9 +429,9 @@ export default class DashboardController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { mentor_id } = newREQQuery
-            if (mentor_id) {
-                result = await db.query(`SELECT count(*) as idea_count FROM challenge_responses join teams on challenge_responses.team_id = teams.team_id where mentor_id = ${mentor_id} && challenge_responses.status = 'SUBMITTED';`, { type: QueryTypes.SELECT });
+            const { college_name } = newREQQuery
+            if (college_name) {
+                result = await db.query(`SELECT count(challenge_response_id) as idea_count FROM challenge_responses join students on challenge_responses.student_id = students.student_id where students.college_name = '${college_name}' && challenge_responses.status = 'SUBMITTED';`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
@@ -535,37 +552,29 @@ export default class DashboardController extends BaseController {
             let result: any = {};
 
             const StudentCoursesCompletedCount = await db.query(`SELECT 
-            count(st.student_id) as studentCourseCMP
-        FROM
-            students AS st
-                JOIN
-            teams AS te ON st.team_id = te.team_id
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
-                JOIN
-            (SELECT 
-                user_id, COUNT(*)
-            FROM
-                user_topic_progress
-            GROUP BY user_id
-            HAVING COUNT(*) >= 31) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
+    COUNT(st.student_id) AS studentCourseCMP
+FROM
+    students AS st
+        JOIN
+    (SELECT 
+        user_id, COUNT(*)
+    FROM
+        user_topic_progress
+    GROUP BY user_id
+    HAVING COUNT(*) >=  ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id
+WHERE
+    st.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
             const started = await db.query(`SELECT 
-            count(st.student_id) as studentCoursestartted
-        FROM
-            students AS st
-                JOIN
-            teams AS te ON st.team_id = te.team_id
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
-                JOIN
-            (SELECT 
-                DISTINCT user_id
-            FROM
-                user_topic_progress ) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
+    COUNT(st.student_id) AS studentCoursestartted
+FROM
+    students AS st
+        JOIN
+    (SELECT DISTINCT
+        user_id
+    FROM
+        user_topic_progress) AS temp ON st.user_id = temp.user_id
+WHERE
+    st.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
             result['StudentCoursesCompletedCount'] = Object.values(StudentCoursesCompletedCount[0]).toString()
             result['started'] = Object.values(started[0]).toString()
             res.status(200).send(dispatcher(res, result, 'done'))
@@ -582,33 +591,29 @@ export default class DashboardController extends BaseController {
             let result: any = {};
 
             const fullCount = await db.query(`SELECT 
-            count(te.team_id) as initiated
-        FROM
-            teams AS te
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
-                JOIN
-            (SELECT 
-                team_id, status
-            FROM
-                challenge_responses) AS temp ON te.team_id = temp.team_id WHERE og.status='ACTIVE'`, { type: QueryTypes.SELECT });
+    COUNT(st.student_id) AS initiated
+FROM
+    students AS st
+        JOIN
+    (SELECT 
+        student_id, status
+    FROM
+        challenge_responses) AS temp ON st.student_id = temp.student_id
+WHERE
+    st.status = 'ACTIVE'`, { type: QueryTypes.SELECT });
             const submittedCount = await db.query(`SELECT 
-            count(te.team_id) as submittedCount
-        FROM
-            teams AS te
-                JOIN
-            mentors AS mn ON te.mentor_id = mn.mentor_id
-                JOIN
-            organizations AS og ON mn.organization_code = og.organization_code
-                JOIN
-            (SELECT 
-                team_id, status
-            FROM
-                challenge_responses
-            WHERE
-                status = 'SUBMITTED') AS temp ON te.team_id = temp.team_id WHERE og.status='ACTIVE'`, { type: QueryTypes.SELECT })
+    COUNT(st.student_id) AS submittedCount
+FROM
+    students AS st
+        JOIN
+    (SELECT 
+        student_id, status
+    FROM
+        challenge_responses
+    WHERE
+        status = 'SUBMITTED') AS temp ON st.student_id = temp.student_id
+WHERE
+    st.status = 'ACTIVE'`, { type: QueryTypes.SELECT })
             result['initiated_ideas'] = Object.values(fullCount[0]).toString()
             result['submitted_ideas'] = Object.values(submittedCount[0]).toString()
             res.status(200).send(dispatcher(res, result, 'done'))
@@ -624,129 +629,128 @@ export default class DashboardController extends BaseController {
         try {
             let result: any = {};
             const mentorCount = await db.query(`SELECT 
-            COUNT(mn.mentor_id) AS totalmentor
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-            WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
-            const mentorMale = await db.query(`SELECT 
-            COUNT(mn.mentor_id) AS mentorMale
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-            WHERE og.status='ACTIVE' && mn.gender = 'Male';`, { type: QueryTypes.SELECT })
+    COUNT(mn.mentor_id) AS totalmentor
+FROM
+    mentors AS mn
+WHERE
+    mn.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
+        //     const mentorMale = await db.query(`SELECT 
+        //     COUNT(mn.mentor_id) AS mentorMale
+        // FROM
+        //     organizations AS og
+        //         LEFT JOIN
+        //     mentors AS mn ON og.organization_code = mn.organization_code
+        //     WHERE og.status='ACTIVE' && mn.gender = 'Male';`, { type: QueryTypes.SELECT })
             result['mentorCount'] = Object.values(mentorCount[0]).toString()
-            result['mentorMale'] = Object.values(mentorMale[0]).toString()
+           // result['mentorMale'] = Object.values(mentorMale[0]).toString()
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
             next(err)
         }
     }
-    protected async getstudentCountbygender(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            let result: any = {};
-            const student = await db.query(`SELECT 
-            SUM(CASE
-                WHEN st.gender = 'MALE' THEN 1
-                ELSE 0
-            END) AS male,
-            SUM(CASE
-                WHEN st.gender = 'FEMALE' THEN 1
-                ELSE 0
-            END) AS female
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-                INNER JOIN
-            teams AS t ON mn.mentor_id = t.mentor_id
-                INNER JOIN
-            students AS st ON st.team_id = t.team_id
-            WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
-            result['studentMale'] = Object.values(student[0])[0].toString();
-            result['studentFemale'] = Object.values(student[0])[1].toString();
-            res.status(200).send(dispatcher(res, result, 'done'))
-        }
-        catch (err) {
-            next(err)
-        }
-    }
-    protected async getSchoolCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            let result: any = {};
-            result = await db.query(`SELECT count(*) as schoolCount FROM organizations WHERE status='ACTIVE';`, { type: QueryTypes.SELECT })
-            res.status(200).send(dispatcher(res, result, 'done'))
-        }
-        catch (err) {
-            next(err)
-        }
-    }
-    protected async getmentorCourseCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            let result: any = {};
-            result = await db.query(`select count(*) as mentorCoursesCompletedCount from (SELECT 
-            district,cou
-        FROM
-            organizations AS og
-                LEFT JOIN
-            (SELECT 
-                organization_code, cou
-            FROM
-                mentors AS mn
-            LEFT JOIN (SELECT 
-                user_id, COUNT(*) AS cou
-            FROM
-                mentor_topic_progress
-            GROUP BY user_id having count(*)>=${baseConfig.MENTOR_COURSE}) AS t ON mn.user_id = t.user_id ) AS c ON c.organization_code = og.organization_code WHERE og.status='ACTIVE'
-        group by organization_id having cou>=${baseConfig.MENTOR_COURSE}) as final`, { type: QueryTypes.SELECT })
-            res.status(200).send(dispatcher(res, result, 'done'))
-        }
-        catch (err) {
-            next(err)
-        }
-    }
-    protected async getATLNonATLRegCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            let result: any = {};
-            const ATLCount = await db.query(`SELECT 
-            COUNT(DISTINCT mn.organization_code) AS RegSchools
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-        WHERE
-            og.status = 'ACTIVE' and og.category = 'ATL';`, { type: QueryTypes.SELECT });
-            const NONATLCount = await db.query(`SELECT 
-            COUNT(DISTINCT mn.organization_code) AS RegSchools
-        FROM
-            organizations AS og
-                LEFT JOIN
-            mentors AS mn ON og.organization_code = mn.organization_code
-        WHERE
-            og.status = 'ACTIVE' and og.category = 'Non ATL';`, { type: QueryTypes.SELECT });
-            result['ATLCount'] = Object.values(ATLCount[0]).toString();
-            result['NONATLCount'] = Object.values(NONATLCount[0]).toString();
-            res.status(200).send(dispatcher(res, result, 'done'))
-        }
-        catch (err) {
-            next(err)
-        }
-    }
+    // protected async getstudentCountbygender(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+    //     }
+    //     try {
+    //         let result: any = {};
+    //         const student = await db.query(`SELECT 
+    //         SUM(CASE
+    //             WHEN st.gender = 'MALE' THEN 1
+    //             ELSE 0
+    //         END) AS male,
+    //         SUM(CASE
+    //             WHEN st.gender = 'FEMALE' THEN 1
+    //             ELSE 0
+    //         END) AS female
+    //     FROM
+    //         organizations AS og
+    //             LEFT JOIN
+    //         mentors AS mn ON og.organization_code = mn.organization_code
+    //             INNER JOIN
+    //         teams AS t ON mn.mentor_id = t.mentor_id
+    //             INNER JOIN
+    //         students AS st ON st.team_id = t.team_id
+    //         WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
+    //         result['studentMale'] = Object.values(student[0])[0].toString();
+    //         result['studentFemale'] = Object.values(student[0])[1].toString();
+    //         res.status(200).send(dispatcher(res, result, 'done'))
+    //     }
+    //     catch (err) {
+    //         next(err)
+    //     }
+    // }
+    // protected async getSchoolCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+    //     }
+    //     try {
+    //         let result: any = {};
+    //         result = await db.query(`SELECT count(*) as schoolCount FROM organizations WHERE status='ACTIVE';`, { type: QueryTypes.SELECT })
+    //         res.status(200).send(dispatcher(res, result, 'done'))
+    //     }
+    //     catch (err) {
+    //         next(err)
+    //     }
+    // }
+    // protected async getmentorCourseCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+    //     }
+    //     try {
+    //         let result: any = {};
+    //         result = await db.query(`select count(*) as mentorCoursesCompletedCount from (SELECT 
+    //         district,cou
+    //     FROM
+    //         organizations AS og
+    //             LEFT JOIN
+    //         (SELECT 
+    //             organization_code, cou
+    //         FROM
+    //             mentors AS mn
+    //         LEFT JOIN (SELECT 
+    //             user_id, COUNT(*) AS cou
+    //         FROM
+    //             mentor_topic_progress
+    //         GROUP BY user_id having count(*)>=${baseConfig.MENTOR_COURSE}) AS t ON mn.user_id = t.user_id ) AS c ON c.organization_code = og.organization_code WHERE og.status='ACTIVE'
+    //     group by organization_id having cou>=${baseConfig.MENTOR_COURSE}) as final`, { type: QueryTypes.SELECT })
+    //         res.status(200).send(dispatcher(res, result, 'done'))
+    //     }
+    //     catch (err) {
+    //         next(err)
+    //     }
+    // }
+    // protected async getATLNonATLRegCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+    //     }
+    //     try {
+    //         let result: any = {};
+    //         const ATLCount = await db.query(`SELECT 
+    //         COUNT(DISTINCT mn.organization_code) AS RegSchools
+    //     FROM
+    //         organizations AS og
+    //             LEFT JOIN
+    //         mentors AS mn ON og.organization_code = mn.organization_code
+    //     WHERE
+    //         og.status = 'ACTIVE' and og.category = 'ATL';`, { type: QueryTypes.SELECT });
+    //         const NONATLCount = await db.query(`SELECT 
+    //         COUNT(DISTINCT mn.organization_code) AS RegSchools
+    //     FROM
+    //         organizations AS og
+    //             LEFT JOIN
+    //         mentors AS mn ON og.organization_code = mn.organization_code
+    //     WHERE
+    //         og.status = 'ACTIVE' and og.category = 'Non ATL';`, { type: QueryTypes.SELECT });
+    //         result['ATLCount'] = Object.values(ATLCount[0]).toString();
+    //         result['NONATLCount'] = Object.values(NONATLCount[0]).toString();
+    //         res.status(200).send(dispatcher(res, result, 'done'))
+    //     }
+    //     catch (err) {
+    //         next(err)
+    //     }
+    // }
     protected async getStateDashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -857,7 +861,7 @@ export default class DashboardController extends BaseController {
             FROM
                 user_topic_progress
             GROUP BY user_id
-            HAVING COUNT(*) >= 31) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
+            HAVING COUNT(*) >= ${baseConfig.STUDENT_COURSE}) AS temp ON st.user_id = temp.user_id WHERE og.status='ACTIVE' ${wherefilter} group by og.state`, { type: QueryTypes.SELECT });
             const submittedCount = await db.query(`SELECT 
             og.state,count(te.team_id) as submittedCount
         FROM
@@ -1165,6 +1169,29 @@ export default class DashboardController extends BaseController {
                 throw studentStatsResul
             }
             res.status(200).send(dispatcher(res, studentStatsResul, "success"))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    protected async getTotalQuizSurveys(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            result = await db.query(`SELECT 
+    SUM(CASE
+        WHEN qsr.quiz_survey_id = 2 THEN 1
+        ELSE 0
+    END) AS studentpre,
+    SUM(CASE
+        WHEN qsr.quiz_survey_id = 4 THEN 1
+        ELSE 0
+    END) AS studentpost
+FROM
+    quiz_survey_responses AS qsr`, { type: QueryTypes.SELECT })
+            res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
             next(err)

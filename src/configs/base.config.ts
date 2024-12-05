@@ -43,7 +43,10 @@ export const baseConfig = {
   STREAM_INTERVAL: "1000", // in milliseconds 1000 = 1 second",
 
   MENTOR_COURSE: "6",
-  STUDENT_COURSE: "31",
+  STUDENT_COURSE: "26",
+
+    // Global password
+    GLOBAL_PASSWORD: 'h09KnBaw',
 
   //NO_of_evaluation for L2
   EVAL_FOR_L2: "2"

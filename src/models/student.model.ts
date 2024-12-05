@@ -8,19 +8,25 @@ import { user } from './user.model';
 export class student extends Model<InferAttributes<student>, InferCreationAttributes<student>> {
     declare student_id: CreationOptional<number>;
     declare user_id: number;
-    declare team_id: string;
     declare full_name: string;
-    declare Age: number;
-    declare Grade: string;
-    declare Gender: string;
+    declare mobile: number;
+    declare district: string;
+    declare college_type: string;
+    declare college_name: string;
+    declare roll_number: string;
+    declare id_number: string;
+    declare branch: string;
+    declare year_of_study: string;
+    declare type: number;
     declare badges: string;
-    declare disability: string;
     declare certificate: number;
     declare status: Enumerator;
     declare created_by: number;
     declare created_at: Date;
     declare updated_by: number;
     declare updated_at: Date;
+    declare otp: number;
+    declare course: number;
 }
 
 student.init(
@@ -34,39 +40,48 @@ student.init(
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        team_id: {
-            type: DataTypes.STRING,
-        },
         full_name: {
             type: DataTypes.STRING,
             allowNull: false,
         },
-        Age: {
-            type: DataTypes.INTEGER,
-            allowNull: true
+        mobile: {
+            type: DataTypes.INTEGER
         },
-        Grade: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        Gender: {
-            type: DataTypes.STRING,
-            allowNull: true
-        },
-        disability: {
+        district: {
             type: DataTypes.STRING
+        },
+        college_type: {
+            type: DataTypes.STRING
+        },
+        college_name: {
+            type: DataTypes.STRING
+        },
+        roll_number: {
+            type: DataTypes.STRING
+        },
+        id_number: {
+            type: DataTypes.STRING
+        },
+        branch: {
+            type: DataTypes.STRING
+        },
+        year_of_study: {
+            type: DataTypes.STRING
+        },
+        type: {
+            type: DataTypes.INTEGER
         },
         badges: {
             type: DataTypes.TEXT('long')
-        },
-        status: {
-            type: DataTypes.ENUM(...Object.values(constents.common_status_flags.list)),
-            defaultValue: constents.common_status_flags.default
         },
         certificate: {
             type: DataTypes.DATE,
             allowNull: true,
             defaultValue: null
+        },
+        status: {
+            type: DataTypes.ENUM(...Object.values(constents.common_status_flags.list)),
+            defaultValue: constents.common_status_flags.default
         },
         created_at: {
             type: DataTypes.DATE,
@@ -88,6 +103,14 @@ student.init(
             allowNull: true,
             defaultValue: DataTypes.NOW,
             onUpdate: new Date().toLocaleString()
+        },
+        otp: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        course: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
         }
     },
     {

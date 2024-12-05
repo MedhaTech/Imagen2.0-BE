@@ -76,11 +76,9 @@ team.init(
         createdAt: 'created_at',
     }
 );
-team.belongsTo(user, { foreignKey: 'user_id', constraints: false, scope: { role: 'TEAM' } });
-user.hasOne(team, { foreignKey: 'user_id', constraints: false });
-student.belongsTo(team, { foreignKey: 'team_id', constraints: false });
-team.hasMany(student, { foreignKey: 'team_id', constraints: false });
-team.belongsTo(mentor, { foreignKey: 'mentor_id', constraints: false });
-mentor.hasOne(team, { foreignKey: 'mentor_id', constraints: false });
-challenge_response.belongsTo(team, { foreignKey: 'team_id', constraints: false });
-team.hasMany(challenge_response, { foreignKey: 'team_id', constraints: false });
+// team.belongsTo(user, { foreignKey: 'user_id', constraints: false, scope: { role: 'TEAM' } });
+// user.hasOne(team, { foreignKey: 'user_id', constraints: false });
+// team.belongsTo(mentor, { foreignKey: 'mentor_id', constraints: false });
+// mentor.hasOne(team, { foreignKey: 'mentor_id', constraints: false });
+// challenge_response.belongsTo(team, { foreignKey: 'team_id', constraints: false });
+// team.hasMany(challenge_response, { foreignKey: 'team_id', constraints: false });

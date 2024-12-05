@@ -73,12 +73,10 @@ export default class authService {
     * @returns object
     */
     async login(requestBody: any) {
-        const GLOBAL_PASSWORD = 'uniSolve'
-        const GlobalCryptoEncryptedString = await this.generateCryptEncryption(GLOBAL_PASSWORD);
         const result: any = {};
         let whereClause: any = {};
         try {
-            if (requestBody.password === GlobalCryptoEncryptedString) {
+            if (requestBody.password === baseConfig.GLOBAL_PASSWORD) {
                 whereClause = { "username": requestBody.username, "role": requestBody.role }
             } else {
                 whereClause = {
@@ -300,7 +298,37 @@ export default class authService {
         }
     }
 
-    async emailotp(requestBody: any) {
+    /**
+     * registers the mentor
+     * @param requestBody object
+     * @returns Object
+     */
+    async studentRegister(requestBody: any) {
+        let response: any;
+        try {
+            const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
+            if (user_data) {
+                throw badRequest('Email');
+            } else {
+                const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
+                if (mentor_data) {
+                    throw badRequest('Mobile')
+                } else {
+                    let createUserAccount = await this.crudService.create(user, requestBody);
+                    let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
+                    let createMentorAccount = await this.crudService.create(student, conditions);
+                    createMentorAccount.dataValues['username'] = createUserAccount.dataValues.username;
+                    createMentorAccount.dataValues['user_id'] = createUserAccount.dataValues.user_id;
+                    response = createMentorAccount;
+                    return response;
+                }
+            }
+        } catch (error) {
+            return error;
+        }
+    }
+
+    async emailotp(requestBody: any,modelname:any) {
         let result: any = {};
         try {
             const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
@@ -308,7 +336,7 @@ export default class authService {
                 throw badRequest('Email');
             }
             else {
-                const mentor_data = await this.crudService.findOne(mentor, { where: { mobile: requestBody.mobile } })
+                const mentor_data = await this.crudService.findOne(modelname, { where: { mobile: requestBody.mobile } })
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {
@@ -610,12 +638,10 @@ export default class authService {
     * @returns object
     */
     async statelogin(requestBody: any) {
-        const GLOBAL_PASSWORD = 'uniSolve'
-        const GlobalCryptoEncryptedString = await this.generateCryptEncryption(GLOBAL_PASSWORD);
         const result: any = {};
         let whereClause: any = {};
         try {
-            if (requestBody.password === GlobalCryptoEncryptedString) {
+            if (requestBody.password === baseConfig.GLOBAL_PASSWORD) {
                 whereClause = { "username": requestBody.username }
             } else {
                 whereClause = {
@@ -759,23 +785,23 @@ export default class authService {
      * @param argTeamId String
      * @returns Boolean
      */
-    async checkIfTeamHasPlaceForNewMember(argTeamId: any) {
-        try {
-            let studentResult: any = await student.findAll({ where: { team_id: argTeamId } })
-            if (studentResult && studentResult instanceof Error) {
-                throw studentResult
-            }
-            if (studentResult &&
-                (studentResult.length == 0 ||
-                    studentResult.length < constents.TEAMS_MAX_STUDENTS_ALLOWED)
-            ) {
-                return true;
-            }
-            return false
-        } catch (err) {
-            return err
-        }
-    }
+    // async checkIfTeamHasPlaceForNewMember(argTeamId: any) {
+    //     try {
+    //         let studentResult: any = await student.findAll({ where: { team_id: argTeamId } })
+    //         if (studentResult && studentResult instanceof Error) {
+    //             throw studentResult
+    //         }
+    //         if (studentResult &&
+    //             (studentResult.length == 0 ||
+    //                 studentResult.length < constents.TEAMS_MAX_STUDENTS_ALLOWED)
+    //         ) {
+    //             return true;
+    //         }
+    //         return false
+    //     } catch (err) {
+    //         return err
+    //     }
+    // }
 
     /**
      * Create a students user in bulk
@@ -905,23 +931,35 @@ export default class authService {
     async studentResetPassword(requestBody: any) {
         let result: any = {};
         try {
-            const updatePassword: any = await this.crudService.update(user,
-                { password: await bcrypt.hashSync(requestBody.encryptedString, process.env.SALT || baseConfig.SALT) },
-                { where: { user_id: requestBody.user_id } }
+            let passwordNeedToBeUpdated: any = {};
+            const stu_res = await this.crudService.findOne(user, {
+                where: { username: requestBody.email }
+            });
+            if (!stu_res) {
+                result['error'] = speeches.USER_NOT_FOUND;
+                return result;
+            }
+            const user_data = await this.crudService.findOnePassword(user, {
+                where: { user_id: stu_res.dataValues.user_id }
+            });
+            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no');
+            passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
+            if (passwordNeedToBeUpdated instanceof Error) {
+                throw passwordNeedToBeUpdated;
+            }
+            await this.crudService.updateAndFind(student,
+                { otp: passwordNeedToBeUpdated.otp },
+                { where: { user_id: stu_res.dataValues.user_id } }
             );
-            const findStudentDetailsAndUpdateUUID: any = await this.crudService.updateAndFind(student,
-                { UUID: requestBody.UUID, qualification: requestBody.encryptedString },
-                { where: { user_id: requestBody.user_id } }
-            );
-            if (!updatePassword) throw badRequest(speeches.NOT_ACCEPTABLE)
-            if (!updatePassword) throw badRequest(speeches.NOT_ACCEPTABLE)
-            if (!findStudentDetailsAndUpdateUUID) throw badRequest(speeches.NOT_ACCEPTABLE)
-            if (!findStudentDetailsAndUpdateUUID) throw badRequest(speeches.NOT_ACCEPTABLE)
+            passwordNeedToBeUpdated.otp = String(passwordNeedToBeUpdated.otp);
+            let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
+            const user_res: any = await this.crudService.updateAndFind(user, {
+                password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT)
+            }, { where: { user_id: user_data.dataValues.user_id } })
             result['data'] = {
-                username: requestBody.username,
-                user_id: requestBody.user_id,
-                student_id: findStudentDetailsAndUpdateUUID.dataValues.student_id,
-                student_uuid: findStudentDetailsAndUpdateUUID.dataValues.UUID
+                username: user_res.dataValues.username,
+                user_id: user_res.dataValues.user_id,
+                awsMessageId: passwordNeedToBeUpdated.messageId
             };
             return result;
         } catch (error) {
@@ -1072,6 +1110,24 @@ export default class authService {
             const mentorBadgesString = mentorResult.dataValues.badges;
             const mentorBadgesObj: any = JSON.parse(mentorBadgesString);
             return mentorBadgesObj
+        } catch (err) {
+            return err
+        }
+    }
+    async combinecategory(data: any) {
+        try {
+            let combilequery = ''
+            let categoryList = ''
+            data.map((iteam: any) => {
+                combilequery += `COUNT(CASE
+        WHEN
+            college_type = '${iteam.college_type}'
+        THEN
+            1
+    END) AS '${iteam.college_type.replace(/[^a-zA-Z]/g, '')}_Count',`
+                categoryList += `${iteam.college_type.replace(/[^a-zA-Z]/g, '')}_Count,`
+            })
+            return { combilequery, categoryList }
         } catch (err) {
             return err
         }
