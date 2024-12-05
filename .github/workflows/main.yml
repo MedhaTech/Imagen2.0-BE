@@ -4,7 +4,7 @@ name: Deploymen to Prod
 
 on:
   push:
-    branches: [development , main ] 
+    branches: development 
 jobs:
   
   Build:
@@ -38,18 +38,7 @@ jobs:
             cd /home/ubuntu/img-be &&
             sudo git pull origin development &&
             sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
-      - name: Deploy to  Stage Env
-        if: github.ref == 'refs/heads/testing'
-        env:
-          PRIVATE_KEY: ${{ secrets.ATL2_STG_PRIVATE_KEY }}
-          HOSTNAME: ${{ secrets.ATL2_STG_HOSTNAME }}
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.ATL2_STG_HOSTNAME}} '
-            cd aim2.0_be &&
-            sudo git pull origin main &&
-            npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
-
+      
             
 
 
