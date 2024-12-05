@@ -37,7 +37,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMAGEN_PROD_BE_HOSTNAME}} '
             cd /home/ubuntu/Imagen-BE &&
             sudo git pull origin main &&
-            npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
+            sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
       
             
 
