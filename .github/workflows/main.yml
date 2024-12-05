@@ -1,9 +1,10 @@
 
-name: Deployment to DEV
+
+name: Deploymen to Prod
 
 on:
   push:
-    branches: [development , testing ] 
+    branches: [development , main ] 
 jobs:
   
   Build:
@@ -20,7 +21,9 @@ jobs:
         run: npm run build
 
   Deploy:
+
     needs : Build
+
     runs-on: ubuntu-latest
 
     steps:
@@ -44,8 +47,11 @@ jobs:
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.ATL2_STG_HOSTNAME}} '
             cd aim2.0_be &&
-            sudo git pull origin testing &&
+            sudo git pull origin main &&
             npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
+
+            
+
 
             
 
