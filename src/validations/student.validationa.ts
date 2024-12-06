@@ -33,9 +33,7 @@ export const studentSchemaAddstudent = Joi.object().keys({
     college_type: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_name: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     roll_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    // id_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
-    id_number: Joi.string().allow(null, ''),
-
+    id_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
     branch: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     password: Joi.any(),
