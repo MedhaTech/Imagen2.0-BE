@@ -383,7 +383,7 @@ export default class authService {
         <h3>Dear Guide Teacher,</h3>
         <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
-        <p><strong>Link: https://schoolinnovationmarathon.org/login</strong></p>
+        <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
         <p>
         <strong>
         Regards,<br> YFSI Team
