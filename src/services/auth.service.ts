@@ -364,36 +364,36 @@ export default class authService {
         const result: any = {}
         const otp: any = Math.random().toFixed(6).substr(-6);
         const verifyOtpdata = `<body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-        <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+        <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
         <h3>Dear Guide Teacher,</h3>
         
-        <p>Your One-Time Password (OTP) to register yourself as a guide teacher in School Innovation Marathon (SIM 24-25) is <b>${otp}</b></p>
+        <p>Your One-Time Password (OTP) to register yourself as a guide teacher in Youth for Social Impact 2025 is <b>${otp}</b></p>
         
         <p>We appreciate for your interest in inspiring students to solve problems with simplified design thinking process as a method to innovate through this program.</p>
         <p>
         <strong>
-        Regards,<br> SIM Team
+        Regards,<br> YFSI Team
         </strong>
         </div></body>`
         const forgotPassData = `
         <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-        <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+        <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
         <h3>Dear Guide Teacher,</h3>
-        <p>Your temporary password to login to School Innovation Marathon platform is <b>${otp}.</b></p>
+        <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
         <p><strong>Link: https://schoolinnovationmarathon.org/login</strong></p>
         <p>
         <strong>
-        Regards,<br> SIM Team
+        Regards,<br> YFSI Team
         </strong>
         </p>
         </div></body>`
-        const verifyOtpSubject = `OTP to register for School Innovation Marathon (SIM 24-25)`
-        const forgotPassSubjec = `Temporary Password to Login into School Innovation Marathon (SIM 24-25)`
-        const fullSubjec = `Welcome! Your School Innovation Marathon (SIM 24-25) registration was successful. Check out your login details.`
-        const teamsCredentials = `SIM 2024 - Teams Credentials`
+        const verifyOtpSubject = `OTP to register for Youth for Social Impact 2025`
+        const forgotPassSubjec = `Temporary Password to Login into Youth for Social Impact 2025`
+        const fullSubjec = `Welcome! Your Youth for Social Impact 2025 registration was successful. Check out your login details.`
+        const teamsCredentials = `YFSI 2025 - Teams Credentials`
         AWS.config.update({
             region: 'ap-south-1',
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -512,10 +512,10 @@ export default class authService {
             let word = myArray[0];
             const WelcomeTemp = `
             <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-            <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+            <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
             <div style="padding: 1% 5%;">
             <h3>Dear Guide Teacher,</h3>
-            <h4>Congratulations for successfully registering for School Innovation Marathon 24-25</h4>
+            <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>Your schools has been successfully registered with the following details :
             <br> School name: <strong> ${school_name}</strong> <br> UDISE CODE:<strong> ${udise_code}</strong>
             <br> District:<strong> ${district}</strong>
@@ -529,8 +529,8 @@ export default class authService {
             </strong> <br>
             Mobile no: <strong> ${mobile} </strong>
             <p>Please use your user id and password to login and proceed further.</p>
-            <p><strong>Link: https://schoolinnovationmarathon.org/login</strong></p>
-            <p><strong>Regards,<br> SIM Team</strong></p>
+            <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
+            <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>`
             const otp = await this.triggerEmail(email, 2, WelcomeTemp);
             if (otp instanceof Error) {
@@ -1048,11 +1048,11 @@ export default class authService {
     </style>
 </head>
 <body style="border: solid;margin-right: 15%;margin-left: 15%;">
-<img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+<img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
 <div style="padding: 1% 5%;">
     <h3>Dear Guide Teacher,</h3>
-    <p>Greetings from School Innovation Marathom 2024. Here are your <strong>SIM student teams credentials</strong> for your reference.</p>
-    <p><strong>Team login URL : https://schoolinnovationmarathon.org/login</strong></p>
+    <p>Greetings from Youth for Social Impact 2025. Here are your <strong>YFSI student teams credentials</strong> for your reference.</p>
+    <p><strong>Student login URL : http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
     <table>
         <tr>
             <th>SL No</th>
@@ -1063,7 +1063,7 @@ export default class authService {
         ${allstring}
     </table>
     <strong>
-        Regards,<br> SIM Team
+        Regards,<br> YFSI Team
         </strong>
 </div>
 </body>
