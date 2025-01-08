@@ -340,7 +340,7 @@ export default class authService {
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {
-                    const otp = await this.triggerEmail(requestBody.username, 1, 'no');
+                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ?'Institution User' :'Student'  );
                     if (otp instanceof Error) {
                         throw otp;
                     }
@@ -360,15 +360,15 @@ export default class authService {
      * @param responseBody Object
      * @returns Object
      */
-    async triggerEmail(email: any, id: any, fulldata: any) {
+    async triggerEmail(email: any, id: any, fulldata: any, role:any) {
         const result: any = {}
         const otp: any = Math.random().toFixed(6).substr(-6);
         const verifyOtpdata = `<body style="border: solid;margin-right: 15%;margin-left: 15%; ">
         <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
-        <h3>Dear Guide Teacher,</h3>
+        <h3>Dear ${role},</h3>
         
-        <p>Your One-Time Password (OTP) to register yourself as a guide teacher in Youth for Social Impact 2025 is <b>${otp}</b></p>
+        <p>Your One-Time Password (OTP) to register yourself in Youth for Social Impact 2025 is <b>${otp}</b></p>
         
         <p>We appreciate for your interest in inspiring students to solve problems with simplified design thinking process as a method to innovate through this program.</p>
         <p>
@@ -380,7 +380,7 @@ export default class authService {
         <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
         <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
-        <h3>Dear Guide Teacher,</h3>
+        <h3>Dear ${role},</h3>
         <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
         <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
@@ -477,7 +477,7 @@ export default class authService {
                 passwordNeedToBeUpdated['otp'] = word;
                 passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
             } else {
-                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no');
+                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no','Institution User');
                 passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
                 if (passwordNeedToBeUpdated instanceof Error) {
                     throw passwordNeedToBeUpdated;
@@ -514,7 +514,7 @@ export default class authService {
             <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
             <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
             <div style="padding: 1% 5%;">
-            <h3>Dear Guide Teacher,</h3>
+            <h3>Dear Student,</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>Your schools has been successfully registered with the following details :
             <br> School name: <strong> ${school_name}</strong> <br> UDISE CODE:<strong> ${udise_code}</strong>
@@ -532,7 +532,7 @@ export default class authService {
             <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>`
-            const otp = await this.triggerEmail(email, 2, WelcomeTemp);
+            const otp = await this.triggerEmail(email, 2, WelcomeTemp,'Institution User');
             if (otp instanceof Error) {
                 throw otp;
             }
@@ -942,7 +942,7 @@ export default class authService {
             const user_data = await this.crudService.findOnePassword(user, {
                 where: { user_id: stu_res.dataValues.user_id }
             });
-            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no');
+            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no','Student');
             passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
             if (passwordNeedToBeUpdated instanceof Error) {
                 throw passwordNeedToBeUpdated;
@@ -1069,7 +1069,7 @@ export default class authService {
 </body>
 </html>
 `
-            const otp = await this.triggerEmail(email, 4, WelcomeTemp);
+            const otp = await this.triggerEmail(email, 4, WelcomeTemp,'Student');
             if (otp instanceof Error) {
                 throw otp;
             }
