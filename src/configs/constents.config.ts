@@ -73,6 +73,15 @@ export const constents = {
     },
     default: 'OPEN'
   },
+  discussion_forum_status_flags: {
+    list: {
+      'OPEN': 'OPEN',
+      'INPROGRESS': 'INPROGRESS',
+      'RESOLVED': 'RESOLVED',
+      'INVALID': 'INVALID'
+    },
+    default: 'OPEN'
+  },
   quiz_question_level_flags: {
     list: {
       'HARD': 'HARD',
