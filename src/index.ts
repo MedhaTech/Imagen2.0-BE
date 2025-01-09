@@ -29,6 +29,8 @@ import MentorAttachmentController from "./controllers/mentorAttachment.controlle
 import ReportController from "./controllers/report.controller";
 import ChallengeResponsesController from "./controllers/challenge_response.controller";
 import ReflectiveQuizController from "./controllers/reflective_quiz.controller";
+import DiscussionForumController from "./controllers/discussionForums.controller";
+import DiscussionForumRepliesController from "./controllers/discussionForumsReplies.controller";
 
 
 // validating env variables
@@ -63,7 +65,9 @@ try {
         new MentorAttachmentController,
         new ReportController,
         new ChallengeResponsesController,
-        new ReflectiveQuizController
+        new ReflectiveQuizController,
+        new DiscussionForumController,
+        new DiscussionForumRepliesController
 
     ], Number(process.env.APP_PORT));
     // starting app
