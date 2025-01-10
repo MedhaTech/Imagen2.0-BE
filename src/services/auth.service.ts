@@ -328,7 +328,7 @@ export default class authService {
         }
     }
 
-    async emailotp(requestBody: any,modelname:any) {
+    async emailotp(requestBody: any, modelname: any) {
         let result: any = {};
         try {
             const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
@@ -340,7 +340,7 @@ export default class authService {
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {
-                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ?'Institution User' :'Student'  );
+                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : 'Student');
                     if (otp instanceof Error) {
                         throw otp;
                     }
@@ -360,7 +360,7 @@ export default class authService {
      * @param responseBody Object
      * @returns Object
      */
-    async triggerEmail(email: any, id: any, fulldata: any, role:any) {
+    async triggerEmail(email: any, id: any, fulldata: any, role: any) {
         const result: any = {}
         const otp: any = Math.random().toFixed(6).substr(-6);
         const verifyOtpdata = `<body style="border: solid;margin-right: 15%;margin-left: 15%; ">
@@ -477,7 +477,7 @@ export default class authService {
                 passwordNeedToBeUpdated['otp'] = word;
                 passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
             } else {
-                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no','Institution User');
+                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Institution User');
                 passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
                 if (passwordNeedToBeUpdated instanceof Error) {
                     throw passwordNeedToBeUpdated;
@@ -506,7 +506,7 @@ export default class authService {
     async triggerWelcome(requestBody: any) {
         let result: any = {};
         try {
-            const { school_name, udise_code, district, state, pin_code, email, mobile } = requestBody;
+            const { college_name, college_type, district, email, mobile } = requestBody;
             var pass = email.trim();
             var myArray = pass.split('@');
             let word = myArray[0];
@@ -514,25 +514,22 @@ export default class authService {
             <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
             <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
             <div style="padding: 1% 5%;">
-            <h3>Dear Student,</h3>
+            <h3>Dear Institution User,</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>Your schools has been successfully registered with the following details :
-            <br> School name: <strong> ${school_name}</strong> <br> UDISE CODE:<strong> ${udise_code}</strong>
+            <br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
             <br> District:<strong> ${district}</strong>
-             <br> State:<strong> ${state}</strong>
-             <br> Pincode:<strong> ${pin_code}</strong>
             </p>
-            <p> Below are your log-in details: </p>
-            <p> Login User ID: <strong> ${email} </strong>
+            <p> 
+            Email Id: <strong> ${email} </strong>
             <br>
-            Password: <strong>  ${word}
-            </strong> <br>
             Mobile no: <strong> ${mobile} </strong>
+            </p>
             <p>Please use your user id and password to login and proceed further.</p>
             <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>`
-            const otp = await this.triggerEmail(email, 2, WelcomeTemp,'Institution User');
+            const otp = await this.triggerEmail(email, 2, WelcomeTemp, 'Institution User');
             if (otp instanceof Error) {
                 throw otp;
             }
@@ -942,7 +939,7 @@ export default class authService {
             const user_data = await this.crudService.findOnePassword(user, {
                 where: { user_id: stu_res.dataValues.user_id }
             });
-            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no','Student');
+            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Student');
             passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
             if (passwordNeedToBeUpdated instanceof Error) {
                 throw passwordNeedToBeUpdated;
@@ -1069,7 +1066,7 @@ export default class authService {
 </body>
 </html>
 `
-            const otp = await this.triggerEmail(email, 4, WelcomeTemp,'Student');
+            const otp = await this.triggerEmail(email, 4, WelcomeTemp, 'Student');
             if (otp instanceof Error) {
                 throw otp;
             }
