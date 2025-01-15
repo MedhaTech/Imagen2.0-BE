@@ -68,7 +68,6 @@ export default class DiscussionForumController extends BaseController {
                             db.literal(`( SELECT COUNT(*) FROM discussion_forum_replies AS s WHERE s.discussion_forum_id = \`discussion_forum\`.\`discussion_forum_id\`)`), 'replies_count'
                         ],
                         'discussion_forum_id',
-                        'query_category',
                         'query_details',
                         "link",
                         "file",
@@ -107,7 +106,6 @@ export default class DiscussionForumController extends BaseController {
                     const responseOfFindAndCountAll = await this.crudService.findAndCountAll(modelClass, {
                         attributes: [
                             'discussion_forum_id',
-                            'query_category',
                             'query_details',
                             'status',
                             'created_at',

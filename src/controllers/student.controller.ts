@@ -617,9 +617,12 @@ GROUP BY
     }
     private async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const { email } = req.body;
+            const { email, role } = req.body;
             if (!email) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
+            }
+            if (!role) {
+                throw badRequest(speeches.USER_ROLE_REQUIRED);
             }
             const result = await this.authService.studentResetPassword(req.body);
             if (!result) {

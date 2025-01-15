@@ -460,7 +460,7 @@ export default class authService {
                 });
             } else {
                 mentor_res = await this.crudService.findOne(user, {
-                    where: { username: requestBody.email }
+                    where: { username: requestBody.email,role:requestBody.role }
                 });
             }
             if (!mentor_res) {
@@ -930,7 +930,7 @@ export default class authService {
         try {
             let passwordNeedToBeUpdated: any = {};
             const stu_res = await this.crudService.findOne(user, {
-                where: { username: requestBody.email }
+                where: { username: requestBody.email, role:requestBody.role }
             });
             if (!stu_res) {
                 result['error'] = speeches.USER_NOT_FOUND;

@@ -241,7 +241,7 @@ export default class MentorController extends BaseController {
         req.body['role'] = 'MENTOR'
         try {
             const result = await this.authService.login(req.body);
-           
+
             if (!result) {
                 return res.status(404).send(dispatcher(res, result, 'error', speeches.USER_NOT_FOUND));
             }
@@ -391,7 +391,7 @@ export default class MentorController extends BaseController {
             if (!username) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
             }
-            const result = await this.authService.emailotp(req.body,mentor);
+            const result = await this.authService.emailotp(req.body, mentor);
             if (result.error) {
                 if (result && result.error.output && result.error.output.payload && result.error.output.payload.message == 'Email') {
                     return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
@@ -410,11 +410,14 @@ export default class MentorController extends BaseController {
     }
     private async resetPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const { email, username, otp } = req.body;
+            const { email, username, otp, role } = req.body;
             let otpCheck = typeof otp == 'boolean' && otp == false ? otp : true;
             if (otpCheck) {
                 if (!email) {
                     throw badRequest(speeches.USER_EMAIL_REQUIRED);
+                }
+                if (!role) {
+                    throw badRequest(speeches.USER_ROLE_REQUIRED);
                 }
             } else {
                 if (!username) {
