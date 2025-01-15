@@ -4,7 +4,6 @@ import db from '../utils/dbconnection.util';
 
 export interface discussionForum {
     discussion_forum_id: number;
-    query_category: string;
     query_details: string;
     file: string;
     link: string;
@@ -25,10 +24,6 @@ discussion_forum.init(
             autoIncrement: true,
             primaryKey: true
         },
-        query_category: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
         query_details: {
             type: DataTypes.TEXT("long"),
             allowNull: false
@@ -40,8 +35,8 @@ discussion_forum.init(
             type: DataTypes.TEXT("long")
         },
         status: {
-            type: DataTypes.ENUM(...Object.values(constents.discussion_forum_status_flags.list)),
-            defaultValue: constents.discussion_forum_status_flags.default
+            type: DataTypes.ENUM(...Object.values(constents.common_status_flags.list)),
+            defaultValue: constents.common_status_flags.default
         },
         district: {
             type: DataTypes.STRING,
