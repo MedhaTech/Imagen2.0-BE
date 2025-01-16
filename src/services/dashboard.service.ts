@@ -101,7 +101,7 @@ SET
         return `
              select count(t.course_topic_id) 
              from course_topics as t
-             where 
+             join course_modules as cm on t.course_module_id = cm.course_module_id where course_id = 1 and 
              ${addWhereClauseStatusPart ? "t." + whereClauseStatusPartLiteral : whereClauseStatusPartLiteral}
              `
     }
