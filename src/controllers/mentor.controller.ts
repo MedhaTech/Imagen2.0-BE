@@ -50,6 +50,7 @@ export default class MentorController extends BaseController {
         this.router.post(`${this.path}/:mentor_user_id/badges`, this.addBadgeToMentor.bind(this));
         this.router.get(`${this.path}/:mentor_user_id/badges`, this.getMentorBadges.bind(this));
         this.router.get(`${this.path}/teamCredentials/:mentorId`, this.getteamCredentials.bind(this));
+        this.router.get(`${this.path}/pilotNameByInstName`, this.getNameByInst.bind(this));
 
         super.initializeRoutes();
     }
@@ -698,6 +699,31 @@ export default class MentorController extends BaseController {
         }
         catch (err) {
             next(err)
+        }
+    }
+    protected async getNameByInst(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const college_name = newREQQuery.college_name;
+            const result = await db.query(`SELECT 
+    full_name, student_id
+FROM
+    students
+WHERE
+    type = 0
+        AND college_name = '${college_name}';`, { type: QueryTypes.SELECT });
+            res.status(200).send(dispatcher(res, result, "success"))
+        } catch (error) {
+            next(error);
         }
     }
 };
