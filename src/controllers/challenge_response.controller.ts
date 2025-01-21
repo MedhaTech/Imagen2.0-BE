@@ -357,10 +357,10 @@ export default class ChallengeResponsesController extends BaseController {
                                         db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
                                     ],
                                     [
-                                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_name'
+                                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_name'
                                     ],
                                     [
-                                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_type'
+                                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
                                     ],  
                                 ],
                                 where: {
@@ -432,10 +432,10 @@ export default class ChallengeResponsesController extends BaseController {
                                         db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
                                     ],
                                     [
-                                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_name'
+                                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_name'
                                     ],
                                     [
-                                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_type'
+                                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
                                     ], 
                                     
                                 ],
@@ -538,10 +538,10 @@ export default class ChallengeResponsesController extends BaseController {
                                 db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
                             ],
                             [
-                                db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_name'
+                                db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_name'
                             ],
                             [
-                                db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_type'
+                                db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
                             ], 
                            
                         ],
