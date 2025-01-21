@@ -32,6 +32,13 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/studentdetailsreport`, this.getstudentDetailsreport.bind(this));
         this.router.get(`${this.path}/ideadeatilreport`, this.getideaReport.bind(this));
         this.router.get(`${this.path}/ideaReportTable`, this.getideaReportTable.bind(this));
+        this.router.get(`${this.path}/L1ReportTable1`, this.getL1ReportTable1.bind(this));
+        this.router.get(`${this.path}/L1ReportTable2`, this.getL1ReportTable2.bind(this));
+        this.router.get(`${this.path}/L2ReportTable1`, this.getL2ReportTable1.bind(this));
+        this.router.get(`${this.path}/L2ReportTable2`, this.getL2ReportTable2.bind(this));
+        this.router.get(`${this.path}/L2ReportTable3`, this.getL2ReportTable3.bind(this));
+        this.router.get(`${this.path}/L3ReportTable1`, this.getL3ReportTable1.bind(this));
+        this.router.get(`${this.path}/L3ReportTable2`, this.getL3ReportTable2.bind(this));
     }
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
@@ -648,6 +655,317 @@ WHERE
             res.status(200).send(dispatcher(res, data, "success"))
         } catch (err) {
             console.log(err)
+            next(err)
+        }
+    }
+    protected async getL1ReportTable1(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const district = newREQQuery.district;
+            let wherefilter = '';
+            if (district) {
+                wherefilter = `WHERE org.district= '${district}'`;
+            }
+            const summary = await db.query(`SELECT 
+            org.district,
+            COALESCE(totalSubmited, 0) AS totalSubmited,
+            COALESCE(accepted, 0) AS accepted,
+            COALESCE(rejected, 0) AS rejected
+        FROM
+            organizations AS org
+                LEFT JOIN
+            (SELECT 
+                COUNT(*) AS totalSubmited,
+                    district,
+                    COUNT(CASE
+                        WHEN evaluation_status = 'SELECTEDROUND1' THEN 1
+                    END) AS accepted,
+                    COUNT(CASE
+                        WHEN evaluation_status = 'REJECTEDROUND1' THEN 1
+                    END) AS rejected
+            FROM
+                challenge_responses AS cal
+            WHERE
+                cal.status = 'SUBMITTED'
+            GROUP BY district) AS t2 ON org.district = t2.district
+            ${wherefilter}
+        GROUP BY org.district`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL1ReportTable2(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            const summary = await db.query(`SELECT 
+            user_id,
+            full_name,
+            COUNT(evaluated_by) AS totalEvaluated,
+            COUNT(CASE
+                WHEN evaluation_status = 'SELECTEDROUND1' THEN 1
+            END) AS accepted,
+            COUNT(CASE
+                WHEN evaluation_status = 'REJECTEDROUND1' THEN 1
+            END) AS rejected
+        FROM
+            challenge_responses AS cal
+                JOIN
+            evaluators AS evl ON cal.evaluated_by = evl.user_id
+        WHERE
+            cal.status = 'SUBMITTED'
+        GROUP BY evaluated_by`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL2ReportTable1(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            const summary = await db.query(`SELECT 
+            challenge_response_id,
+            AVG(overall) AS overall,
+            (AVG(param_1) + AVG(param_2)) / 2 AS Quality,
+            (AVG(param_3) + AVG(param_4) + AVG(param_5)) / 3 AS Feasibility
+        FROM
+            evaluator_ratings
+        GROUP BY challenge_response_id;
+        `, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL2ReportTable3(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const district = newREQQuery.district;
+            let wherefilter = '';
+            if (district) {
+                wherefilter = `WHERE org.district= '${district}'`;
+            }
+            const summary = await db.query(`SELECT 
+    org.district,
+    COALESCE(count_1to3,0) as count_1to3,
+    COALESCE(count_3to5,0) as count_3to5,
+    COALESCE(count_5to6,0) as count_5to6,
+    COALESCE(count_6to7,0) as count_6to7,
+    COALESCE(count_7to8,0) as count_7to8,
+    COALESCE(count_8to9,0) as count_8to9,
+    COALESCE(count_9to10,0) as count_9to10
+FROM
+    organizations AS org
+        LEFT JOIN
+    (SELECT 
+        district,
+            COUNT(CASE
+                WHEN
+                    average_score >= 1
+                        AND average_score <= 3
+                THEN
+                    1
+            END) AS count_1to3,
+            COUNT(CASE
+                WHEN average_score > 3 AND average_score <= 5 THEN 1
+            END) AS count_3to5,
+            COUNT(CASE
+                WHEN average_score > 5 AND average_score <= 6 THEN 1
+            END) AS count_5to6,
+            COUNT(CASE
+                WHEN average_score > 6 AND average_score <= 7 THEN 1
+            END) AS count_6to7,
+            COUNT(CASE
+                WHEN average_score > 7 AND average_score <= 8 THEN 1
+            END) AS count_7to8,
+            COUNT(CASE
+                WHEN average_score > 8 AND average_score <= 9 THEN 1
+            END) AS count_8to9,
+            COUNT(CASE
+                WHEN
+                    average_score > 9
+                        AND average_score <= 10
+                THEN
+                    1
+            END) AS count_9to10
+    FROM
+        (SELECT 
+        challenge_response_id, AVG(overall) AS average_score
+    FROM
+        Aim_db.evaluator_ratings
+    GROUP BY challenge_response_id
+    HAVING COUNT(challenge_response_id) >= 2) AS subquery
+    JOIN challenge_responses AS cal ON subquery.challenge_response_id = cal.challenge_response_id
+    GROUP BY district) AS final_count ON org.district = final_count.district
+     ${wherefilter}
+GROUP BY org.district
+        `, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    protected async getL2ReportTable2(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            const summary = await db.query(`SELECT 
+            user_id, full_name, COUNT(*) as totalEvaluated
+        FROM
+            evaluator_ratings
+                JOIN
+            evaluators ON evaluator_ratings.evaluator_id = evaluators.user_id
+        GROUP BY user_id;`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL3ReportTable1(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            const summary = await db.query(`
+            SELECT 
+    cal.challenge_response_id,
+    AVG(overall) AS overall,
+    (AVG(param_1) + AVG(param_2)) / 2 AS Quality,
+    (AVG(param_3) + AVG(param_4) + AVG(param_5)) / 3 AS Feasibility
+FROM
+    evaluator_ratings AS evl_r
+        JOIN
+    challenge_responses AS cal ON evl_r.challenge_response_id = cal.challenge_response_id
+WHERE
+    final_result <> 'null'
+GROUP BY challenge_response_id;`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL3ReportTable2(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const district = newREQQuery.district;
+            let wherefilter = '';
+            if (district) {
+                wherefilter = `WHERE org.district= '${district}'`;
+            }
+            const summary = await db.query(`SELECT 
+            org.district,
+            COALESCE((runners + winners),0) AS shortedlisted,
+            COALESCE(runners, 0) AS runners,
+            COALESCE(winners, 0) AS winners
+        FROM
+            organizations AS org
+                LEFT JOIN
+            (SELECT 
+                district,
+                    COUNT(CASE
+                        WHEN final_result = '0' THEN 1
+                    END) AS runners,
+                    COUNT(CASE
+                        WHEN final_result = '1' THEN 1
+                    END) AS winners
+            FROM
+                challenge_responses AS cal
+            WHERE
+                cal.status = 'SUBMITTED'
+            GROUP BY district) AS t2 ON org.district = t2.district
+            ${wherefilter}
+        GROUP BY org.district`, { type: QueryTypes.SELECT });
+            data = summary;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
             next(err)
         }
     }
