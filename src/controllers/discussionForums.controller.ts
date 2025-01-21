@@ -47,7 +47,7 @@ export default class DiscussionForumController extends BaseController {
             const { page, size, status, user_id, district } = newREQQuery;
             let condition = status ? { status: { [Op.like]: `%${status}%` } } : null;
             let districtFilter = district ? { district: { [Op.like]: `%${district}%` } } : null;
-            let filteringBasedOnUser_id = user_id ? { created_by: user_id } : null;
+            //let filteringBasedOnUser_id = user_id ? { created_by: user_id } : null;
             const { limit, offset } = this.getPagination(page, size);
             const modelClass = await this.loadModel(model).catch(error => {
                 next(error)
@@ -126,8 +126,7 @@ export default class DiscussionForumController extends BaseController {
                         where: {
                             [Op.and]: [
                                 districtFilter,
-                                condition,
-                                filteringBasedOnUser_id
+                                condition
                             ]
                         },
                         limit, offset,
