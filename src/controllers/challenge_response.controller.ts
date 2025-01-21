@@ -353,12 +353,15 @@ export default class ChallengeResponsesController extends BaseController {
                                     [
                                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                                     ],
-                                    // [
-                                    //     db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM  students  AS s LEFT OUTER JOIN  teams AS t ON s.student_id = t.student_id WHERE t.student_id = \`challenge_response\`.\`student_id\` )`), 'team_members'
-                                    // ],
-                                    // [
-                                    //     db.literal(`(SELECT mentorTeamOrg.organization_name FROM challenge_responses AS challenge_responses LEFT OUTER JOIN teams AS team ON challenge_response.student_id = team.student_id LEFT OUTER JOIN mentors AS mentorTeam ON team.mentor_id = mentorTeam.mentor_id LEFT OUTER JOIN organizations AS mentorTeamOrg ON mentorTeam.organization_code = mentorTeamOrg.organization_code WHERE challenge_responses.student_id =  \`challenge_responses\`.\`student_id\` GROUP BY challenge_response.student_id)`), 'organization_name'
-                                    // ],  
+                                    [
+                                        db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
+                                    ],
+                                    [
+                                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_name'
+                                    ],
+                                    [
+                                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_type'
+                                    ],  
                                 ],
                                 where: {
                                     [Op.and]: [
@@ -425,13 +428,15 @@ export default class ChallengeResponsesController extends BaseController {
                                     [
                                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                                     ],
-                                    
-                                    // [
-                                    //     db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM  students  AS s LEFT OUTER JOIN  teams AS t ON s.student_id = t.student_id WHERE t.student_id = \`challenge_response\`.\`student_id\` )`), 'team_members'
-                                    // ],
-                                    // [
-                                    //     db.literal(`(SELECT mentorTeamOrg.organization_name FROM challenge_responses AS challenge_responses LEFT OUTER JOIN teams AS team ON challenge_response.student_id = team.student_id LEFT OUTER JOIN mentors AS mentorTeam ON team.mentor_id = mentorTeam.mentor_id LEFT OUTER JOIN organizations AS mentorTeamOrg ON mentorTeam.organization_code = mentorTeamOrg.organization_code WHERE challenge_responses.student_id =  \`challenge_response\`.\`student_id\` GROUP BY challenge_response.student_id)`), 'organization_name'
-                                    // ],
+                                    [
+                                        db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
+                                    ],
+                                    [
+                                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_name'
+                                    ],
+                                    [
+                                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_type'
+                                    ], 
                                     
                                 ],
                                 where: {
@@ -529,15 +534,15 @@ export default class ChallengeResponsesController extends BaseController {
                             [
                                 db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                             ],
-                            // [
-                            //     db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM  students  AS s LEFT OUTER JOIN  teams AS t ON s.student_id = t.student_id WHERE t.student_id = \`challenge_response\`.\`student_id\` )`), 'team_members'
-                            // ],
-                            // [
-                            //     db.literal(`(SELECT mentorTeamOrg.organization_name FROM challenge_responses AS challenge_responses LEFT OUTER JOIN teams AS team ON challenge_response.student_id = team.student_id LEFT OUTER JOIN mentors AS mentorTeam ON team.mentor_id = mentorTeam.mentor_id LEFT OUTER JOIN organizations AS mentorTeamOrg ON mentorTeam.organization_code = mentorTeamOrg.organization_code WHERE challenge_responses.student_id =  \`challenge_response\`.\`student_id\` GROUP BY challenge_response.student_id)`), 'organization_name'
-                            // ],
-                            // [
-                            //     db.literal(`(SELECT mentorTeamOrg.district FROM challenge_responses AS challenge_responses LEFT OUTER JOIN teams AS team ON challenge_response.student_id = team.student_id LEFT OUTER JOIN mentors AS mentorTeam ON team.mentor_id = mentorTeam.mentor_id LEFT OUTER JOIN organizations AS mentorTeamOrg ON mentorTeam.organization_code = mentorTeamOrg.organization_code WHERE challenge_responses.student_id = \`challenge_response\`.\`student_id\` GROUP BY challenge_response.student_id)`), 'district'
-                            // ],
+                            [
+                                db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
+                            ],
+                            [
+                                db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_name'
+                            ],
+                            [
+                                db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_responses\`.\`student_id\`)`), 'college_type'
+                            ], 
                            
                         ],
                         where: {
@@ -900,7 +905,7 @@ export default class ChallengeResponsesController extends BaseController {
             if (!evaluator_user_id) throw unauthorized(speeches.ID_REQUIRED);
 
             let activeState = await this.crudService.findOne(evaluation_process, {
-                attributes: ['state'], where: { [Op.and]: [{ status: 'ACTIVE' }, { level_name: 'L1' }] }
+                attributes: ['district'], where: { [Op.and]: [{ status: 'ACTIVE' }, { level_name: 'L1' }] }
             });
             let states = activeState.dataValues.state;
             const convertToStateArray = states.split(",");
@@ -908,10 +913,10 @@ export default class ChallengeResponsesController extends BaseController {
             let boolStatusWhereClauseRequired = false;
 
             if (paramStatus && (paramStatus in constents.challenges_flags.list)) {
-                whereClauseStatusPart = { "status": paramStatus, state: { [Op.in]: convertToStateArray } };
+                whereClauseStatusPart = { "status": paramStatus, district: { [Op.in]: convertToStateArray } };
                 boolStatusWhereClauseRequired = true;
             } else {
-                whereClauseStatusPart = { "status": "SUBMITTED", state: { [Op.in]: convertToStateArray } };
+                whereClauseStatusPart = { "status": "SUBMITTED", district: { [Op.in]: convertToStateArray } };
                 boolStatusWhereClauseRequired = true;
             };
 
@@ -945,7 +950,7 @@ export default class ChallengeResponsesController extends BaseController {
                             "created_at",
                             "submitted_at",
                             `status`,
-                            `state`,
+                            `district`,
                             `idea_describe`,
                             [
                                 db.literal(`( SELECT count(*) FROM challenge_responses as idea where idea.status = 'SUBMITTED')`),
@@ -979,14 +984,14 @@ export default class ChallengeResponsesController extends BaseController {
                         break;
                     case 'L2':
                         let activeState = await this.crudService.findOne(evaluation_process, {
-                            attributes: ['state'], where: { [Op.and]: [{ status: 'ACTIVE' }, { level_name: 'L2' }] }
+                            attributes: ['district'], where: { [Op.and]: [{ status: 'ACTIVE' }, { level_name: 'L2' }] }
                         });
                         let states = activeState.dataValues.state
                         if (states !== null) {
                             let statesArray = states.replace(/,/g, "','")
-                            challengeResponse = await db.query("SELECT challenge_responses.challenge_response_id, challenge_responses.challenge_id, challenge_responses.theme, challenge_responses.student_id, challenge_responses.title,challenge_responses.solve,challenge_responses.customer,challenge_responses.detail,challenge_responses.stage,challenge_responses.unique,challenge_responses.similar,challenge_responses.revenue,challenge_responses.society,challenge_responses.confident,challenge_responses.prototype_image,challenge_responses.prototype_link,challenge_responses.support, challenge_responses.initiated_by,  challenge_responses.created_at, challenge_responses.submitted_at,    challenge_responses.status, challenge_responses.state,challenge_responses.idea_describe,(SELECT COUNT(*) FROM challenge_responses AS idea WHERE idea.evaluation_status = 'SELECTEDROUND1') AS 'overAllIdeas', (SELECT COUNT(*) - SUM(CASE WHEN FIND_IN_SET('" + evaluator_user_id.toString() + "', evals) > 0 THEN 1 ELSE 0 END) FROM l1_accepted WHERE l1_accepted.state IN ('" + statesArray + "')) AS 'openIdeas', (SELECT COUNT(*) FROM evaluator_ratings AS A WHERE A.evaluator_id = " + evaluator_user_id.toString() + ") AS 'evaluatedIdeas' FROM l1_accepted AS l1_accepted LEFT OUTER JOIN challenge_responses AS challenge_responses ON l1_accepted.challenge_response_id = challenge_responses.challenge_response_id WHERE l1_accepted.state IN ('" + statesArray + "') AND NOT FIND_IN_SET(" + evaluator_user_id.toString() + ", l1_accepted.evals) ORDER BY RAND() LIMIT 1", { type: QueryTypes.SELECT });
+                            challengeResponse = await db.query("SELECT challenge_responses.challenge_response_id, challenge_responses.challenge_id, challenge_responses.theme, challenge_responses.student_id, challenge_responses.title,challenge_responses.solve,challenge_responses.customer,challenge_responses.detail,challenge_responses.stage,challenge_responses.unique,challenge_responses.similar,challenge_responses.revenue,challenge_responses.society,challenge_responses.confident,challenge_responses.prototype_image,challenge_responses.prototype_link,challenge_responses.support, challenge_responses.initiated_by,  challenge_responses.created_at, challenge_responses.submitted_at,    challenge_responses.status, challenge_responses.district,challenge_responses.idea_describe,(SELECT COUNT(*) FROM challenge_responses AS idea WHERE idea.evaluation_status = 'SELECTEDROUND1') AS 'overAllIdeas', (SELECT COUNT(*) - SUM(CASE WHEN FIND_IN_SET('" + evaluator_user_id.toString() + "', evals) > 0 THEN 1 ELSE 0 END) FROM l1_accepted WHERE l1_accepted.district IN ('" + statesArray + "')) AS 'openIdeas', (SELECT COUNT(*) FROM evaluator_ratings AS A WHERE A.evaluator_id = " + evaluator_user_id.toString() + ") AS 'evaluatedIdeas' FROM l1_accepted AS l1_accepted LEFT OUTER JOIN challenge_responses AS challenge_responses ON l1_accepted.challenge_response_id = challenge_responses.challenge_response_id WHERE l1_accepted.district IN ('" + statesArray + "') AND NOT FIND_IN_SET(" + evaluator_user_id.toString() + ", l1_accepted.evals) ORDER BY RAND() LIMIT 1", { type: QueryTypes.SELECT });
                         } else {
-                            challengeResponse = await db.query(`SELECT challenge_responses.challenge_response_id, challenge_responses.challenge_id, challenge_responses.theme, challenge_responses.student_id, challenge_responses.title,challenge_responses.solve,challenge_responses.customer,challenge_responses.detail,challenge_responses.stage,challenge_responses.unique,challenge_responses.similar,challenge_responses.revenue,challenge_responses.society,challenge_responses.confident,challenge_responses.prototype_image,challenge_responses.prototype_link,challenge_responses.support, challenge_responses.initiated_by,  challenge_responses.created_at, challenge_responses.submitted_at,    challenge_responses.status, challenge_responses.state,challenge_responses.idea_describe,(SELECT COUNT(*) FROM challenge_responses AS idea WHERE idea.evaluation_status = 'SELECTEDROUND1') AS 'overAllIdeas', (SELECT COUNT(*) - SUM(CASE WHEN FIND_IN_SET(${evaluator_user_id.toString()}, evals) > 0 THEN 1 ELSE 0 END) FROM l1_accepted) AS 'openIdeas', (SELECT COUNT(*) FROM evaluator_ratings AS A WHERE A.evaluator_id = ${evaluator_user_id.toString()}) AS 'evaluatedIdeas' FROM l1_accepted AS l1_accepted LEFT OUTER JOIN challenge_responses AS challenge_responses ON l1_accepted.challenge_response_id = challenge_responses.challenge_response_id WHERE NOT FIND_IN_SET(${evaluator_user_id.toString()}, l1_accepted.evals) ORDER BY RAND() LIMIT 1`, { type: QueryTypes.SELECT });
+                            challengeResponse = await db.query(`SELECT challenge_responses.challenge_response_id, challenge_responses.challenge_id, challenge_responses.theme, challenge_responses.student_id, challenge_responses.title,challenge_responses.solve,challenge_responses.customer,challenge_responses.detail,challenge_responses.stage,challenge_responses.unique,challenge_responses.similar,challenge_responses.revenue,challenge_responses.society,challenge_responses.confident,challenge_responses.prototype_image,challenge_responses.prototype_link,challenge_responses.support, challenge_responses.initiated_by,  challenge_responses.created_at, challenge_responses.submitted_at,    challenge_responses.status, challenge_responses.district,challenge_responses.idea_describe,(SELECT COUNT(*) FROM challenge_responses AS idea WHERE idea.evaluation_status = 'SELECTEDROUND1') AS 'overAllIdeas', (SELECT COUNT(*) - SUM(CASE WHEN FIND_IN_SET(${evaluator_user_id.toString()}, evals) > 0 THEN 1 ELSE 0 END) FROM l1_accepted) AS 'openIdeas', (SELECT COUNT(*) FROM evaluator_ratings AS A WHERE A.evaluator_id = ${evaluator_user_id.toString()}) AS 'evaluatedIdeas' FROM l1_accepted AS l1_accepted LEFT OUTER JOIN challenge_responses AS challenge_responses ON l1_accepted.challenge_response_id = challenge_responses.challenge_response_id WHERE NOT FIND_IN_SET(${evaluator_user_id.toString()}, l1_accepted.evals) ORDER BY RAND() LIMIT 1`, { type: QueryTypes.SELECT });
                         }
                         const evaluatedIdeas = await db.query(`SELECT COUNT(*) as evaluatedIdeas FROM evaluator_ratings AS A WHERE A.evaluator_id = ${evaluator_user_id.toString()}`, { type: QueryTypes.SELECT })
                         let throwMessage = {
