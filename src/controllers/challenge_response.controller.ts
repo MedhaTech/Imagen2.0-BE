@@ -1428,9 +1428,9 @@ export default class ChallengeResponsesController extends BaseController {
                         [
                             db.literal(`(SELECT  JSON_ARRAYAGG(evaluator_id) FROM  evaluator_ratings as rating WHERE rating.challenge_response_id = \`challenge_response\`.\`challenge_response_id\`)`), 'evaluator_id'
                         ],
-                        // [
-                        //     db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = evaluator_ratings.created_by)`), 'rated_evaluated_name'
-                        // ]
+                        [
+                            db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = evaluator_ratings.created_by)`), 'rated_evaluated_name'
+                        ]
                     ]
                 }], limit, offset, subQuery: false
             });
