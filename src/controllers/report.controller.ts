@@ -969,4 +969,74 @@ GROUP BY challenge_response_id;`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    protected async getL1Report(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, theme, college_type, evaluation_status } = newREQQuery;
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+            let themesFilter: any = `'%%'`
+            let evaluationstatusFilter: any = `'%%'`
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+            if (theme !== 'All Themes' && theme !== undefined) {
+                themesFilter = `'${theme}'`
+            }
+            if (evaluation_status !== 'Both' && evaluation_status !== undefined) {
+                evaluationstatusFilter = `'${evaluation_status}'`
+            }
+            const summary = await db.query(`SELECT 
+    s.district,
+    challenge_response_id,
+    college_name,
+    college_type,
+    (select JSON_ARRAYAGG(full_name) from students where student_id = cr.student_id or students.type = cr.student_id) as student_names,
+    theme,
+    idea_describe,
+    title,
+    solve,
+    customer,
+    detail,
+    stage,
+    cr.unique,
+    similar,
+    revenue,
+    society,
+    confident,
+    support,
+    prototype_image,
+    prototype_link,
+    evaluation_status
+FROM
+    challenge_responses AS cr
+        JOIN
+    students AS s ON cr.student_id = s.student_id
+WHERE
+    s.status = 'ACTIVE'
+        && evaluation_status IN ('REJECTEDROUND1' , 'SELECTEDROUND1')
+		&& s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} && cr.theme LIKE ${themesFilter} && cr.evaluation_status LIKE ${evaluationstatusFilter};`, { type: QueryTypes.SELECT });
+            if (!summary) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (summary instanceof Error) {
+                throw summary
+            }
+            res.status(200).send(dispatcher(res, summary, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
 }
