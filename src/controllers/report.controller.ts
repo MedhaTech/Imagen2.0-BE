@@ -39,6 +39,7 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/L2ReportTable3`, this.getL2ReportTable3.bind(this));
         this.router.get(`${this.path}/L3ReportTable1`, this.getL3ReportTable1.bind(this));
         this.router.get(`${this.path}/L3ReportTable2`, this.getL3ReportTable2.bind(this));
+        this.router.get(`${this.path}/L1deatilreport`, this.getL1Report.bind(this));
     }
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
