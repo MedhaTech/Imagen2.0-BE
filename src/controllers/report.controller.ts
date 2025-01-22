@@ -40,6 +40,8 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/L3ReportTable1`, this.getL3ReportTable1.bind(this));
         this.router.get(`${this.path}/L3ReportTable2`, this.getL3ReportTable2.bind(this));
         this.router.get(`${this.path}/L1deatilreport`, this.getL1Report.bind(this));
+        this.router.get(`${this.path}/L2deatilreport`, this.getL2Report.bind(this));
+        this.router.get(`${this.path}/L3deatilreport`, this.getL3Report.bind(this));
     }
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
@@ -1036,6 +1038,173 @@ WHERE
                 throw summary
             }
             res.status(200).send(dispatcher(res, summary, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL2Report(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, theme, college_type } = newREQQuery;
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+            let themesFilter: any = `'%%'`
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+            if (theme !== 'All Themes' && theme !== undefined) {
+                themesFilter = `'${theme}'`
+            }
+
+            const summary = await db.query(`SELECT 
+    s.district,
+    challenge_response_id,
+    college_name,
+    college_type,
+    (select JSON_ARRAYAGG(full_name) from students where student_id = cr.student_id or students.type = cr.student_id) as student_names,
+    theme,
+    idea_describe,
+    title,
+    solve,
+    customer,
+    detail,
+    stage,
+    cr.unique,
+    similar,
+    revenue,
+    society,
+    confident,
+    support,
+    prototype_image,
+    prototype_link,
+    final_result
+FROM
+    challenge_responses AS cr
+        JOIN
+    students AS s ON cr.student_id = s.student_id
+WHERE
+    s.status = 'ACTIVE'
+        && evaluation_status = 'SELECTEDROUND1'
+		&& s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} && cr.theme LIKE ${themesFilter};`, { type: QueryTypes.SELECT });
+
+            const evaluatorRatingValues = await db.query(`SELECT 
+challenge_response_id,
+    AVG(overall) AS overall_score,
+    AVG(param_1) AS novelty,
+    AVG(param_3) AS feasibility,
+    AVG(param_4) AS scalability,
+    AVG(param_5) AS sustainability,
+    AVG(param_2) AS useful,
+    COUNT(challenge_response_id) AS eval_count,
+    (AVG(param_1) + AVG(param_2)) / 2 AS quality_score,
+    (AVG(param_3) + AVG(param_4) + AVG(param_5)) / 3 AS feasibility_score
+FROM
+    evaluator_ratings
+GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
+            data['summary'] = summary;
+            data['evaluatorRatingValues'] = evaluatorRatingValues;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    protected async getL3Report(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let data: any = {}
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, theme, college_type } = newREQQuery;
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+            let themesFilter: any = `'%%'`
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+            if (theme !== 'All Themes' && theme !== undefined) {
+                themesFilter = `'${theme}'`
+            }
+            const summary = await db.query(`SELECT 
+    s.district,
+    challenge_response_id,
+    college_name,
+    college_type,
+    (select JSON_ARRAYAGG(full_name) from students where student_id = cr.student_id or students.type = cr.student_id) as student_names,
+    theme,
+    idea_describe,
+    title,
+    solve,
+    customer,
+    detail,
+    stage,
+    cr.unique,
+    similar,
+    revenue,
+    society,
+    confident,
+    support,
+    prototype_image,
+    prototype_link,
+    final_result
+FROM
+    challenge_responses AS cr
+        JOIN
+    students AS s ON cr.student_id = s.student_id
+WHERE
+    s.status = 'ACTIVE'
+        && final_result <>'null'
+		&& s.district LIKE ${districtFilter} && s.college_type LIKE ${categoryFilter} && cr.theme LIKE ${themesFilter};`, { type: QueryTypes.SELECT });
+            const evaluatorRatingValues = await db.query(`SELECT 
+challenge_response_id,
+    AVG(overall) AS overall_score,
+    AVG(param_1) AS novelty,
+    AVG(param_3) AS feasibility,
+    AVG(param_4) AS scalability,
+    AVG(param_5) AS sustainability,
+    AVG(param_2) AS useful,
+    (AVG(param_1) + AVG(param_2)) / 2 AS quality_score,
+    (AVG(param_3) + AVG(param_4) + AVG(param_5)) / 3 AS feasibility_score
+FROM
+    evaluator_ratings
+GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
+            data['summary'] = summary;
+            data['evaluatorRatingValues'] = evaluatorRatingValues;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
         } catch (err) {
             next(err)
         }
