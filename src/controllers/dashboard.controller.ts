@@ -193,7 +193,11 @@ export default class DashboardController extends BaseController {
             if (studentStatsResul instanceof Error) {
                 throw studentStatsResul
             }
-            //console.log(studentStatsResul)
+
+            studentStatsResul.map(async (item: any, index: any) => {
+                studentStatsResul[index]['idea_submission'] = studentStatsResul[0]['idea_submission']  
+            })
+
             const badges = studentStatsResul.badges;
             let badgesCount = 0
             if (badges) {
@@ -228,7 +232,7 @@ export default class DashboardController extends BaseController {
     private async getMapStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             this.model = dashboard_map_stat.name
-            const result = await this.crudService.findAll(dashboard_map_stat,{
+            const result = await this.crudService.findAll(dashboard_map_stat, {
                 attributes: [
                     "dashboard_map_stat_id",
                     "district_name",
@@ -240,19 +244,19 @@ export default class DashboardController extends BaseController {
             }
             )
             const TotalObj: any = {
-                reg_mentors:0,
-                teams:0,
-                students:0,
-                ideas:0,
+                reg_mentors: 0,
+                teams: 0,
+                students: 0,
+                ideas: 0,
                 district_name: "all"
             };
             result.map((student: any) => {
-                TotalObj.reg_mentors +=Number(student.reg_mentors)
-                TotalObj.teams +=Number(student.teams)
-                TotalObj.students +=Number(student.students)
-                TotalObj.ideas +=Number(student.ideas)
+                TotalObj.reg_mentors += Number(student.reg_mentors)
+                TotalObj.teams += Number(student.teams)
+                TotalObj.students += Number(student.students)
+                TotalObj.ideas += Number(student.ideas)
             })
-            const totalResult = [...result,TotalObj]
+            const totalResult = [...result, TotalObj]
             return res.status(200).send(dispatcher(res, totalResult, 'success'));
         } catch (error) {
             next(error);
@@ -479,8 +483,8 @@ WHERE
             }
             const { user_id } = newREQQuery
             if (user_id) {
-                const preSurvey = await db.query(`SELECT count(*) as preSurvey FROM Aim_db.quiz_survey_responses where quiz_survey_id =1 and user_id = ${user_id};`, { type: QueryTypes.SELECT });
-                const postSurvey = await db.query(`SELECT count(*) as postSurvey FROM Aim_db.quiz_survey_responses where quiz_survey_id =3 and user_id = ${user_id};`, { type: QueryTypes.SELECT });
+                const preSurvey = await db.query(`SELECT count(*) as preSurvey FROM quiz_survey_responses where quiz_survey_id =1 and user_id = ${user_id};`, { type: QueryTypes.SELECT });
+                const postSurvey = await db.query(`SELECT count(*) as postSurvey FROM quiz_survey_responses where quiz_survey_id =3 and user_id = ${user_id};`, { type: QueryTypes.SELECT });
                 if (Object.values(preSurvey[0]).toString() === '1') {
                     result['preSurvey'] = "COMPLETED"
                 } else
@@ -511,7 +515,7 @@ WHERE
             }
             const { state_name } = newREQQuery
             if (state_name) {
-                const preSurvey = await db.query(`SELECT whatapp_link FROM Aim_db.state_coordinators where state_name like "${state_name}";`, { type: QueryTypes.SELECT });
+                const preSurvey = await db.query(`SELECT whatapp_link FROM state_coordinators where state_name like "${state_name}";`, { type: QueryTypes.SELECT });
                 result = Object.values(preSurvey[0]).toString()
             }
             res.status(200).send(dispatcher(res, result, 'done'))
@@ -634,15 +638,15 @@ FROM
     mentors AS mn
 WHERE
     mn.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
-        //     const mentorMale = await db.query(`SELECT 
-        //     COUNT(mn.mentor_id) AS mentorMale
-        // FROM
-        //     organizations AS og
-        //         LEFT JOIN
-        //     mentors AS mn ON og.organization_code = mn.organization_code
-        //     WHERE og.status='ACTIVE' && mn.gender = 'Male';`, { type: QueryTypes.SELECT })
+            //     const mentorMale = await db.query(`SELECT 
+            //     COUNT(mn.mentor_id) AS mentorMale
+            // FROM
+            //     organizations AS og
+            //         LEFT JOIN
+            //     mentors AS mn ON og.organization_code = mn.organization_code
+            //     WHERE og.status='ACTIVE' && mn.gender = 'Male';`, { type: QueryTypes.SELECT })
             result['mentorCount'] = Object.values(mentorCount[0]).toString()
-           // result['mentorMale'] = Object.values(mentorMale[0]).toString()
+            // result['mentorMale'] = Object.values(mentorMale[0]).toString()
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {

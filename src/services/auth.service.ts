@@ -328,7 +328,7 @@ export default class authService {
         }
     }
 
-    async emailotp(requestBody: any,modelname:any) {
+    async emailotp(requestBody: any, modelname: any) {
         let result: any = {};
         try {
             const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
@@ -340,7 +340,7 @@ export default class authService {
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {
-                    const otp = await this.triggerEmail(requestBody.username, 1, 'no');
+                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : 'Student');
                     if (otp instanceof Error) {
                         throw otp;
                     }
@@ -360,40 +360,40 @@ export default class authService {
      * @param responseBody Object
      * @returns Object
      */
-    async triggerEmail(email: any, id: any, fulldata: any) {
+    async triggerEmail(email: any, id: any, fulldata: any, role: any) {
         const result: any = {}
         const otp: any = Math.random().toFixed(6).substr(-6);
         const verifyOtpdata = `<body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-        <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+        <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
-        <h3>Dear Guide Teacher,</h3>
+        <h3>Dear ${role},</h3>
         
-        <p>Your One-Time Password (OTP) to register yourself as a guide teacher in School Innovation Marathon (SIM 24-25) is <b>${otp}</b></p>
+        <p>Your One-Time Password (OTP) to register yourself in Youth for Social Impact 2025 is <b>${otp}</b></p>
         
         <p>We appreciate for your interest in inspiring students to solve problems with simplified design thinking process as a method to innovate through this program.</p>
         <p>
         <strong>
-        Regards,<br> SIM Team
+        Regards,<br> YFSI Team
         </strong>
         </div></body>`
         const forgotPassData = `
         <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-        <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+        <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
-        <h3>Dear Guide Teacher,</h3>
-        <p>Your temporary password to login to School Innovation Marathon platform is <b>${otp}.</b></p>
+        <h3>Dear ${role},</h3>
+        <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
-        <p><strong>Link: https://schoolinnovationmarathon.org/login</strong></p>
+        <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
         <p>
         <strong>
-        Regards,<br> SIM Team
+        Regards,<br> YFSI Team
         </strong>
         </p>
         </div></body>`
-        const verifyOtpSubject = `OTP to register for School Innovation Marathon (SIM 24-25)`
-        const forgotPassSubjec = `Temporary Password to Login into School Innovation Marathon (SIM 24-25)`
-        const fullSubjec = `Welcome! Your School Innovation Marathon (SIM 24-25) registration was successful. Check out your login details.`
-        const teamsCredentials = `SIM 2024 - Teams Credentials`
+        const verifyOtpSubject = `OTP to register for Youth for Social Impact 2025`
+        const forgotPassSubjec = `Temporary Password to Login into Youth for Social Impact 2025`
+        const fullSubjec = `Welcome! Your Youth for Social Impact 2025 registration was successful. Check out your login details.`
+        const teamsCredentials = `YFSI 2025 - Teams Credentials`
         AWS.config.update({
             region: 'ap-south-1',
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -460,7 +460,7 @@ export default class authService {
                 });
             } else {
                 mentor_res = await this.crudService.findOne(user, {
-                    where: { username: requestBody.email }
+                    where: { username: requestBody.email,role:requestBody.role }
                 });
             }
             if (!mentor_res) {
@@ -477,7 +477,7 @@ export default class authService {
                 passwordNeedToBeUpdated['otp'] = word;
                 passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
             } else {
-                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no');
+                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Institution User');
                 passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
                 if (passwordNeedToBeUpdated instanceof Error) {
                     throw passwordNeedToBeUpdated;
@@ -506,33 +506,30 @@ export default class authService {
     async triggerWelcome(requestBody: any) {
         let result: any = {};
         try {
-            const { school_name, udise_code, district, state, pin_code, email, mobile } = requestBody;
+            const { college_name, college_type, district, email, mobile } = requestBody;
             var pass = email.trim();
             var myArray = pass.split('@');
             let word = myArray[0];
             const WelcomeTemp = `
             <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
-            <img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+            <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
             <div style="padding: 1% 5%;">
-            <h3>Dear Guide Teacher,</h3>
-            <h4>Congratulations for successfully registering for School Innovation Marathon 24-25</h4>
+            <h3>Dear Institution User,</h3>
+            <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>Your schools has been successfully registered with the following details :
-            <br> School name: <strong> ${school_name}</strong> <br> UDISE CODE:<strong> ${udise_code}</strong>
+            <br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
             <br> District:<strong> ${district}</strong>
-             <br> State:<strong> ${state}</strong>
-             <br> Pincode:<strong> ${pin_code}</strong>
             </p>
-            <p> Below are your log-in details: </p>
-            <p> Login User ID: <strong> ${email} </strong>
+            <p> 
+            Email Id: <strong> ${email} </strong>
             <br>
-            Password: <strong>  ${word}
-            </strong> <br>
             Mobile no: <strong> ${mobile} </strong>
+            </p>
             <p>Please use your user id and password to login and proceed further.</p>
-            <p><strong>Link: https://schoolinnovationmarathon.org/login</strong></p>
-            <p><strong>Regards,<br> SIM Team</strong></p>
+            <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
+            <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>`
-            const otp = await this.triggerEmail(email, 2, WelcomeTemp);
+            const otp = await this.triggerEmail(email, 2, WelcomeTemp, 'Institution User');
             if (otp instanceof Error) {
                 throw otp;
             }
@@ -933,7 +930,7 @@ export default class authService {
         try {
             let passwordNeedToBeUpdated: any = {};
             const stu_res = await this.crudService.findOne(user, {
-                where: { username: requestBody.email }
+                where: { username: requestBody.email, role:requestBody.role }
             });
             if (!stu_res) {
                 result['error'] = speeches.USER_NOT_FOUND;
@@ -942,7 +939,7 @@ export default class authService {
             const user_data = await this.crudService.findOnePassword(user, {
                 where: { user_id: stu_res.dataValues.user_id }
             });
-            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no');
+            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Student');
             passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
             if (passwordNeedToBeUpdated instanceof Error) {
                 throw passwordNeedToBeUpdated;
@@ -1048,11 +1045,11 @@ export default class authService {
     </style>
 </head>
 <body style="border: solid;margin-right: 15%;margin-left: 15%;">
-<img src="https://aim-email-images.s3.ap-south-1.amazonaws.com/Email1SIM_2024.png.jpg" alt="header" style="width: 100%;" />
+<img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
 <div style="padding: 1% 5%;">
     <h3>Dear Guide Teacher,</h3>
-    <p>Greetings from School Innovation Marathom 2024. Here are your <strong>SIM student teams credentials</strong> for your reference.</p>
-    <p><strong>Team login URL : https://schoolinnovationmarathon.org/login</strong></p>
+    <p>Greetings from Youth for Social Impact 2025. Here are your <strong>YFSI student teams credentials</strong> for your reference.</p>
+    <p><strong>Student login URL : http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
     <table>
         <tr>
             <th>SL No</th>
@@ -1063,13 +1060,13 @@ export default class authService {
         ${allstring}
     </table>
     <strong>
-        Regards,<br> SIM Team
+        Regards,<br> YFSI Team
         </strong>
 </div>
 </body>
 </html>
 `
-            const otp = await this.triggerEmail(email, 4, WelcomeTemp);
+            const otp = await this.triggerEmail(email, 4, WelcomeTemp, 'Student');
             if (otp instanceof Error) {
                 throw otp;
             }
@@ -1130,6 +1127,36 @@ export default class authService {
             return { combilequery, categoryList }
         } catch (err) {
             return err
+        }
+    }
+    //evaluator restpassword
+    async evaluatorResetPassword(requestBody: any) {
+        let result: any = {};
+        let eval_res: any;
+        try {
+            eval_res = await this.crudService.findOne(user, {
+                where: { username: requestBody.username }
+            });
+            if (!eval_res) {
+                result['error'] = speeches.USER_NOT_FOUND;
+                return result;
+            }
+            const user_data = await this.crudService.findOnePassword(user, {
+                where: { user_id: eval_res.dataValues.user_id }
+            });
+
+            let hashString = await this.generateCryptEncryption(requestBody.mobile)
+            const user_res: any = await this.crudService.updateAndFind(user, {
+                password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT)
+            }, { where: { user_id: user_data.dataValues.user_id } })
+            result['data'] = {
+                username: user_res.dataValues.username,
+                user_id: user_res.dataValues.user_id
+            };
+            return result;
+        } catch (error) {
+            result['error'] = error;
+            return result;
         }
     }
 }

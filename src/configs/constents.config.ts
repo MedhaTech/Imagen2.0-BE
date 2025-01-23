@@ -73,6 +73,15 @@ export const constents = {
     },
     default: 'OPEN'
   },
+  discussion_forum_status_flags: {
+    list: {
+      'OPEN': 'OPEN',
+      'INPROGRESS': 'INPROGRESS',
+      'RESOLVED': 'RESOLVED',
+      'INVALID': 'INVALID'
+    },
+    default: 'OPEN'
+  },
   quiz_question_level_flags: {
     list: {
       'HARD': 'HARD',
@@ -215,6 +224,7 @@ export const constents = {
   },
   TEAMS_MAX_STUDENTS_ALLOWED: 3,
   ALPHA_NUMERIC_PATTERN: /^[a-zA-Z0-9 ]*$/,
+  ALPHA_NUMERIC_PATTERN_HUD: /^[a-zA-Z0-9 -_.]*$/,
   ALPHA_NUMERIC_PATTERN_PLUS_SLASH: /^[a-zA-Z0-9 /]*$/,
   ALPHA_NUMERIC_PLUS_PATTERN : /^[a-zA-Z0-9 \-()&.,]*$/, //Don't allow semicolon
   ONLY_DIGIT_PATTERN: /^\d+$/,
