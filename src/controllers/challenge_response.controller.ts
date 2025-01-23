@@ -862,9 +862,21 @@ export default class ChallengeResponsesController extends BaseController {
                     "verified_at",
                     "mentor_rejected_reason",
                     "challenge_response_id",
+                    "district",
+                    "status",
                     [
                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
+                    ],
+                    [
+                        db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
+                    ],
+                    [
+                        db.literal(`(SELECT college_name FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_name'
+                    ],
+                    [
+                        db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
                     ]
+
                 ],
                 where: {
                     [Op.and]: [
