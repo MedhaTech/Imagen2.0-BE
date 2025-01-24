@@ -993,7 +993,7 @@ export default class ChallengeResponsesController extends BaseController {
                 attributes: ['district'], where: { [Op.and]: [{ status: 'ACTIVE' }, { level_name: 'L1' }] }
             });
             let activeStateforEvaluator = await this.crudService.findOne(evaluator, {
-                attributes: ['state'], where: { [Op.and]: [{ status: 'ACTIVE' }, { user_id: evaluator_user_id }] }
+                attributes: ['district'], where: { [Op.and]: [{ status: 'ACTIVE' }, { user_id: evaluator_user_id }] }
             });
 
             let states = activeState.dataValues.district;
