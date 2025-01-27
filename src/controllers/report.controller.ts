@@ -1090,7 +1090,8 @@ WHERE
     support,
     prototype_image,
     prototype_link,
-    final_result
+    final_result,
+    cr.status
 FROM
     challenge_responses AS cr
         JOIN
@@ -1174,7 +1175,8 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
     support,
     prototype_image,
     prototype_link,
-    final_result
+    final_result,
+    cr.status
 FROM
     challenge_responses AS cr
         JOIN
