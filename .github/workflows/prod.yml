@@ -35,7 +35,7 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
           ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMAGEN_PROD_BE_HOSTNAME}} '
-            cd /home/ubuntu/Imagen-BE &&
+            cd /home/ubuntu/Yfsi-Prod-Be &&
             sudo git pull origin main &&
             sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
       
