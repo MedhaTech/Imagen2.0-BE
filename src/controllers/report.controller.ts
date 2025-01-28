@@ -1022,7 +1022,8 @@ GROUP BY challenge_response_id;`, { type: QueryTypes.SELECT });
     support,
     prototype_image,
     prototype_link,
-    evaluation_status
+    evaluation_status,
+    cr.status
 FROM
     challenge_responses AS cr
         JOIN
