@@ -381,9 +381,9 @@ export default class authService {
         <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
         <div style="padding: 1% 5%;">
         <h3>Dear ${role},</h3>
-        <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
+        <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
-        <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
+        <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
         <p>
         <strong>
         Regards,<br> YFSI Team
@@ -526,7 +526,7 @@ export default class authService {
             Mobile no: <strong> ${mobile} </strong>
             </p>
             <p>Please use your user id and password to login and proceed further.</p>
-            <p><strong>Link: http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
+            <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>`
             const otp = await this.triggerEmail(email, 2, WelcomeTemp, 'Institution User');
@@ -1049,7 +1049,7 @@ export default class authService {
 <div style="padding: 1% 5%;">
     <h3>Dear Guide Teacher,</h3>
     <p>Greetings from Youth for Social Impact 2025. Here are your <strong>YFSI student teams credentials</strong> for your reference.</p>
-    <p><strong>Student login URL : http://ec2-43-204-38-180.ap-south-1.compute.amazonaws.com/login</strong></p>
+    <p><strong>Student login URL : https://www.youthforsocialimpact.in/login</strong></p>
     <table>
         <tr>
             <th>SL No</th>
