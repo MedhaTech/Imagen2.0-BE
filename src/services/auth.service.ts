@@ -450,19 +450,13 @@ export default class authService {
     async mentorResetPassword(requestBody: any) {
         let result: any = {};
         let mentor_res: any;
-        let mentor_id: any = requestBody.mentor_id;
         let otp = requestBody.otp == undefined ? true : false;
         let passwordNeedToBeUpdated: any = {};
         try {
-            if (!otp) {
-                mentor_res = await this.crudService.findOne(user, {
-                    where: { username: requestBody.username }
-                });
-            } else {
-                mentor_res = await this.crudService.findOne(user, {
-                    where: { username: requestBody.email,role:requestBody.role }
-                });
-            }
+            mentor_res = await this.crudService.findOne(user, {
+                where: { username: requestBody.email, role: requestBody.role }
+            });
+
             if (!mentor_res) {
                 result['error'] = speeches.USER_NOT_FOUND;
                 return result;
@@ -471,22 +465,22 @@ export default class authService {
                 where: { user_id: mentor_res.dataValues.user_id }
             });
             if (!otp) {
-                var pass = requestBody.username.trim();
-                var myArray = pass.split('@');
-                let word = myArray[0];
-                passwordNeedToBeUpdated['otp'] = word;
+                passwordNeedToBeUpdated['otp'] = mentor_res.dataValues.mobile;
                 passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
+                if (passwordNeedToBeUpdated instanceof Error) {
+                    throw passwordNeedToBeUpdated;
+                }
             } else {
                 const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Institution User');
                 passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
                 if (passwordNeedToBeUpdated instanceof Error) {
                     throw passwordNeedToBeUpdated;
                 }
+                const findMentorDetailsAndUpdateOTP: any = await this.crudService.updateAndFind(mentor,
+                    { otp: passwordNeedToBeUpdated.otp },
+                    { where: { user_id: mentor_res.dataValues.user_id } }
+                );
             }
-            const findMentorDetailsAndUpdateOTP: any = await this.crudService.updateAndFind(mentor,
-                { otp: passwordNeedToBeUpdated.otp },
-                { where: { user_id: mentor_res.dataValues.user_id } }
-            );
             passwordNeedToBeUpdated.otp = String(passwordNeedToBeUpdated.otp);
             let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
             const user_res: any = await this.crudService.updateAndFind(user, {
@@ -503,18 +497,15 @@ export default class authService {
             return result;
         }
     }
-    async triggerWelcome(requestBody: any) {
+    async triggerWelcome(requestBody: any, role: any) {
         let result: any = {};
         try {
             const { college_name, college_type, district, email, mobile } = requestBody;
-            var pass = email.trim();
-            var myArray = pass.split('@');
-            let word = myArray[0];
             const WelcomeTemp = `
             <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
             <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
             <div style="padding: 1% 5%;">
-            <h3>Dear Institution User,</h3>
+            <h3>Dear ${role},</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>Your schools has been successfully registered with the following details :
             <br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
@@ -529,7 +520,7 @@ export default class authService {
             <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>`
-            const otp = await this.triggerEmail(email, 2, WelcomeTemp, 'Institution User');
+            const otp = await this.triggerEmail(email, 2, WelcomeTemp, '');
             if (otp instanceof Error) {
                 throw otp;
             }
@@ -929,8 +920,9 @@ export default class authService {
         let result: any = {};
         try {
             let passwordNeedToBeUpdated: any = {};
+            let otp = requestBody.otp == undefined ? true : false;
             const stu_res = await this.crudService.findOne(user, {
-                where: { username: requestBody.email, role:requestBody.role }
+                where: { username: requestBody.email, role: requestBody.role }
             });
             if (!stu_res) {
                 result['error'] = speeches.USER_NOT_FOUND;
@@ -939,15 +931,24 @@ export default class authService {
             const user_data = await this.crudService.findOnePassword(user, {
                 where: { user_id: stu_res.dataValues.user_id }
             });
-            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Student');
-            passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
-            if (passwordNeedToBeUpdated instanceof Error) {
-                throw passwordNeedToBeUpdated;
+            if (otp) {
+                const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Student');
+                passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
+                if (passwordNeedToBeUpdated instanceof Error) {
+                    throw passwordNeedToBeUpdated;
+                }
+                await this.crudService.updateAndFind(student,
+                    { otp: passwordNeedToBeUpdated.otp },
+                    { where: { user_id: stu_res.dataValues.user_id } }
+                );
             }
-            await this.crudService.updateAndFind(student,
-                { otp: passwordNeedToBeUpdated.otp },
-                { where: { user_id: stu_res.dataValues.user_id } }
-            );
+            else {
+                passwordNeedToBeUpdated['otp'] = stu_res.dataValues.mobile
+                passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
+                if (passwordNeedToBeUpdated instanceof Error) {
+                    throw passwordNeedToBeUpdated;
+                }
+            }
             passwordNeedToBeUpdated.otp = String(passwordNeedToBeUpdated.otp);
             let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
             const user_res: any = await this.crudService.updateAndFind(user, {
