@@ -62,6 +62,9 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/totalQuizSurveys`, this.getTotalQuizSurveys.bind(this));
         //State DashBoard stats
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
+        //public api's
+        this.router.get(`${this.path}/CollegeNameForCollegeType`, this.getCollegeNameForCollegeType.bind(this));
+        
     }
 
 
@@ -195,7 +198,7 @@ export default class DashboardController extends BaseController {
             }
 
             studentStatsResul.map(async (item: any, index: any) => {
-                studentStatsResul[index]['idea_submission'] = studentStatsResul[0]['idea_submission']  
+                studentStatsResul[index]['idea_submission'] = studentStatsResul[0]['idea_submission']
             })
 
             const badges = studentStatsResul.badges;
@@ -1195,6 +1198,33 @@ WHERE
     END) AS studentpost
 FROM
     quiz_survey_responses AS qsr`, { type: QueryTypes.SELECT })
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    protected async getCollegeNameForCollegeType(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { college_type } = newREQQuery
+            if (college_type) {
+                result = await db.query(`SELECT DISTINCT college_name
+FROM students
+WHERE college_type = '${college_type}'
+UNION
+SELECT DISTINCT college_name
+FROM mentors
+WHERE college_type = '${college_type}';
+`, { type: QueryTypes.SELECT });
+            }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
