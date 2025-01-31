@@ -461,15 +461,12 @@ export default class authService {
                 result['error'] = speeches.USER_NOT_FOUND;
                 return result;
             }
-            const user_data = await this.crudService.findOnePassword(user, {
+            const user_data = await this.crudService.findOne(mentor, {
                 where: { user_id: mentor_res.dataValues.user_id }
             });
             if (!otp) {
-                passwordNeedToBeUpdated['otp'] = mentor_res.dataValues.mobile;
+                passwordNeedToBeUpdated['otp'] = user_data.dataValues.mobile;
                 passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
-                if (passwordNeedToBeUpdated instanceof Error) {
-                    throw passwordNeedToBeUpdated;
-                }
             } else {
                 const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Institution User');
                 passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
@@ -485,7 +482,7 @@ export default class authService {
             let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
             const user_res: any = await this.crudService.updateAndFind(user, {
                 password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT)
-            }, { where: { user_id: user_data.dataValues.user_id } })
+            }, { where: { user_id: mentor_res.dataValues.user_id } })
             result['data'] = {
                 username: user_res.dataValues.username,
                 user_id: user_res.dataValues.user_id,
@@ -928,7 +925,7 @@ export default class authService {
                 result['error'] = speeches.USER_NOT_FOUND;
                 return result;
             }
-            const user_data = await this.crudService.findOnePassword(user, {
+            const user_data = await this.crudService.findOnePassword(student, {
                 where: { user_id: stu_res.dataValues.user_id }
             });
             if (otp) {
@@ -943,17 +940,14 @@ export default class authService {
                 );
             }
             else {
-                passwordNeedToBeUpdated['otp'] = stu_res.dataValues.mobile
+                passwordNeedToBeUpdated['otp'] = user_data.dataValues.mobile
                 passwordNeedToBeUpdated["messageId"] = speeches.AWSMESSAGEID
-                if (passwordNeedToBeUpdated instanceof Error) {
-                    throw passwordNeedToBeUpdated;
-                }
             }
             passwordNeedToBeUpdated.otp = String(passwordNeedToBeUpdated.otp);
             let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
             const user_res: any = await this.crudService.updateAndFind(user, {
                 password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT)
-            }, { where: { user_id: user_data.dataValues.user_id } })
+            }, { where: { user_id: stu_res.dataValues.user_id } })
             result['data'] = {
                 username: user_res.dataValues.username,
                 user_id: user_res.dataValues.user_id,
