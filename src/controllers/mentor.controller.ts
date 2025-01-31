@@ -411,19 +411,12 @@ export default class MentorController extends BaseController {
     }
     private async resetPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const { email, username, otp, role } = req.body;
-            let otpCheck = typeof otp == 'boolean' && otp == false ? otp : true;
-            if (otpCheck) {
-                if (!email) {
-                    throw badRequest(speeches.USER_EMAIL_REQUIRED);
-                }
-                if (!role) {
-                    throw badRequest(speeches.USER_ROLE_REQUIRED);
-                }
-            } else {
-                if (!username) {
-                    throw badRequest(speeches.USER_EMAIL_REQUIRED);
-                }
+            const { email, role } = req.body;
+            if (!email) {
+                throw badRequest(speeches.USER_EMAIL_REQUIRED);
+            }
+            if (!role) {
+                throw badRequest(speeches.USER_ROLE_REQUIRED);
             }
             const result = await this.authService.mentorResetPassword(req.body);
             if (!result) {
@@ -529,7 +522,7 @@ export default class MentorController extends BaseController {
     }
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const result = await this.authService.triggerWelcome(req.body);
+            const result = await this.authService.triggerWelcome(req.body,'Institution User');
             return res.status(200).send(dispatcher(res, result, 'success'));
         } catch (error) {
             next(error);
