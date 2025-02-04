@@ -11,7 +11,7 @@ export default class DashboardService extends BaseService {
         try {
             const removeData = `truncate dashboard_map_stats;`
             const DistrictData = `INSERT INTO dashboard_map_stats(district_name)
-select district from students group by district`
+select district from organizations group by district`
             const teamData = `UPDATE dashboard_map_stats AS d
         JOIN
     (SELECT 
