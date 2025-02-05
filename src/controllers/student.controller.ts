@@ -20,6 +20,7 @@ import { mentor } from '../models/mentor.model';
 import { organization } from '../models/organization.model';
 import { badRequest, internal, notFound } from 'boom';
 import db from "../utils/dbconnection.util"
+import { challenge_response } from '../models/challenge_response.model';
 
 export default class StudentController extends BaseController {
     model = "student";
@@ -274,7 +275,12 @@ WHERE
             if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
             const user_id = getUserIdFromStudentData.dataValues.user_id;
             const getteamuserIdfromstudentdata = await this.crudService.findAll(student, { where: { type: where.student_id } });
-
+            
+            const IdeaData = await this.crudService.findOne(challenge_response,{ where: { student_id: where.student_id } });
+            if(IdeaData){
+                await this.crudService.delete(challenge_response,{ where: { student_id: where.student_id } })
+            }
+            
             if (getteamuserIdfromstudentdata && !(getteamuserIdfromstudentdata instanceof Error)) {
                 const arrayOfStudentuserIds = getteamuserIdfromstudentdata.map((student: any) => student.user_id)
                 for (var i = 0; i < arrayOfStudentuserIds.length; i++) {
