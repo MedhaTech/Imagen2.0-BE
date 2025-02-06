@@ -238,6 +238,27 @@ export default class MentorController extends BaseController {
         const data = result.dataValues;
         return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
     }
+    protected async deleteData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            const { model, id } = req.params;
+            if (model) this.model = model;
+            const where: any = {};
+            const newParamId = await this.authService.decryptGlobal(req.params.id);
+            where[`${this.model}_id`] = newParamId;
+            const getUserIdFromMentorData = await this.crudService.findOne(mentor, { where: { mentor_id: where.mentor_id } });
+            if (!getUserIdFromMentorData) throw notFound(speeches.USER_NOT_FOUND);
+            if (getUserIdFromMentorData instanceof Error) throw getUserIdFromMentorData;
+            const user_id = getUserIdFromMentorData.dataValues.user_id;
+            await this.crudService.delete(user, { where: { user_id: user_id } })
+            const data = await this.crudService.delete(mentor, { where: { mentor_id: where.mentor_id } })
+            return res.status(200).send(dispatcher(res, data, 'deleted'));
+        } catch (error) {
+            next(error);
+        }
+    }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         req.body['role'] = 'MENTOR'
         try {
@@ -522,7 +543,7 @@ export default class MentorController extends BaseController {
     }
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const result = await this.authService.triggerWelcome(req.body,'Institution User');
+            const result = await this.authService.triggerWelcome(req.body, 'Institution User');
             return res.status(200).send(dispatcher(res, result, 'success'));
         } catch (error) {
             next(error);
