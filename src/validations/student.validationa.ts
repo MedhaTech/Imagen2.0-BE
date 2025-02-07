@@ -55,6 +55,8 @@ export const studentUpdateSchema = Joi.object().keys({
     branch: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     password: Joi.any(),
+    type:Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN)
+
 });
 
 export const studentLoginSchema = Joi.object().keys({

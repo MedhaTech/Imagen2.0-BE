@@ -59,6 +59,7 @@ export const initiateIdeaSchema = Joi.object().keys({
     society: Joi.string(),
     confident: Joi.string(),
     prototype_image: Joi.string(),
+    others: Joi.string(),
     prototype_link: Joi.string(),
     support: Joi.string(),
     state:Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
