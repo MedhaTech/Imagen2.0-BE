@@ -37,7 +37,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMG_AP_HOSTNAME}} '
             cd /home/ubuntu/YFSI-AP-BE &&
             sudo git pull origin dev-for-ap &&
-            npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
+            sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
      
 
             
