@@ -1,10 +1,10 @@
 
 
-name: Deploymen to Prod
+name: Deploymen to AP Server
 
 on:
   push:
-    branches: [development , main ] 
+    branches: dev-for-ap
 jobs:
   
   Build:
@@ -28,27 +28,17 @@ jobs:
 
     steps:
       - name: Deploy to  Development
-        if: github.ref == 'refs/heads/development'
+        if: github.ref == 'refs/heads/dev-for-ap'
         env:
-          PRIVATE_KEY: ${{ secrets.IMG_PRIVATE_KEY }}
-          HOSTNAME: ${{ secrets.IMG_HOSTNAME }}
+          PRIVATE_KEY: ${{ secrets.IMG_AP_PRIVATE_KEY }}
+          HOSTNAME: ${{ secrets.IMG_AP_HOSTNAME }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMG_HOSTNAME}} '
-            cd /home/ubuntu/img-be &&
-            sudo git pull origin development &&
+          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMG_AP_HOSTNAME}} '
+            cd /home/ubuntu/YFSI-AP-BE &&
+            sudo git pull origin dev-for-ap &&
             sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
-      - name: Deploy to  Stage Env
-        if: github.ref == 'refs/heads/testing'
-        env:
-          PRIVATE_KEY: ${{ secrets.ATL2_STG_PRIVATE_KEY }}
-          HOSTNAME: ${{ secrets.ATL2_STG_HOSTNAME }}
-        run: |
-          echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
-          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.ATL2_STG_HOSTNAME}} '
-            cd aim2.0_be &&
-            sudo git pull origin main &&
-            npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
+     
 
             
 
