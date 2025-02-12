@@ -576,11 +576,7 @@ FROM
     students AS s ON cal.student_id = s.student_id
 WHERE
     cal.status = 'SUBMITTED'
-GROUP BY s.district SELECT 
-    district, COUNT(student_id) AS totalstudent
-FROM
-    students
-GROUP BY district ORDER BY district`, { type: QueryTypes.SELECT });
+GROUP BY s.district ORDER BY district`, { type: QueryTypes.SELECT });
             data = summary;
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
