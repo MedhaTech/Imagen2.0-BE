@@ -25,7 +25,7 @@ export const latest_newsUpdateSchema = Joi.object().keys({
     details: Joi.string().required().messages({
         'string.empty': speeches.ID_REQUIRED
     }),
-    url: Joi.string(),
-    file_name: Joi.string(),
+    url: Joi.string().allow(null, ''),
+    file_name: Joi.string().allow(null, ''),
     new_status: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
 });
