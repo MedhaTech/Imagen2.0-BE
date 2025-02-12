@@ -56,7 +56,7 @@ export default class ReportController extends BaseController {
                 students;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT district,${querystring.combilequery} count(student_id) as studentReg FROM students group by district;
+                                SELECT district,${querystring.combilequery} count(student_id) as studentReg FROM students group by district ORDER BY district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
@@ -134,7 +134,7 @@ FROM
                 mentors;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district;
+                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district ORDER BY district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
@@ -215,7 +215,7 @@ FROM
     students AS s ON m.college_name = s.college_name
 WHERE
     m.status = 'ACTIVE'
-GROUP BY m.district`, { type: QueryTypes.SELECT });
+GROUP BY m.district ORDER BY m.district`, { type: QueryTypes.SELECT });
 
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
@@ -239,7 +239,7 @@ GROUP BY m.district`, { type: QueryTypes.SELECT });
     district, COUNT(student_id) AS totalstudent
 FROM
     students
-GROUP BY district`, { type: QueryTypes.SELECT });
+GROUP BY district ORDER BY district`, { type: QueryTypes.SELECT });
 
             const courseCompleted = await db.query(`SELECT 
             st.district,count(st.student_id) as studentCourseCMP
@@ -576,7 +576,11 @@ FROM
     students AS s ON cal.student_id = s.student_id
 WHERE
     cal.status = 'SUBMITTED'
-GROUP BY s.district`, { type: QueryTypes.SELECT });
+GROUP BY s.district SELECT 
+    district, COUNT(student_id) AS totalstudent
+FROM
+    students
+GROUP BY district ORDER BY district`, { type: QueryTypes.SELECT });
             data = summary;
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
