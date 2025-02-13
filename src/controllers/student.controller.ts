@@ -253,12 +253,7 @@ WHERE
             if (!getUserIdFromStudentData) throw notFound(speeches.USER_NOT_FOUND);
             if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
             const user_id = getUserIdFromStudentData.dataValues.user_id;
-
-            const IdeaData = await this.crudService.findOne(challenge_response, { where: { initiated_by: user_id } });
-            if (IdeaData) {
-                await this.crudService.delete(challenge_response, { where: { initiated_by: user_id } })
-            }
-
+            
             const deleteUserStudentAndRemoveAllResponses = await this.authService.deleteStudentAndStudentResponse(user_id);
             const data = deleteUserStudentAndRemoveAllResponses
             return res.status(200).send(dispatcher(res, data, 'deleted'));
