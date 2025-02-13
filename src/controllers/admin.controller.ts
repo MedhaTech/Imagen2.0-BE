@@ -31,7 +31,7 @@ export default class AdminController extends BaseController {
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         this.router.get(`${this.path}/knowqueryparm`, this.getknowqueryparm.bind(this));
         this.router.post(`${this.path}/createqueryparm`, this.getcreatequeryparm.bind(this));
-        this.router.post(`${this.path}/bulkEmail`, validationMiddleware(adminbulkemail), this.bulkEmail.bind(this));
+        //this.router.post(`${this.path}/bulkEmail`, validationMiddleware(adminbulkemail), this.bulkEmail.bind(this));
         super.initializeRoutes();
     }
     protected async createData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -198,48 +198,48 @@ export default class AdminController extends BaseController {
         }
 
     }
-    private async bulkEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN') {
-            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-        }
-        try {
-            const { msg, subject, district } = req.body;
-            const payload = this.autoFillTrackingColumns(req, res, email);
-            await this.crudService.create(email, payload);
-            let data: any = {}
-            let districtFilter: any = `'%%'`
-            if (district !== 'All Districts' && district !== undefined) {
-                districtFilter = `'${district}'`
-            }
-            const summary = await db.query(`SELECT DISTINCT
-    u.username
-FROM
-    students AS s
-        JOIN
-    users AS u ON s.user_id = u.user_id
-WHERE
-    district LIKE ${districtFilter}`, { type: QueryTypes.SELECT });
-            const arrayOfUsernames = await this.authService.ConverListemail(summary);
-            let resultdata = [];
-            if (arrayOfUsernames.length > 49) {
-                function splitArray(arr: any, chunkSize: any) {
-                    let result = [];
-                    for (let i = 0; i < arr.length; i += chunkSize) {
-                        result.push(arr.slice(i, i + chunkSize));
-                    }
-                    return result;
-                }
-                let splitArrays = splitArray(arrayOfUsernames, 49);
-                splitArrays.map(async (smallarrayofusername, i) => {
-                    resultdata = await this.authService.triggerBulkEmail(smallarrayofusername, msg, subject);
-                })
-            } else {
-                resultdata.push(await this.authService.triggerBulkEmail(arrayOfUsernames, msg, subject))
-            }
+//     private async bulkEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+//         if (res.locals.role !== 'ADMIN') {
+//             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+//         }
+//         try {
+//             const { msg, subject, district } = req.body;
+//             const payload = this.autoFillTrackingColumns(req, res, email);
+//             await this.crudService.create(email, payload);
+//             let data: any = {}
+//             let districtFilter: any = `'%%'`
+//             if (district !== 'All Districts' && district !== undefined) {
+//                 districtFilter = `'${district}'`
+//             }
+//             const summary = await db.query(`SELECT DISTINCT
+//     u.username
+// FROM
+//     students AS s
+//         JOIN
+//     users AS u ON s.user_id = u.user_id
+// WHERE
+//     district LIKE ${districtFilter}`, { type: QueryTypes.SELECT });
+//             const arrayOfUsernames = await this.authService.ConverListemail(summary);
+//             let resultdata = [];
+//             if (arrayOfUsernames.length > 49) {
+//                 function splitArray(arr: any, chunkSize: any) {
+//                     let result = [];
+//                     for (let i = 0; i < arr.length; i += chunkSize) {
+//                         result.push(arr.slice(i, i + chunkSize));
+//                     }
+//                     return result;
+//                 }
+//                 let splitArrays = splitArray(arrayOfUsernames, 49);
+//                 splitArrays.map(async (smallarrayofusername, i) => {
+//                     resultdata = await this.authService.triggerBulkEmail(smallarrayofusername, msg, subject);
+//                 })
+//             } else {
+//                 resultdata.push(await this.authService.triggerBulkEmail(arrayOfUsernames, msg, subject))
+//             }
 
-            return res.status(200).send(dispatcher(res, resultdata, 'Email sent'));
-        } catch (error) {
-            next(error);
-        }
-    }
+//             return res.status(200).send(dispatcher(res, resultdata, 'Email sent'));
+//         } catch (error) {
+//             next(error);
+//         }
+//     }
 };
