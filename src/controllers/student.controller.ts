@@ -253,7 +253,7 @@ WHERE
             if (!getUserIdFromStudentData) throw notFound(speeches.USER_NOT_FOUND);
             if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
             const user_id = getUserIdFromStudentData.dataValues.user_id;
-            
+
             const deleteUserStudentAndRemoveAllResponses = await this.authService.deleteStudentAndStudentResponse(user_id);
             const data = deleteUserStudentAndRemoveAllResponses
             return res.status(200).send(dispatcher(res, data, 'deleted'));
@@ -663,7 +663,19 @@ GROUP BY
     }
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const result = await this.authService.triggerWelcome(req.body, 'Student User');
+            if (!req.body.student_id) {
+                throw badRequest(speeches.USER_STUDENTID_REQUIRED);
+            }
+            const crewDetails = await db.query(`SELECT 
+    s.full_name, mobile, username
+FROM
+    students AS s
+        JOIN
+    users AS u ON s.user_id = u.user_id
+WHERE
+    student_id = ${req.body.student_id} OR type = ${req.body.student_id}`, { type: QueryTypes.SELECT });
+
+            const result = await this.authService.triggerWelcome(req.body, 'Student User', crewDetails);
             return res.status(200).send(dispatcher(res, result, 'success'));
         } catch (error) {
             next(error);
