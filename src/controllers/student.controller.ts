@@ -603,6 +603,7 @@ WHERE
             result = await db.query(`SELECT 
     Smain.student_id,
     Smain.full_name,
+    (select status from challenge_responses as c where c.student_id = Smain.student_id) as ideaStatus,
     IFNULL(CONCAT('[', 
            GROUP_CONCAT(
                CONCAT('{"full_name": "', sub.full_name, '", "student_id": "', sub.student_id, '"}')
