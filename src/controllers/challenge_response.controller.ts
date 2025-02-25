@@ -1005,10 +1005,10 @@ export default class ChallengeResponsesController extends BaseController {
             let boolStatusWhereClauseRequired = false;
 
             if (paramStatus && (paramStatus in constents.challenges_flags.list)) {
-                whereClauseStatusPart = { "status": paramStatus, district: { [Op.in]: convertToStateArray } };
+                whereClauseStatusPart = { "status": paramStatus, district: { [Op.in]: commonStateforL1 } };
                 boolStatusWhereClauseRequired = true;
             } else {
-                whereClauseStatusPart = { "status": "SUBMITTED", district: { [Op.in]: convertToStateArray } };
+                whereClauseStatusPart = { "status": "SUBMITTED", district: { [Op.in]: commonStateforL1 } };
                 boolStatusWhereClauseRequired = true;
             };
 
