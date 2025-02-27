@@ -530,7 +530,7 @@ export default class authService {
             <div style="padding: 1% 5%;">
             <h3>Dear ${role},</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
-            <p>Your schools has been successfully registered with the following details :
+            <p>Your Institution has been successfully registered with the following details :
             <br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
             <br> District:<strong> ${district}</strong>
             </p>
@@ -550,7 +550,7 @@ export default class authService {
             ${allstring}
         </table> `: ''}
             
-            <p>Please use your user id and password to login and proceed further.</p>
+            <p>Please use your Email id and password to login and proceed further.</p>
             <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>
