@@ -423,7 +423,7 @@ export default class authService {
                     Data: id === 1 ? verifyOtpSubject : id === 3 ? forgotPassSubjec : id === 4 ? teamsCredentials : fullSubjec
                 }
             },
-            Source: "sim-no-reply@inqui-lab.org", /* required */
+            Source: "yfsi@inqui-lab.org", /* required */
             ReplyToAddresses: [],
         };
         try {
@@ -1029,7 +1029,7 @@ export default class authService {
                     Data: subText
                 }
             },
-            Source: "sim-no-reply@inqui-lab.org", /* required */
+            Source: "yfsi@inqui-lab.org", /* required */
             ReplyToAddresses: [],
         };
         try {
