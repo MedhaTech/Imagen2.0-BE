@@ -20,7 +20,7 @@ export const studentSchema = Joi.object().keys({
     password: Joi.any(),
     confirmPassword: Joi.any(),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN)
+    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, '')
 
 });
 export const studentSchemaAddstudent = Joi.object().keys({
@@ -42,7 +42,7 @@ export const studentSchemaAddstudent = Joi.object().keys({
     password: Joi.any(),
     confirmPassword: Joi.any(),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN)
+    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, '')
 });
 
 export const studentUpdateSchema = Joi.object().keys({
@@ -60,7 +60,7 @@ export const studentUpdateSchema = Joi.object().keys({
     password: Joi.any(),
     type:Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN)
+    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, '')
 
 });
 
