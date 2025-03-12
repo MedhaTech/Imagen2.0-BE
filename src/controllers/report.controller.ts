@@ -26,6 +26,7 @@ export default class ReportController extends BaseController {
         this.router.get(this.path + "/studentRegList", this.studentRegDetails.bind(this));
         this.router.get(this.path + "/instsummary", this.instsummary.bind(this));
         this.router.get(this.path + "/instRegList", this.institutionRegDetails.bind(this));
+        this.router.get(this.path + "/instNonRegList", this.institutionNonRegDetails.bind(this));
         this.router.get(`${this.path}/instdetailstable`, this.getmentorDetailstable.bind(this));
         this.router.get(`${this.path}/instdetailsreport`, this.getmentorDetailsreport.bind(this));
         this.router.get(`${this.path}/studentdetailstable`, this.getstudentDetailstable.bind(this));
@@ -104,7 +105,9 @@ export default class ReportController extends BaseController {
     roll_number,
     id_number,
     branch,
-    year_of_study
+    year_of_study,
+    college_town,
+    gender
 FROM
     students AS s
         LEFT JOIN
@@ -193,6 +196,56 @@ WHERE
             }
             res.status(200).send(dispatcher(res, insReglist, "success"))
         } catch (err) {
+            next(err)
+        }
+    }
+    protected async institutionNonRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, college_type } = newREQQuery;
+
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+
+            const insReglist = await db.query(`SELECT 
+    s.college_name,
+    s.college_type,
+    s.district,
+    college_town,
+    COUNT(student_id) AS studentRegCount
+FROM
+    Aim_db.students AS s
+        LEFT JOIN
+    mentors AS m ON s.college_name = m.college_name
+WHERE
+    m.college_name IS NULL
+        AND s.status = 'ACTIVE' AND s.district LIKE ${districtFilter} AND s.college_type LIKE ${categoryFilter}
+GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
+            if (!insReglist) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (insReglist instanceof Error) {
+                throw insReglist
+            }
+            res.status(200).send(dispatcher(res, insReglist, "success"))
+        } catch (err) {
+            console.log(err)
             next(err)
         }
     }
@@ -447,7 +500,9 @@ GROUP BY college_name`, { type: QueryTypes.SELECT });
     roll_number,
     id_number,
     branch,
-    year_of_study
+    year_of_study,
+    college_town,
+    gender
 FROM
     students as s
 WHERE
