@@ -1,0 +1,50 @@
+
+
+
+name: Deploymen to prod AP Server
+
+on:
+  push:
+    branches: main-for-ap
+jobs:
+  
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install
+        run: npm i -f
+
+      - name: Buid the application
+        run: npm run build
+
+  Deploy:
+
+    needs : Build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to prod
+        if: github.ref == 'refs/heads/main-for-ap'
+        env:
+          PRIVATE_KEY: ${{ secrets.IMG_PROD_AP_PRIVATE_KEY }}
+          HOSTNAME: ${{ secrets.IMG_PROD_AP_HOSTNAME }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 400 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ubuntu@${{secrets.IMG_PROD_AP_HOSTNAME}} '
+            cd /home/ubuntu/YFSI-AP-BE &&
+            sudo git pull origin main-for-ap &&
+            sudo npm run build && pm2 stop all && pm2 delete all && npm run start:prod && pm2 save -f'
+     
+
+            
+
+
+            
+
+      
+  
