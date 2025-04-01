@@ -503,7 +503,7 @@ GROUP BY college_name`, { type: QueryTypes.SELECT });
     year_of_study,
     college_town,
     gender,
-    (select username from users as u where where s.user_id = u.user_id) as email
+    (select username from users as u where s.user_id = u.user_id) as email
 FROM
     students as s
 WHERE
