@@ -64,7 +64,7 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
         //public api's
         this.router.get(`${this.path}/CollegeNameForCollegeType`, this.getCollegeNameForCollegeType.bind(this));
-        
+
     }
 
 
@@ -1224,6 +1224,14 @@ SELECT DISTINCT college_name
 FROM mentors
 WHERE college_type = '${college_type}';
 `, { type: QueryTypes.SELECT });
+            }
+            else {
+                result = await db.query(`SELECT DISTINCT college_name
+                    FROM students
+                    UNION
+                    SELECT DISTINCT college_name
+                    FROM mentors;
+                    `, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
