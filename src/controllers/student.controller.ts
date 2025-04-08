@@ -691,7 +691,10 @@ WHERE
             const { student_id } = newREQQuery
 
             result = await db.query(`SELECT 
-    cr.status, AVG(e.overall) as score
+    cr.status,CASE
+        WHEN COUNT(e.overall) > 1 THEN (SUM(e.overall) / COUNT(e.overall))
+        ELSE (SUM(e.overall) / 2.0)
+    END AS score
 FROM
     challenge_responses AS cr
         JOIN
