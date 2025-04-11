@@ -690,7 +690,6 @@ GROUP BY s.district ORDER BY district`, { type: QueryTypes.SELECT });
     prototype_link,
     cal.status,
     cal.student_id,
-    s.full_name as studentfullname,
     mobile,
     s.district,
     college_type,
@@ -698,7 +697,10 @@ GROUP BY s.district ORDER BY district`, { type: QueryTypes.SELECT });
     roll_number,
     id_number,
     branch,
-    year_of_study
+    year_of_study,
+    s.full_name as Pilot,
+    (select full_name from students as st where st.user_id = cal.initiated_by) as initiatedName,
+    (select JSON_ARRAYAGG(full_name) from students as st where st.type = cal.student_id) as teamMembers
 FROM
     challenge_responses as cal join students as s on cal.student_id = s.student_id 
 WHERE
