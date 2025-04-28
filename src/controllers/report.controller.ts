@@ -259,8 +259,8 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
     m.district,
     COUNT(DISTINCT mentor_id) AS insReg,
     COUNT(DISTINCT student_id) AS studentReg,
-    COUNT(CASE
-        WHEN s.type = 0 THEN 1
+    COUNT(DISTINCT CASE
+        WHEN s.type = 0 THEN s.student_id
     END) AS 'teamCount'
 FROM
     mentors AS m
