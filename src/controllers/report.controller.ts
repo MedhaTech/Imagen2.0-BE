@@ -258,7 +258,7 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
             const data = await db.query(`SELECT 
     m.district,
     COUNT(DISTINCT mentor_id) AS insReg,
-    COUNT(student_id) AS studentReg,
+    COUNT(DISTINCT student_id) AS studentReg,
     COUNT(CASE
         WHEN s.type = 0 THEN 1
     END) AS 'teamCount'
