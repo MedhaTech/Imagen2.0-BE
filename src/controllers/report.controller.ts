@@ -256,19 +256,31 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
         try {
 
             const data = await db.query(`SELECT 
-     m.district,
-    COUNT(DISTINCT mentor_id) AS insReg,
-    COUNT(DISTINCT student_id) AS studentReg,
-    COUNT(DISTINCT CASE
-        WHEN s.type = 0 THEN s.student_id
-    END) AS 'teamCount'
+    COALESCE(m.district, s.district) AS district,
+    COALESCE(insReg, 0) AS insReg,
+    COALESCE(studentReg, 0) AS studentReg,
+    COALESCE(teamCount, 0) AS teamCount
 FROM
-    mentors AS m
-        LEFT JOIN
-    students AS s ON m.college_name = s.college_name
-WHERE
-    m.status = 'ACTIVE'
-GROUP BY m.district ORDER BY m.district`, { type: QueryTypes.SELECT });
+    (SELECT 
+        district, COUNT(DISTINCT mentor_id) AS insReg
+    FROM
+        mentors
+    WHERE
+        status = 'ACTIVE'
+    GROUP BY district) AS m
+        JOIN
+    (SELECT 
+        district,
+            COUNT(student_id) AS studentReg,
+            COUNT(CASE
+                WHEN type = 0 THEN 1
+            END) AS teamCount
+    FROM
+        students
+    WHERE
+        status = 'ACTIVE'
+    GROUP BY district) AS s ON m.district = s.district
+ORDER BY district`, { type: QueryTypes.SELECT });
 
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
