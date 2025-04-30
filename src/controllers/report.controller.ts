@@ -256,11 +256,11 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
         try {
 
             const data = await db.query(`SELECT 
-    m.district,
+     m.district,
     COUNT(DISTINCT mentor_id) AS insReg,
-    COUNT(student_id) AS studentReg,
-    COUNT(CASE
-        WHEN s.type = 0 THEN 1
+    COUNT(DISTINCT student_id) AS studentReg,
+    COUNT(DISTINCT CASE
+        WHEN s.type = 0 THEN s.student_id
     END) AS 'teamCount'
 FROM
     mentors AS m
@@ -278,7 +278,6 @@ GROUP BY m.district ORDER BY m.district`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, data, "success"))
         } catch (err) {
-            console.log(err)
             next(err)
         }
     }
