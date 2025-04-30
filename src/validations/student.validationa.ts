@@ -6,10 +6,10 @@ export const studentSchema = Joi.object().keys({
     full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).required().messages({
         'string.empty': speeches.USER_FULLNAME_REQUIRED
     }),
-    username: Joi.string().email().trim().min(1).required().messages({
+    username: Joi.string().trim().min(1).required().messages({
         'string.empty': speeches.USER_USERNAME_REQUIRED
     }),
-    mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN),
+    mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN).allow(null, ''),
     district: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_type: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_name: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
@@ -20,7 +20,8 @@ export const studentSchema = Joi.object().keys({
     password: Joi.any(),
     confirmPassword: Joi.any(),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, '')
+    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
+    email: Joi.string().email().allow(null, '')
 
 });
 export const studentSchemaAddstudent = Joi.object().keys({
@@ -42,7 +43,8 @@ export const studentSchemaAddstudent = Joi.object().keys({
     password: Joi.any(),
     confirmPassword: Joi.any(),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, '')
+    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
+    email: Joi.string().email().allow(null, '')
 });
 
 export const studentUpdateSchema = Joi.object().keys({
@@ -60,17 +62,19 @@ export const studentUpdateSchema = Joi.object().keys({
     password: Joi.any(),
     type:Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, '')
+    college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
+    email: Joi.string().email().allow(null, '')
 
 });
 
 export const studentLoginSchema = Joi.object().keys({
-    username: Joi.string().email().required().messages({
+    username: Joi.string().required().messages({
         'string.empty': speeches.USER_USERNAME_REQUIRED
     }),
-    password: Joi.string().required().messages({
+    password: Joi.string().messages({
         'string.empty': speeches.USER_PASSWORD_REQUIRED
-    })
+    }),
+    logintype:Joi.string()
 });
 
 export const studentChangePasswordSchema = Joi.object().keys({

@@ -308,19 +308,29 @@ export default class authService {
         try {
             const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
             if (user_data) {
-                throw badRequest('Email');
+                throw badRequest('Email/UUID');
             } else {
-                const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
-                if (mentor_data) {
-                    throw badRequest('Mobile')
+                if (requestBody.mobile !== null) {
+                    const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
+                    if (mentor_data) {
+                        throw badRequest('Mobile')
+                    }
                 } else {
-                    let createUserAccount = await this.crudService.create(user, requestBody);
-                    let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
-                    let createMentorAccount = await this.crudService.create(student, conditions);
-                    createMentorAccount.dataValues['username'] = createUserAccount.dataValues.username;
-                    createMentorAccount.dataValues['user_id'] = createUserAccount.dataValues.user_id;
-                    response = createMentorAccount;
-                    return response;
+                    if (requestBody.email !== null) {
+                        console.log("2");
+                        const mentor_data = await this.crudService.findOne(student, { where: { email: requestBody.email } })
+                        if (mentor_data) {
+                            throw badRequest('Email')
+                        }
+                    } else {
+                        let createUserAccount = await this.crudService.create(user, requestBody);
+                        let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
+                        let createMentorAccount = await this.crudService.create(student, conditions);
+                        createMentorAccount.dataValues['username'] = createUserAccount.dataValues.username;
+                        createMentorAccount.dataValues['user_id'] = createUserAccount.dataValues.user_id;
+                        response = createMentorAccount;
+                        return response;
+                    }
                 }
             }
         } catch (error) {

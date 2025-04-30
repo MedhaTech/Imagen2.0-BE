@@ -55,6 +55,9 @@ export default class StudentController extends BaseController {
         // let studentDetails: any;
         let result;
         req.body['role'] = 'STUDENT'
+        if (req.body.logintype === 'SINGLESIGIN') {
+            req.body['password'] = baseConfig.GLOBAL_PASSWORD
+        }
         result = await this.authService.login(req.body);
 
         if (!result) {
