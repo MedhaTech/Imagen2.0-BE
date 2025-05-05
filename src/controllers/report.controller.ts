@@ -546,7 +546,7 @@ WHERE
 FROM
     challenge_responses`, { type: QueryTypes.SELECT });
             const userTopicData = await db.query(`SELECT 
-    COUNT(*) AS user_count, user_id
+    COUNT(*) AS user_count, user_id,MAX(CASE WHEN course_topic_id = 26 THEN created_at END) AS created_at
 FROM
     user_topic_progress
 GROUP BY user_id`, { type: QueryTypes.SELECT });
