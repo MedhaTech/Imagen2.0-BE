@@ -543,7 +543,7 @@ export default class MentorController extends BaseController {
     }
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const result = await this.authService.triggerWelcome(req.body, 'Institution User');
+            const result = await this.authService.triggerWelcome(req.body, 'Institution User','');
             return res.status(200).send(dispatcher(res, result, 'success'));
         } catch (error) {
             next(error);

@@ -26,6 +26,7 @@ export default class ReportController extends BaseController {
         this.router.get(this.path + "/studentRegList", this.studentRegDetails.bind(this));
         this.router.get(this.path + "/instsummary", this.instsummary.bind(this));
         this.router.get(this.path + "/instRegList", this.institutionRegDetails.bind(this));
+        this.router.get(this.path + "/instNonRegList", this.institutionNonRegDetails.bind(this));
         this.router.get(`${this.path}/instdetailstable`, this.getmentorDetailstable.bind(this));
         this.router.get(`${this.path}/instdetailsreport`, this.getmentorDetailsreport.bind(this));
         this.router.get(`${this.path}/studentdetailstable`, this.getstudentDetailstable.bind(this));
@@ -56,7 +57,7 @@ export default class ReportController extends BaseController {
                 students;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT district,${querystring.combilequery} count(student_id) as studentReg FROM students group by district;
+                                SELECT district,${querystring.combilequery} count(student_id) as studentReg FROM students group by district ORDER BY district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
@@ -104,7 +105,9 @@ export default class ReportController extends BaseController {
     roll_number,
     id_number,
     branch,
-    year_of_study
+    year_of_study,
+    college_town,
+    gender
 FROM
     students AS s
         LEFT JOIN
@@ -134,7 +137,7 @@ FROM
                 mentors;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district;
+                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district ORDER BY district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
@@ -196,6 +199,56 @@ WHERE
             next(err)
         }
     }
+    protected async institutionNonRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { district, college_type } = newREQQuery;
+
+            let districtFilter: any = `'%%'`
+            let categoryFilter: any = `'%%'`
+
+            if (district !== 'All Districts' && district !== undefined) {
+                districtFilter = `'${district}'`
+            }
+            if (college_type !== 'All Types' && college_type !== undefined) {
+                categoryFilter = `'${college_type}'`
+            }
+
+            const insReglist = await db.query(`SELECT 
+    s.college_name,
+    s.college_type,
+    s.district,
+    college_town,
+    COUNT(student_id) AS studentRegCount
+FROM
+    Aim_db.students AS s
+        LEFT JOIN
+    mentors AS m ON s.college_name = m.college_name
+WHERE
+    m.college_name IS NULL
+        AND s.status = 'ACTIVE' AND s.district LIKE ${districtFilter} AND s.college_type LIKE ${categoryFilter}
+GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
+            if (!insReglist) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (insReglist instanceof Error) {
+                throw insReglist
+            }
+            res.status(200).send(dispatcher(res, insReglist, "success"))
+        } catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
     protected async getmentorDetailstable(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -203,19 +256,32 @@ WHERE
         try {
 
             const data = await db.query(`SELECT 
-    m.district,
-    COUNT(DISTINCT mentor_id) AS insReg,
-    COUNT(student_id) AS studentReg,
-    COUNT(CASE
-        WHEN s.type = 0 THEN 1
-    END) AS 'teamCount'
+    COALESCE(m.district, s.district) AS district,
+    COALESCE(insReg, 0) AS insReg,
+    COALESCE(studentReg, 0) AS studentReg,
+    COALESCE(teamCount, 0) AS teamCount
 FROM
-    mentors AS m
-        LEFT JOIN
-    students AS s ON m.college_name = s.college_name
-WHERE
-    m.status = 'ACTIVE'
-GROUP BY m.district`, { type: QueryTypes.SELECT });
+    (
+        SELECT 
+            district,
+            COUNT(DISTINCT mentor_id) AS insReg
+        FROM mentors
+        WHERE status = 'ACTIVE'
+        GROUP BY district
+    ) AS m
+JOIN
+    (
+        SELECT 
+            district,
+            COUNT(student_id) AS studentReg,
+            COUNT(CASE WHEN type = 0 THEN 1 END) AS teamCount
+        FROM students
+        WHERE status = 'ACTIVE'
+        GROUP BY district
+    ) AS s
+ON m.district = s.district
+ORDER BY district;
+`, { type: QueryTypes.SELECT });
 
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
@@ -225,7 +291,6 @@ GROUP BY m.district`, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, data, "success"))
         } catch (err) {
-            console.log(err)
             next(err)
         }
     }
@@ -239,7 +304,7 @@ GROUP BY m.district`, { type: QueryTypes.SELECT });
     district, COUNT(student_id) AS totalstudent
 FROM
     students
-GROUP BY district`, { type: QueryTypes.SELECT });
+GROUP BY district ORDER BY district`, { type: QueryTypes.SELECT });
 
             const courseCompleted = await db.query(`SELECT 
             st.district,count(st.student_id) as studentCourseCMP
@@ -447,7 +512,10 @@ GROUP BY college_name`, { type: QueryTypes.SELECT });
     roll_number,
     id_number,
     branch,
-    year_of_study
+    year_of_study,
+    college_town,
+    gender,
+    (select username from users as u where s.user_id = u.user_id) as email
 FROM
     students as s
 WHERE
@@ -576,7 +644,7 @@ FROM
     students AS s ON cal.student_id = s.student_id
 WHERE
     cal.status = 'SUBMITTED'
-GROUP BY s.district`, { type: QueryTypes.SELECT });
+GROUP BY s.district ORDER BY district`, { type: QueryTypes.SELECT });
             data = summary;
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
@@ -634,7 +702,6 @@ GROUP BY s.district`, { type: QueryTypes.SELECT });
     prototype_link,
     cal.status,
     cal.student_id,
-    s.full_name as studentfullname,
     mobile,
     s.district,
     college_type,
@@ -642,7 +709,10 @@ GROUP BY s.district`, { type: QueryTypes.SELECT });
     roll_number,
     id_number,
     branch,
-    year_of_study
+    year_of_study,
+    s.full_name as Pilot,
+    (select full_name from students as st where st.user_id = cal.initiated_by) as initiatedName,
+    (select JSON_ARRAYAGG(full_name) from students as st where st.type = cal.student_id) as teamMembers
 FROM
     challenge_responses as cal join students as s on cal.student_id = s.student_id 
 WHERE

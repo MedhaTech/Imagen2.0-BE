@@ -48,12 +48,16 @@ export default class StudentController extends BaseController {
         this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         this.router.post(`${this.path}/triggerWelcomeEmail`, this.triggerWelcomeEmail.bind(this));
+        this.router.get(`${this.path}/IsCertificate`, this.getCertificate.bind(this));
         super.initializeRoutes();
     }
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         // let studentDetails: any;
         let result;
         req.body['role'] = 'STUDENT'
+        if (req.body.logintype === 'SINGLESIGIN') {
+            req.body['password'] = baseConfig.GLOBAL_PASSWORD
+        }
         result = await this.authService.login(req.body);
 
         if (!result) {
@@ -117,7 +121,9 @@ export default class StudentController extends BaseController {
     branch,
     year_of_study,
     type,
-    username
+    username,
+    gender,
+    college_town
 FROM
     students AS s
       INNER JOIN
@@ -253,11 +259,6 @@ WHERE
             if (!getUserIdFromStudentData) throw notFound(speeches.USER_NOT_FOUND);
             if (getUserIdFromStudentData instanceof Error) throw getUserIdFromStudentData;
             const user_id = getUserIdFromStudentData.dataValues.user_id;
-
-            const IdeaData = await this.crudService.findOne(challenge_response, { where: { initiated_by: user_id } });
-            if (IdeaData) {
-                await this.crudService.delete(challenge_response, { where: { initiated_by: user_id } })
-            }
 
             const deleteUserStudentAndRemoveAllResponses = await this.authService.deleteStudentAndStudentResponse(user_id);
             const data = deleteUserStudentAndRemoveAllResponses
@@ -540,25 +541,16 @@ WHERE
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
-            let newREParams: any = {};
-            if (req.params) {
-                const newParams: any = await this.authService.decryptGlobal(req.params);
-                newREParams = JSON.parse(newParams);
-            } else {
-                newREParams = req.params
-            }
-            const { model, student_user_id } = newREParams;
-            const user_id = res.locals.user_id
+            const { model } = req.params;
             if (model) {
                 this.model = model;
             };
-            const where: any = {};
-            where[`${this.model}_id`] = newREParams.id;
+            const newParamId = await this.authService.decryptGlobal(req.params.student_user_id);
             const modelLoaded = await this.loadModel(model);
             const payload = this.autoFillTrackingColumns(req, res, modelLoaded);
             payload["certificate"] = new Date().toLocaleString();
             const updateCertificate = await this.crudService.updateAndFind(student, payload, {
-                where: { student_id: student_user_id }
+                where: { user_id: newParamId }
             });
             if (!updateCertificate) {
                 throw internal()
@@ -608,6 +600,7 @@ WHERE
             result = await db.query(`SELECT 
     Smain.student_id,
     Smain.full_name,
+    (select status from challenge_responses as c where c.student_id = Smain.student_id) as ideaStatus,
     IFNULL(CONCAT('[', 
            GROUP_CONCAT(
                CONCAT('{"full_name": "', sub.full_name, '", "student_id": "', sub.student_id, '"}')
@@ -667,10 +660,55 @@ GROUP BY
     }
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const result = await this.authService.triggerWelcome(req.body, 'Student User');
+            if (!req.body.student_id) {
+                throw badRequest(speeches.USER_STUDENTID_REQUIRED);
+            }
+            const crewDetails = await db.query(`SELECT 
+    s.full_name, mobile, username
+FROM
+    students AS s
+        JOIN
+    users AS u ON s.user_id = u.user_id
+WHERE
+    student_id = ${req.body.student_id} OR type = ${req.body.student_id}`, { type: QueryTypes.SELECT });
+
+            const result = await this.authService.triggerWelcome(req.body, 'Student User', crewDetails);
             return res.status(200).send(dispatcher(res, result, 'success'));
         } catch (error) {
             next(error);
+        }
+    }
+    protected async getCertificate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { student_id } = newREQQuery
+
+            result = await db.query(`SELECT 
+    cr.status,CASE
+        WHEN COUNT(e.overall) > 1 THEN (SUM(e.overall) / COUNT(e.overall))
+        ELSE (SUM(e.overall) / 2.0)
+    END AS score
+FROM
+    challenge_responses AS cr
+        JOIN
+    evaluator_ratings AS e ON cr.challenge_response_id = e.challenge_response_id
+WHERE
+    cr.student_id = ${student_id}`, { type: QueryTypes.SELECT });
+
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
         }
     }
 

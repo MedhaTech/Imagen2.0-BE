@@ -308,19 +308,29 @@ export default class authService {
         try {
             const user_data = await this.crudService.findOne(user, { where: { username: requestBody.username } });
             if (user_data) {
-                throw badRequest('Email');
+                throw badRequest('Email/UUID');
             } else {
-                const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
-                if (mentor_data) {
-                    throw badRequest('Mobile')
+                if (requestBody.mobile !== null) {
+                    const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
+                    if (mentor_data) {
+                        throw badRequest('Mobile')
+                    }
                 } else {
-                    let createUserAccount = await this.crudService.create(user, requestBody);
-                    let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
-                    let createMentorAccount = await this.crudService.create(student, conditions);
-                    createMentorAccount.dataValues['username'] = createUserAccount.dataValues.username;
-                    createMentorAccount.dataValues['user_id'] = createUserAccount.dataValues.user_id;
-                    response = createMentorAccount;
-                    return response;
+                    if (requestBody.email !== null) {
+                        console.log("2");
+                        const mentor_data = await this.crudService.findOne(student, { where: { email: requestBody.email } })
+                        if (mentor_data) {
+                            throw badRequest('Email')
+                        }
+                    } else {
+                        let createUserAccount = await this.crudService.create(user, requestBody);
+                        let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
+                        let createMentorAccount = await this.crudService.create(student, conditions);
+                        createMentorAccount.dataValues['username'] = createUserAccount.dataValues.username;
+                        createMentorAccount.dataValues['user_id'] = createUserAccount.dataValues.user_id;
+                        response = createMentorAccount;
+                        return response;
+                    }
                 }
             }
         } catch (error) {
@@ -423,7 +433,7 @@ export default class authService {
                     Data: id === 1 ? verifyOtpSubject : id === 3 ? forgotPassSubjec : id === 4 ? teamsCredentials : fullSubjec
                 }
             },
-            Source: "sim-no-reply@inqui-lab.org", /* required */
+            Source: "yfsi@inqui-lab.org", /* required */
             ReplyToAddresses: [],
         };
         try {
@@ -494,17 +504,43 @@ export default class authService {
             return result;
         }
     }
-    async triggerWelcome(requestBody: any, role: any) {
+    async triggerWelcome(requestBody: any, role: any, crewDetails: any) {
         let result: any = {};
         try {
+            let allstring: String = ''
+            if (role === 'Student User' && crewDetails.length > 0) {
+                for (let x in crewDetails) {
+                    allstring += `<tr><td>${parseInt(x) + 1}</td><td>${crewDetails[x].full_name}</td><td>${crewDetails[x].mobile}</td><td>${crewDetails[x].username}</td></tr>`
+                }
+            }
             const { college_name, college_type, district, email, mobile } = requestBody;
             const WelcomeTemp = `
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+             <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    </head>
             <body style="border: solid;margin-right: 15%;margin-left: 15%; ">
             <img src="https://imagen-dev.s3.ap-south-1.amazonaws.com/resources/dev/Email%20Attachment_1.png" alt="header" style="width: 100%;" />
             <div style="padding: 1% 5%;">
             <h3>Dear ${role},</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
-            <p>Your schools has been successfully registered with the following details :
+            <p>You are successfully registered with the following details :
             <br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
             <br> District:<strong> ${district}</strong>
             </p>
@@ -513,10 +549,22 @@ export default class authService {
             <br>
             Mobile no: <strong> ${mobile} </strong>
             </p>
-            <p>Please use your user id and password to login and proceed further.</p>
+            ${role === 'Student User' && crewDetails.length > 0 ? `<p>Crew Members Details</p>
+                <table>
+            <tr>
+                <th>SL No</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Email</th>
+            </tr>
+            ${allstring}
+        </table> `: ''}
+            
+            <p>Please use your Email id and password to login and proceed further.</p>
             <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
-            </div></body>`
+            </div></body>
+</html>`
             const otp = await this.triggerEmail(email, 2, WelcomeTemp, '');
             if (otp instanceof Error) {
                 throw otp;
@@ -991,7 +1039,7 @@ export default class authService {
                     Data: subText
                 }
             },
-            Source: "sim-no-reply@inqui-lab.org", /* required */
+            Source: "yfsi@inqui-lab.org", /* required */
             ReplyToAddresses: [],
         };
         try {
@@ -1152,6 +1200,19 @@ export default class authService {
         } catch (error) {
             result['error'] = error;
             return result;
+        }
+    }
+    //converting list email to array of values
+    async ConverListemail(data: any) {
+        try {
+            let arrayofemail: any = [];
+            data.map((value: any) => {
+                arrayofemail.push(value.username);
+            })
+            return arrayofemail
+        }
+        catch (err) {
+            return err
         }
     }
 }
