@@ -107,7 +107,8 @@ export default class ReportController extends BaseController {
     branch,
     year_of_study,
     college_town,
-    gender
+    gender,
+    s.created_at
 FROM
     students AS s
         LEFT JOIN
@@ -181,7 +182,8 @@ FROM
     mobile,
     district,
     college_type,
-    college_name
+    college_name,
+    m.created_at
 FROM
     mentors AS m
         JOIN
@@ -523,7 +525,8 @@ WHERE
                 CASE
                     WHEN status = 'ACTIVE' THEN 'Completed'
                 END AS 'pre_survey_status',
-                user_id
+                user_id,
+                created_at
             FROM
                 quiz_survey_responses
             WHERE
@@ -532,13 +535,14 @@ WHERE
     CASE
         WHEN status = 'ACTIVE' THEN 'Completed'
     END AS 'post_survey_status',
-    user_id
+    user_id,
+    created_at
 FROM
     quiz_survey_responses
 WHERE
     quiz_survey_id = 4`, { type: QueryTypes.SELECT });
             const ideaStatusData = await db.query(`SELECT 
-    student_id, status
+    student_id, status,submitted_at
 FROM
     challenge_responses`, { type: QueryTypes.SELECT });
             const userTopicData = await db.query(`SELECT 
@@ -700,6 +704,7 @@ GROUP BY s.district ORDER BY district`, { type: QueryTypes.SELECT });
     prototype_image,
     prototype_link,
     cal.status,
+    submitted_at,
     cal.student_id,
     mobile,
     s.district,
