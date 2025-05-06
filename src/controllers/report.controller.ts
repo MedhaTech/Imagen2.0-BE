@@ -516,6 +516,7 @@ GROUP BY college_name`, { type: QueryTypes.SELECT });
     year_of_study,
     college_town,
     gender,
+    s.type
     (select username from users as u where s.user_id = u.user_id) as email
 FROM
     students as s
