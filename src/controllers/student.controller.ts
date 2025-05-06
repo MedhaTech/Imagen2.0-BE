@@ -318,6 +318,9 @@ WHERE
             if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
                 return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS_MOBILE, 406));
             }
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email/UUID') {
+                return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
+            }
             const data = result.dataValues;
             return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
         } catch (err) {

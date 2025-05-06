@@ -310,18 +310,13 @@ export default class authService {
             if (user_data) {
                 throw badRequest('Email/UUID');
             } else {
-                if (requestBody.mobile !== null) {
-                    const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
-                    if (mentor_data) {
-                        throw badRequest('Mobile')
-                    }
+                const mentor_data = await this.crudService.findOne(student, { where: { mobile: requestBody.mobile } })
+                if (mentor_data && requestBody.mobile !== null) {
+                    throw badRequest('Mobile')
                 } else {
-                    if (requestBody.email !== null) {
-                        console.log("2");
-                        const mentor_data = await this.crudService.findOne(student, { where: { email: requestBody.email } })
-                        if (mentor_data) {
-                            throw badRequest('Email')
-                        }
+                    const mentor_data = await this.crudService.findOne(student, { where: { email: requestBody.email } })
+                    if (mentor_data && requestBody.email !== null) {
+                        throw badRequest('Email')
                     } else {
                         let createUserAccount = await this.crudService.create(user, requestBody);
                         let conditions = { ...requestBody, user_id: createUserAccount.dataValues.user_id };
