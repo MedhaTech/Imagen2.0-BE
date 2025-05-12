@@ -21,14 +21,15 @@ export const studentSchema = Joi.object().keys({
     confirmPassword: Joi.any(),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
-    email: Joi.string().email().allow(null, '')
-
+    email: Joi.string().email().allow(null, ''),
+    reg_type: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
 });
+
 export const studentSchemaAddstudent = Joi.object().keys({
     full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).required().messages({
         'string.empty': speeches.USER_FULLNAME_REQUIRED
     }),
-    type:Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN).required().messages({
+    type: Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN).required().messages({
         'string.empty': speeches.USER_TYPE_REQUIRED
     }),
     username: Joi.string().email(),
@@ -60,7 +61,7 @@ export const studentUpdateSchema = Joi.object().keys({
     branch: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     password: Joi.any(),
-    type:Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN),
+    type: Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
     email: Joi.string().email().allow(null, '')
@@ -74,7 +75,7 @@ export const studentLoginSchema = Joi.object().keys({
     password: Joi.string().messages({
         'string.empty': speeches.USER_PASSWORD_REQUIRED
     }),
-    logintype:Joi.string()
+    logintype: Joi.string()
 });
 
 export const studentChangePasswordSchema = Joi.object().keys({
