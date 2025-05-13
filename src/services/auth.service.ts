@@ -345,13 +345,18 @@ export default class authService {
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {
-                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : 'Student');
-                    if (otp instanceof Error) {
-                        throw otp;
+                    const mentor_data = await this.crudService.findOne(modelname, { where: { email: requestBody.username } })
+                    if (mentor_data) {
+                        throw badRequest('Email')
+                    } else {
+                        const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : 'Student');
+                        if (otp instanceof Error) {
+                            throw otp;
+                        }
+                        const hashedPassword = await this.encryptGlobal(JSON.stringify(otp.otp));
+                        result.data = hashedPassword;
+                        return result;
                     }
-                    const hashedPassword = await this.encryptGlobal(JSON.stringify(otp.otp));
-                    result.data = hashedPassword;
-                    return result;
                 }
             }
         } catch (error) {
