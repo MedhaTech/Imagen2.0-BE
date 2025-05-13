@@ -22,7 +22,7 @@ export const studentSchema = Joi.object().keys({
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
     email: Joi.string().email().allow(null, ''),
-    reg_type: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
+    reg_type: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, '')
 });
 
 export const studentSchemaAddstudent = Joi.object().keys({
