@@ -346,7 +346,7 @@ export default class authService {
                     throw badRequest('Mobile')
                 } else {
                     const mentor_data = await this.crudService.findOne(modelname, { where: { email: requestBody.username } })
-                    if (mentor_data) {
+                    if (mentor_data && modelname === student) {
                         throw badRequest('Email')
                     } else {
                         const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : 'Student');
@@ -393,7 +393,7 @@ export default class authService {
         <h3>Dear ${role},</h3>
         <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
-        <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
+        <p><strong>Link: https://ap.youthforsocialimpact.in/login</strong></p>
         <p>
         <strong>
         Regards,<br> YFSI Team
@@ -561,7 +561,7 @@ export default class authService {
         </table> `: ''}
             
             <p>Please use your Email id and password to login and proceed further.</p>
-            <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
+            <p><strong>Link: https://ap.youthforsocialimpact.in/login</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>
 </html>`
@@ -1092,7 +1092,7 @@ export default class authService {
 <div style="padding: 1% 5%;">
     <h3>Dear Guide Teacher,</h3>
     <p>Greetings from Youth for Social Impact 2025. Here are your <strong>YFSI student teams credentials</strong> for your reference.</p>
-    <p><strong>Student login URL : https://www.youthforsocialimpact.in/login</strong></p>
+    <p><strong>Student login URL : https://ap.youthforsocialimpact.in/login</strong></p>
     <table>
         <tr>
             <th>SL No</th>
