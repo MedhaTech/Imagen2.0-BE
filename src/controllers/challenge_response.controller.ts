@@ -1,4 +1,4 @@
-import { badData, badRequest, internal, notFound, unauthorized } from "boom";
+import { badRequest, internal, notFound, unauthorized } from "boom";
 import { NextFunction, Request, Response } from "express";
 import { Op, QueryTypes } from "sequelize";
 import db from "../utils/dbconnection.util";
@@ -9,7 +9,6 @@ import { challenge_response } from "../models/challenge_response.model";
 import dispatcher from "../utils/dispatch.util";
 import ValidationsHolder from "../validations/validationHolder";
 import BaseController from "./base.controller";
-import { student } from "../models/student.model";
 import fs from 'fs';
 import { S3 } from "aws-sdk";
 import { challengeResponsesSchema, challengeResponsesUpdateSchema, initiateIdeaSchema, UpdateAnyFieldSchema } from "../validations/challenge_responses.validations";
@@ -41,7 +40,14 @@ export default class ChallengeResponsesController extends BaseController {
         this.router.get(this.path + '/submittedDetailsforideapdf', this.getResponseideapdf.bind(this));
         super.initializeRoutes();
     }
-
+    //fetch idea details in different forms
+    //all ideas
+    //ideas which are submitted
+    //ideas acceted by the mentor
+    //ideas in draft
+    //ideas l1 acceted & rejected
+    //ideas in l2
+    //ideas in final list  
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -396,7 +402,7 @@ export default class ChallengeResponsesController extends BaseController {
                                     ],
                                     [
                                         db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
-                                    ],  
+                                    ],
                                 ],
                                 where: {
                                     [Op.and]: [
@@ -408,7 +414,7 @@ export default class ChallengeResponsesController extends BaseController {
                             });
                             break;
                         case 'L2':
-                            // cleaning up the repeated code: observation everything is same except the having groupBy clause so separating both of them based the parameter
+
                             let havingClausePart: any;
                             let groupByClausePart: any;
                             whereClauseStatusPart['evaluation_status'] = "SELECTEDROUND1";
@@ -471,8 +477,8 @@ export default class ChallengeResponsesController extends BaseController {
                                     ],
                                     [
                                         db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
-                                    ], 
-                                    
+                                    ],
+
                                 ],
                                 where: {
                                     [Op.and]: [
@@ -577,8 +583,8 @@ export default class ChallengeResponsesController extends BaseController {
                             ],
                             [
                                 db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
-                            ], 
-                           
+                            ],
+
                         ],
                         where: {
                             [Op.and]: [
@@ -604,6 +610,7 @@ export default class ChallengeResponsesController extends BaseController {
         }
         return res.status(200).send(dispatcher(res, data, 'success'));
     };
+    //updting the idea by challenge_response_id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'EVALUATOR' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -642,6 +649,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error);
         }
     };
+    // Initiating the idea
     protected async initiateIdea(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -684,7 +692,7 @@ export default class ChallengeResponsesController extends BaseController {
                 return res.status(406).send(dispatcher(res, challengeRes, 'error', speeches.DATA_EXIST))
             }
             req.body.challenge_id = challenge_id,
-            req.body.student_id = student_id
+                req.body.student_id = student_id
             req.body.created_by = user_id
             let result: any = await this.crudService.create(challenge_response, req.body);
             if (!result) {
@@ -698,6 +706,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(err)
         }
     }
+    //file storing in s3 bucket
     protected async handleAttachment(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -768,6 +777,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(err)
         }
     }
+    //updting the idea by challenge_response_id
     protected async updateAnyFields(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -777,7 +787,7 @@ export default class ChallengeResponsesController extends BaseController {
             if (model) {
                 this.model = model;
             };
-            const { status,verified_status } = req.body;
+            const { status, verified_status } = req.body;
 
             const newParamId: any = await this.authService.decryptGlobal(req.params.id);
             let newREQQuery: any = {}
@@ -792,13 +802,13 @@ export default class ChallengeResponsesController extends BaseController {
             let newFormat = (newDate.getFullYear()) + "-" + (1 + newDate.getMonth()) + "-" + newDate.getUTCDate() + ' ' + newDate.getHours() + ':' + newDate.getMinutes() + ':' + newDate.getSeconds();
             if (status === 'SUBMITTED') {
                 req.body['submitted_at'] = newFormat.trim()
-                req.body.verified_status=''
-                req.body.verified_at=''
-                req.body.mentor_rejected_reason=''
+                req.body.verified_status = ''
+                req.body.verified_at = ''
+                req.body.mentor_rejected_reason = ''
             } else if (!nameChange) {
                 req.body['submitted_at'] = ''
             }
-            if (verified_status){
+            if (verified_status) {
                 req.body['verified_at'] = newFormat.trim()
             }
 
@@ -819,6 +829,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error);
         }
     }
+    //fetch single idea with challenge_response_id
     protected async getResponse(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -898,6 +909,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error);
         }
     }
+    //fetching idea for the pdf generating
     protected async getResponseideapdf(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -945,7 +957,7 @@ export default class ChallengeResponsesController extends BaseController {
                     "mentor_rejected_reason",
                     [
                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
-                    ]    
+                    ]
                 ],
                 where: {
                     [Op.and]: [
@@ -965,6 +977,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error);
         }
     }
+    //fetching single idea from l1 or l2 bucket for evaluation 
     protected async getRandomChallenge(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EVALUATOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1099,7 +1112,7 @@ export default class ChallengeResponsesController extends BaseController {
                             throw challengeResponse
                         }
                         if (challengeResponse.length == 0) {
-                            // throw notFound("All challenge has been rated, no more challenge to display");
+
                             return res.status(200).send(dispatcher(res, throwMessage, 'success'));
                         };
                         break;
@@ -1112,6 +1125,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error);
         }
     }
+    //fetching list of idea which are evaluator both l1 AND l2 by evalutor id
     private async getChallengesForEvaluator(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EVALUATOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1250,7 +1264,7 @@ export default class ChallengeResponsesController extends BaseController {
                                 [
                                     db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                                 ],
-                               
+
                             ],
                             where: {
                                 [Op.and]: [
@@ -1295,6 +1309,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error)
         }
     };
+    //fetch finally seleted ideas list
     private async finalEvaluation(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1393,8 +1408,8 @@ export default class ChallengeResponsesController extends BaseController {
                     ],
                     [
                         db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
-                    ],  
-                    
+                    ],
+
                 ],
                 where: {
                     [Op.and]: [
@@ -1470,6 +1485,7 @@ export default class ChallengeResponsesController extends BaseController {
             return res.status(500).send(dispatcher(res, error, 'error'))
         }
     };
+    //fetching idea status based on the team id
     protected async getideastatusbyteamid(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1489,6 +1505,7 @@ export default class ChallengeResponsesController extends BaseController {
             next(error);
         }
     }
+    //fetching idea details for pdf generating 
     protected async getSchoolPdfIdeaStatus(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
