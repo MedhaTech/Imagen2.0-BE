@@ -29,7 +29,6 @@ export default class QuizController extends BaseController {
         this.router.get(this.path + "/:id/nextQuestion/", this.getNextQuestion.bind(this));
         this.router.post(this.path + "/:id/response/", validationMiddleware(quizSubmitResponseSchema), this.submitResponse.bind(this));
         this.router.get(this.path + "/result", this.getResult.bind(this));
-       // super.initializeRoutes(); 
     }
 
     /**
@@ -70,7 +69,6 @@ export default class QuizController extends BaseController {
             const curr_topic = await this.crudService.findOne(course_topic, { where: { "topic_type_id": quiz_id, "topic_type": "QUIZ", status: 'ACTIVE' } })
             if (!curr_topic || curr_topic instanceof Error) {
 
-                //here we have made a mjor assumption that mentor quiz_id and student quiz ids will be diff and that one quiz_id cannot be added in both student and mentor course_topic tables(these are two diff tables) , if u do so it will be considered as student course api
                 const curr_topic = await this.crudService.findOne(mentor_course_topic, { where: { "topic_type_id": quiz_id, "topic_type": "QUIZ" } })
                 if (!curr_topic || curr_topic instanceof Error) {
                     throw badRequest("INVALID TOPIC");
@@ -100,7 +98,7 @@ export default class QuizController extends BaseController {
             let question_no = 1
             let nextQuestion: any = null;
             if (quizRes) {
-                //TOOO :: implement checking response and based on that change the 
+
                 let user_response: any = {}
                 user_response = JSON.parse(quizRes.dataValues.response);
 
@@ -174,7 +172,7 @@ export default class QuizController extends BaseController {
                 res.status(200).send(dispatcher(res, resultQuestion))
             } else {
 
-                //send response that quiz is completed..!!
+
                 res.status(200).send(dispatcher(res, "Quiz has been completed no more questions to display"))
             }
         } catch (err) {
@@ -183,7 +181,7 @@ export default class QuizController extends BaseController {
 
 
     }
-
+    //creating quiz response of the user
     protected async submitResponse(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -352,8 +350,8 @@ export default class QuizController extends BaseController {
             next(err)
         }
     }
-    //TODO: 
 
+    //fetching quiz score of the user by user_id
     protected async getResult(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));

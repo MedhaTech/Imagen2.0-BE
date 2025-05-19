@@ -8,10 +8,8 @@ import { QueryTypes } from 'sequelize';
 import { dashboard_map_stat } from '../models/dashboard_map_stat.model';
 import DashboardService from '../services/dashboard.service';
 import { constents } from '../configs/constents.config';
-import { badData, notFound } from 'boom';
+import { notFound } from 'boom';
 import { student } from '../models/student.model';
-import { challenge_response } from '../models/challenge_response.model';
-import StudentService from '../services/students.service';
 import { baseConfig } from "../configs/base.config";
 import { Op } from 'sequelize';
 
@@ -55,10 +53,6 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/studentCourseCount`, this.getstudentCourseCount.bind(this));
         this.router.get(`${this.path}/ideasCount`, this.getideasCount.bind(this));
         this.router.get(`${this.path}/mentorCount`, this.getmentorCount.bind(this));
-        //this.router.get(`${this.path}/studentCountbygender`, this.getstudentCountbygender.bind(this));
-        //this.router.get(`${this.path}/schoolCount`, this.getSchoolCount.bind(this));
-        //this.router.get(`${this.path}/mentorCourseCount`, this.getmentorCourseCount.bind(this));
-        //this.router.get(`${this.path}/ATLNonATLRegCount`, this.getATLNonATLRegCount.bind(this));
         this.router.get(`${this.path}/totalQuizSurveys`, this.getTotalQuizSurveys.bind(this));
         //State DashBoard stats
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
@@ -331,6 +325,7 @@ export default class DashboardController extends BaseController {
             next(err)
         }
     }
+    //fetching single user quiz score by user_id
     protected async getUserQuizScores(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -358,6 +353,7 @@ export default class DashboardController extends BaseController {
             next(err)
         }
     }
+    //fecting team count for the Institution & all
     protected async getteamCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -397,6 +393,7 @@ WHERE
             next(err)
         }
     }
+    //fecting student count for the Institution, & all
     protected async getstudentCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -423,6 +420,7 @@ WHERE
             next(err)
         }
     }
+    //fecting ideas count for the Institution
     protected async getideaCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -446,6 +444,7 @@ WHERE
             next(err)
         }
     }
+    //fecting Institution course percentage
     protected async getmentorpercentage(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -471,6 +470,7 @@ WHERE
             next(err)
         }
     }
+    //fecting mentInstitutionor survey stats (pre and post)
     protected async getmentorSurveyStatus(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -503,6 +503,7 @@ WHERE
             next(err)
         }
     }
+    //fecting state specific details
     protected async getWhatappLink(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -527,6 +528,7 @@ WHERE
             next(err)
         }
     }
+    //fetching team login details for Institution
     protected async getteamCredentials(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -551,6 +553,7 @@ WHERE
             next(err)
         }
     }
+    //fetching student course count
     protected async getstudentCourseCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -590,6 +593,7 @@ WHERE
             next(err)
         }
     }
+    //fetching ideas count for all
     protected async getideasCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -629,6 +633,7 @@ WHERE
             next(err)
         }
     }
+    //fetching Institution count
     protected async getmentorCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -641,123 +646,16 @@ FROM
     mentors AS mn
 WHERE
     mn.status = 'ACTIVE';`, { type: QueryTypes.SELECT });
-            //     const mentorMale = await db.query(`SELECT 
-            //     COUNT(mn.mentor_id) AS mentorMale
-            // FROM
-            //     organizations AS og
-            //         LEFT JOIN
-            //     mentors AS mn ON og.organization_code = mn.organization_code
-            //     WHERE og.status='ACTIVE' && mn.gender = 'Male';`, { type: QueryTypes.SELECT })
+
             result['mentorCount'] = Object.values(mentorCount[0]).toString()
-            // result['mentorMale'] = Object.values(mentorMale[0]).toString()
+
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
             next(err)
         }
     }
-    // protected async getstudentCountbygender(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         let result: any = {};
-    //         const student = await db.query(`SELECT 
-    //         SUM(CASE
-    //             WHEN st.gender = 'MALE' THEN 1
-    //             ELSE 0
-    //         END) AS male,
-    //         SUM(CASE
-    //             WHEN st.gender = 'FEMALE' THEN 1
-    //             ELSE 0
-    //         END) AS female
-    //     FROM
-    //         organizations AS og
-    //             LEFT JOIN
-    //         mentors AS mn ON og.organization_code = mn.organization_code
-    //             INNER JOIN
-    //         teams AS t ON mn.mentor_id = t.mentor_id
-    //             INNER JOIN
-    //         students AS st ON st.team_id = t.team_id
-    //         WHERE og.status='ACTIVE';`, { type: QueryTypes.SELECT });
-    //         result['studentMale'] = Object.values(student[0])[0].toString();
-    //         result['studentFemale'] = Object.values(student[0])[1].toString();
-    //         res.status(200).send(dispatcher(res, result, 'done'))
-    //     }
-    //     catch (err) {
-    //         next(err)
-    //     }
-    // }
-    // protected async getSchoolCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         let result: any = {};
-    //         result = await db.query(`SELECT count(*) as schoolCount FROM organizations WHERE status='ACTIVE';`, { type: QueryTypes.SELECT })
-    //         res.status(200).send(dispatcher(res, result, 'done'))
-    //     }
-    //     catch (err) {
-    //         next(err)
-    //     }
-    // }
-    // protected async getmentorCourseCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         let result: any = {};
-    //         result = await db.query(`select count(*) as mentorCoursesCompletedCount from (SELECT 
-    //         district,cou
-    //     FROM
-    //         organizations AS og
-    //             LEFT JOIN
-    //         (SELECT 
-    //             organization_code, cou
-    //         FROM
-    //             mentors AS mn
-    //         LEFT JOIN (SELECT 
-    //             user_id, COUNT(*) AS cou
-    //         FROM
-    //             mentor_topic_progress
-    //         GROUP BY user_id having count(*)>=${baseConfig.MENTOR_COURSE}) AS t ON mn.user_id = t.user_id ) AS c ON c.organization_code = og.organization_code WHERE og.status='ACTIVE'
-    //     group by organization_id having cou>=${baseConfig.MENTOR_COURSE}) as final`, { type: QueryTypes.SELECT })
-    //         res.status(200).send(dispatcher(res, result, 'done'))
-    //     }
-    //     catch (err) {
-    //         next(err)
-    //     }
-    // }
-    // protected async getATLNonATLRegCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         let result: any = {};
-    //         const ATLCount = await db.query(`SELECT 
-    //         COUNT(DISTINCT mn.organization_code) AS RegSchools
-    //     FROM
-    //         organizations AS og
-    //             LEFT JOIN
-    //         mentors AS mn ON og.organization_code = mn.organization_code
-    //     WHERE
-    //         og.status = 'ACTIVE' and og.category = 'ATL';`, { type: QueryTypes.SELECT });
-    //         const NONATLCount = await db.query(`SELECT 
-    //         COUNT(DISTINCT mn.organization_code) AS RegSchools
-    //     FROM
-    //         organizations AS og
-    //             LEFT JOIN
-    //         mentors AS mn ON og.organization_code = mn.organization_code
-    //     WHERE
-    //         og.status = 'ACTIVE' and og.category = 'Non ATL';`, { type: QueryTypes.SELECT });
-    //         result['ATLCount'] = Object.values(ATLCount[0]).toString();
-    //         result['NONATLCount'] = Object.values(NONATLCount[0]).toString();
-    //         res.status(200).send(dispatcher(res, result, 'done'))
-    //     }
-    //     catch (err) {
-    //         next(err)
-    //     }
-    // }
+    //fetching all count for state
     protected async getStateDashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -902,6 +800,7 @@ WHERE
             next(err)
         }
     }
+    //fetching studetn course count
     protected async getStudentCourse(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -960,6 +859,7 @@ WHERE
             next(err)
         }
     }
+    //fetching student video count by student id
     protected async getStudentVideo(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1018,6 +918,7 @@ WHERE
             next(err)
         }
     }
+    //fetching student quiz count by student id
     protected async getStudentQUIZ(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1076,6 +977,7 @@ WHERE
             next(err)
         }
     }
+    //fetching student badges by student id
     protected async getStudentBadges(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1123,6 +1025,7 @@ WHERE
             next(err)
         }
     }
+    //fetching student survey status by student id
     protected async getStudentPREPOST(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1181,6 +1084,7 @@ WHERE
             next(err)
         }
     }
+    //fetching total count of student pre survey and student post survey
     protected async getTotalQuizSurveys(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1204,6 +1108,7 @@ FROM
             next(err)
         }
     }
+    //fetching list of college name by college type
     protected async getCollegeNameForCollegeType(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             let result: any = {};

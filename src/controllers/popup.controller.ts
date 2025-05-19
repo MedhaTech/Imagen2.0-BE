@@ -23,6 +23,7 @@ export default class popupController extends BaseController {
         this.router.post(`${this.path}/popupFileUpload`, this.handleAttachment.bind(this));
         super.initializeRoutes();
     }
+    //storing files in the s3 bucket
     protected async handleAttachment(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -80,6 +81,7 @@ export default class popupController extends BaseController {
             next(err)
         }
     }
+    //fetching all popup details and single popup by popup_id
     protected async getData(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
@@ -114,8 +116,8 @@ export default class popupController extends BaseController {
                 data = await this.crudService.findAll(popup, {
                     where: [where]
                 })
-                if (data.length <= 0){
-                    where[`state`] = "All States" 
+                if (data.length <= 0) {
+                    where[`state`] = "All States"
                     data = await this.crudService.findAll(popup, {
                         where: [where]
                     })

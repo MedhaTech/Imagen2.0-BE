@@ -6,12 +6,8 @@ import BaseController from './base.controller';
 import ValidationsHolder from '../validations/validationHolder';
 import { user } from '../models/user.model';
 import { admin } from '../models/admin.model';
-import { adminbulkemail, adminSchema, adminUpdateSchema } from '../validations/admins.validationa';
+import { adminSchema, adminUpdateSchema } from '../validations/admins.validationa';
 import { badRequest, notFound, unauthorized } from 'boom';
-import { email } from '../models/email.model';
-import { QueryTypes } from 'sequelize';
-import db from "../utils/dbconnection.util"
-import validationMiddleware from '../middlewares/validation.middleware';
 import { student } from '../models/student.model';
 import { mentor } from '../models/mentor.model';
 
@@ -33,10 +29,10 @@ export default class AdminController extends BaseController {
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         this.router.get(`${this.path}/knowqueryparm`, this.getknowqueryparm.bind(this));
         this.router.post(`${this.path}/createqueryparm`, this.getcreatequeryparm.bind(this));
-        //this.router.post(`${this.path}/bulkEmail`, validationMiddleware(adminbulkemail), this.bulkEmail.bind(this));
         this.router.put(`${this.path}/updateInstitutionOption`, this.updateInstitutionOptions.bind(this));
         super.initializeRoutes();
     }
+    //Creating Admin & Eadmin users
     protected async createData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (!req.body.username || req.body.username === "") req.body.username = req.body.full_name.replace(/\s/g, '');
         if (!req.body.password || req.body.password === "") req.body.password = await this.authService.generateCryptEncryption(req.body.username);
@@ -48,6 +44,7 @@ export default class AdminController extends BaseController {
         }
         return res.status(406).send(dispatcher(res, null, 'error', speeches.USER_ROLE_REQUIRED, 406));
     }
+    //fetching details of Admin and Eadmin users
     protected async getData(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
@@ -74,7 +71,7 @@ export default class AdminController extends BaseController {
         }
 
     }
-
+    //updating details of admin and Eadmin users with the admin id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -112,7 +109,8 @@ export default class AdminController extends BaseController {
             next(error);
         }
     }
-
+    //login api for the admin & eadmin users 
+    //Input username and password
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         let adminDetails: any;
         let newREQQuery: any = {}
@@ -138,7 +136,7 @@ export default class AdminController extends BaseController {
             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
         }
     }
-
+    //logout api for the admin & eadmin users 
     private async logout(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         const result = await this.authService.logout(req.body, res);
         if (result.error) {
@@ -147,6 +145,7 @@ export default class AdminController extends BaseController {
             return res.status(200).send(dispatcher(res, speeches.LOGOUT_SUCCESS, 'success'));
         }
     }
+    //To decrypte the encrypte value
     private async getknowqueryparm(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
@@ -165,7 +164,7 @@ export default class AdminController extends BaseController {
         }
 
     }
-
+    //change password for admin and eadmin
     private async changePassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -182,6 +181,7 @@ export default class AdminController extends BaseController {
             return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
         }
     }
+    // creating encrypted value
     private async getcreatequeryparm(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
@@ -201,50 +201,7 @@ export default class AdminController extends BaseController {
         }
 
     }
-    //     private async bulkEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //         if (res.locals.role !== 'ADMIN') {
-    //             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //         }
-    //         try {
-    //             const { msg, subject, district } = req.body;
-    //             const payload = this.autoFillTrackingColumns(req, res, email);
-    //             await this.crudService.create(email, payload);
-    //             let data: any = {}
-    //             let districtFilter: any = `'%%'`
-    //             if (district !== 'All Districts' && district !== undefined) {
-    //                 districtFilter = `'${district}'`
-    //             }
-    //             const summary = await db.query(`SELECT DISTINCT
-    //     u.username
-    // FROM
-    //     students AS s
-    //         JOIN
-    //     users AS u ON s.user_id = u.user_id
-    // WHERE
-    //     district LIKE ${districtFilter}`, { type: QueryTypes.SELECT });
-    //             const arrayOfUsernames = await this.authService.ConverListemail(summary);
-    //             let resultdata = [];
-    //             if (arrayOfUsernames.length > 49) {
-    //                 function splitArray(arr: any, chunkSize: any) {
-    //                     let result = [];
-    //                     for (let i = 0; i < arr.length; i += chunkSize) {
-    //                         result.push(arr.slice(i, i + chunkSize));
-    //                     }
-    //                     return result;
-    //                 }
-    //                 let splitArrays = splitArray(arrayOfUsernames, 49);
-    //                 splitArrays.map(async (smallarrayofusername, i) => {
-    //                     resultdata = await this.authService.triggerBulkEmail(smallarrayofusername, msg, subject);
-    //                 })
-    //             } else {
-    //                 resultdata.push(await this.authService.triggerBulkEmail(arrayOfUsernames, msg, subject))
-    //             }
-
-    //             return res.status(200).send(dispatcher(res, resultdata, 'Email sent'));
-    //         } catch (error) {
-    //             next(error);
-    //         }
-    //     }
+    //updating the college name in the institution and student users
     private async updateInstitutionOptions(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));

@@ -1,17 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { mentor } from "../models/mentor.model";
-import { organization } from "../models/organization.model";
 import dispatcher from "../utils/dispatch.util";
 import db from "../utils/dbconnection.util"
-import { quiz_survey_response } from '../models/quiz_survey_response.model';
 import BaseController from "./base.controller";
-import { constents } from "../configs/constents.config";
-import { mentor_course_topic } from "../models/mentor_course_topic.model";
-import { internal, notFound } from "boom";
+import { notFound } from "boom";
 import { speeches } from "../configs/speeches.config";
-import { Op, QueryTypes } from 'sequelize';
-import { user } from "../models/user.model";
-import { team } from "../models/team.model";
+import { QueryTypes } from 'sequelize';
 import { baseConfig } from "../configs/base.config";
 
 export default class ReportController extends BaseController {
@@ -44,6 +37,7 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/L2deatilreport`, this.getL2Report.bind(this));
         this.router.get(`${this.path}/L3deatilreport`, this.getL3Report.bind(this));
     }
+    //fetching studentsummary counts
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -71,6 +65,7 @@ export default class ReportController extends BaseController {
             next(err)
         }
     }
+    //fetching student reg detail report
     protected async studentRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -125,6 +120,7 @@ FROM
             next(err)
         }
     }
+    //fetching Institutionsummary counts
     protected async instsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -152,6 +148,7 @@ FROM
             next(err)
         }
     }
+    //fetching Institution reg detail report
     protected async institutionRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -201,6 +198,7 @@ WHERE
             next(err)
         }
     }
+    //fetching Institution non reg detail report
     protected async institutionNonRegDetails(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -251,6 +249,7 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching Institution detail counts
     protected async getmentorDetailstable(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -295,6 +294,7 @@ ORDER BY district`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching student detail counts
     protected async getstudentDetailstable(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -367,6 +367,7 @@ GROUP BY district ORDER BY district`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching mentor detail report
     protected async getmentorDetailsreport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -472,6 +473,7 @@ GROUP BY college_name`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching student detail report
     protected async getstudentDetailsreport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -569,6 +571,7 @@ GROUP BY user_id`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching submitted  ideas detail counts for state and all
     protected async getideaReportTable(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -661,6 +664,7 @@ GROUP BY s.district ORDER BY district`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching submitted  ideas detail report for state and all
     protected async getideaReport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'REPORT' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -736,6 +740,7 @@ WHERE
             next(err)
         }
     }
+    //fetching l1 evaluation detail counts for state and all
     protected async getL1ReportTable1(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -790,6 +795,7 @@ WHERE
             next(err)
         }
     }
+    //fetching l1 evaluator detail counts for state and all
     protected async getL1ReportTable2(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -825,6 +831,7 @@ WHERE
             next(err)
         }
     }
+    //fetching l2 evaluation detail counts for state and all
     protected async getL2ReportTable1(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -852,6 +859,7 @@ WHERE
             next(err)
         }
     }
+    //fetching l2 score wise counts fro state and all
     protected async getL2ReportTable3(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -938,6 +946,7 @@ GROUP BY org.district
             next(err)
         }
     }
+    //fetching l2 evaluator detail counts for state and all
     protected async getL2ReportTable2(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -963,6 +972,7 @@ GROUP BY org.district
             next(err)
         }
     }
+    //fetching l3 evaluation detail counts for state and all
     protected async getL3ReportTable1(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -994,6 +1004,7 @@ GROUP BY challenge_response_id;`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching l3 evaluator detail counts for state and all
     protected async getL3ReportTable2(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1047,6 +1058,7 @@ GROUP BY challenge_response_id;`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching l1 evaluation detail report for state and all
     protected async getL1Report(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1118,6 +1130,7 @@ WHERE
             next(err)
         }
     }
+    //fetching l2 evaluation detail report for state and all
     protected async getL2Report(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -1204,6 +1217,7 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
             next(err)
         }
     }
+    //fetching l3 evaluation detail report for state and all
     protected async getL3Report(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
