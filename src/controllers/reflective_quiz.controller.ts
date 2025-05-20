@@ -23,17 +23,15 @@ export default class ReflectiveQuizController extends BaseController {
         this.validations = new ValidationsHolder(quizSchema, quizUpdateSchema);
     }
     protected initializeRoutes(): void {
-        //example route to add 
         this.router.get(this.path + "/:id/nextQuestion/", this.getNextQuestion.bind(this));
         this.router.post(this.path + "/:id/response/", validationMiddleware(quizSubmitResponseSchema), this.submitResponse.bind(this));
         super.initializeRoutes();
     }
-
+    //fetching details of reflectiveQuiz
     protected async getNextQuestion(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             const newParamId = await this.authService.decryptGlobal(req.params.id);
             const video_id = newParamId;
-           //const newStatus = await this.authService.decryptGlobal(req.params.status);
             const paramStatus: any = 'ACTIVE';
             const user_id = res.locals.user_id;
 
@@ -60,6 +58,7 @@ export default class ReflectiveQuizController extends BaseController {
             next(err)
         }
     }
+    //creating reflectiveQuiz response of the user
     protected async submitResponse(req: Request, res: Response, next: NextFunction) {
         try {
             const newParamId = await this.authService.decryptGlobal(req.params.id);
@@ -90,17 +89,17 @@ export default class ReflectiveQuizController extends BaseController {
             if (quizRes instanceof Error) {
                 throw internal(quizRes.message)
             }
-            // console.log(quizRes);
+
             let dataToUpsert: any = {}
             dataToUpsert = { video_id: video_id, user_id: user_id, updated_by: user_id }
 
-            //copy all attachments....
+
             const attachmentsCopyResult = await this.copyAllFiles(req, null, "reflective_quiz", "responses");
             if (attachmentsCopyResult.errors.length > 0) {
                 return res.status(406).send(dispatcher(res, attachmentsCopyResult.errors, 'error', speeches.NOT_ACCEPTABLE, 406));
             }
 
-            //check if question was ansered correctly
+
             let hasQuestionBeenAnsweredCorrectly = false;
             if (questionAnswered.type == "TEXT" || questionAnswered.type == "DRAW") {
                 hasQuestionBeenAnsweredCorrectly = true;
@@ -124,7 +123,7 @@ export default class ReflectiveQuizController extends BaseController {
 
             let user_response: any = {}
             if (quizRes) {
-                // console.log(quizRes.dataValues.response);
+
                 user_response = JSON.parse(quizRes.dataValues.response);
                 user_response[questionAnswered.dataValues.question_no] = responseObjToAdd;
 
@@ -167,7 +166,7 @@ export default class ReflectiveQuizController extends BaseController {
                 res.status(200).send(dispatcher(res, result));
             }
         } catch (err) {
-            console.log(err)
+
             next(err)
         }
     }

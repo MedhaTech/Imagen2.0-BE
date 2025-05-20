@@ -26,6 +26,7 @@ export default class DiscussionForumController extends BaseController {
         this.router.post(`${this.path}/discussionForumFileUpload`, this.handleAttachment.bind(this));
         super.initializeRoutes();
     }
+    //fetching all discussion_forum details and single discussion_forum by discussion_forum_id
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -47,7 +48,6 @@ export default class DiscussionForumController extends BaseController {
             const { page, size, status, user_id, district } = newREQQuery;
             let condition = status ? { status: { [Op.like]: `%${status}%` } } : null;
             let districtFilter = district ? { district: { [Op.like]: `%${district}%` } } : null;
-            //let filteringBasedOnUser_id = user_id ? { created_by: user_id } : null;
             const { limit, offset } = this.getPagination(page, size);
             const modelClass = await this.loadModel(model).catch(error => {
                 next(error)
@@ -146,6 +146,7 @@ export default class DiscussionForumController extends BaseController {
             next(error);
         }
     };
+    //updating discussion_forum details by discussion_forum_id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -174,6 +175,7 @@ export default class DiscussionForumController extends BaseController {
             next(error);
         }
     }
+    //storing files in the s3 bucket
     protected async handleAttachment(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));

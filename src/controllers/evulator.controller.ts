@@ -1,6 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import fs from 'fs';
-import * as csv from "fast-csv";
 import { speeches } from '../configs/speeches.config';
 import dispatcher from '../utils/dispatch.util';
 import authService from '../services/auth.service';
@@ -10,8 +8,6 @@ import { evaluatorRegSchema, evaluatorUpdateSchema } from '../validations/evalua
 import { evaluator } from '../models/evaluator.model';
 import { user } from '../models/user.model';
 import { badRequest, notFound, unauthorized } from 'boom';
-import db from "../utils/dbconnection.util"
-import { evaluation_process } from '../models/evaluation_process.model';
 import validationMiddleware from '../middlewares/validation.middleware';
 import { baseConfig } from '../configs/base.config';
 import bcrypt from 'bcrypt';
@@ -36,7 +32,9 @@ export default class EvaluatorController extends BaseController {
         this.router.put(`${this.path}/resetPassword`, this.resetPassword.bind(this));
         super.initializeRoutes();
     };
-
+    // fetching evaluator user details 
+    //all users
+    //single user by evaluator id
     protected async getData(req: Request, res: Response, next: NextFunction) {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN' && res.locals.role !== 'EVALUATOR') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
@@ -95,7 +93,7 @@ export default class EvaluatorController extends BaseController {
         }
         return res.status(200).send(dispatcher(res, data, 'success'));
     }
-
+    //updating details of evaluator users with the evaluator id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN' && res.locals.role !== 'EVALUATOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -137,7 +135,7 @@ export default class EvaluatorController extends BaseController {
             next(error);
         }
     }
-
+    //Creating evalutor user
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (!req.body.username || req.body.username === "") req.body.username = req.body.full_name.replace(/\s/g, '');
         if (!req.body.password || req.body.password === "") req.body.password = this.password;
@@ -146,12 +144,12 @@ export default class EvaluatorController extends BaseController {
         };
 
         const payload = this.autoFillTrackingColumns(req, res, evaluator);
-        //payload['district'] = "Andaman and Nicobar Islands,Andhra Pradesh,Arunachal Pradesh,Assam,Bihar,Chandigarh,Chhattisgarh,Dadra and Nagar Haveli and Daman and Diu,Delhi,Goa,Gujarat,Haryana,Himachal Pradesh,Jammu and Kashmir,Jharkhand,Karnataka,Kerala,Ladakh,Lakshadweep,Madhya Pradesh,Maharashtra,Manipur,Meghalaya,Mizoram,Nagaland,Odisha,Puducherry,Punjab,Rajasthan,Sikkim,Tamil Nadu,Telangana,Tripura,Uttar Pradesh,Uttarakhand,West Bengal"
         const result = await this.authService.register(payload);
         if (result.user_res) return res.status(406).send(dispatcher(res, result.user_res.dataValues, 'error', speeches.EVALUATOR_EXISTS, 406));
         return res.status(201).send(dispatcher(res, result.profile.dataValues, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
     }
-
+    //login api for the evaluator user
+    //Input username and password
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         req.body['role'] = 'EVALUATOR'
         const result = await this.authService.login(req.body);
@@ -168,7 +166,7 @@ export default class EvaluatorController extends BaseController {
             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
         }
     }
-
+    //logout api for the evaluator user
     private async logout(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         const result = await this.authService.logout(req.body, res);
         if (result.error) {
@@ -177,7 +175,7 @@ export default class EvaluatorController extends BaseController {
             return res.status(200).send(dispatcher(res, speeches.LOGOUT_SUCCESS, 'success'));
         }
     }
-
+    //change password for evalutor
     private async changePassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EVALUATOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -194,7 +192,7 @@ export default class EvaluatorController extends BaseController {
             return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
         }
     }
-
+    //reseting password for evaluator to mobile
     private async resetPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));

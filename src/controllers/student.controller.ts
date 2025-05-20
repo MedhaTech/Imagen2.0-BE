@@ -1,23 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import { customAlphabet } from 'nanoid';
 import { speeches } from '../configs/speeches.config';
 import dispatcher from '../utils/dispatch.util';
+import { baseConfig } from '../configs/base.config';
 import { studentLoginSchema, studentSchema, studentSchemaAddstudent, studentUpdateSchema } from '../validations/student.validationa';
-import bcrypt from 'bcrypt';
 import authService from '../services/auth.service';
 import BaseController from './base.controller';
 import ValidationsHolder from '../validations/validationHolder';
 import validationMiddleware from '../middlewares/validation.middleware';
-import { constents } from '../configs/constents.config';
 import { Op, QueryTypes } from 'sequelize';
 import { user } from '../models/user.model';
-import { team } from '../models/team.model';
-import { baseConfig } from '../configs/base.config';
 import { student } from '../models/student.model';
-import StudentService from '../services/students.service';
-import { badge } from '../models/badge.model';
-import { mentor } from '../models/mentor.model';
-import { organization } from '../models/organization.model';
 import { badRequest, internal, notFound } from 'boom';
 import db from "../utils/dbconnection.util"
 import { challenge_response } from '../models/challenge_response.model';
@@ -25,8 +17,6 @@ import { challenge_response } from '../models/challenge_response.model';
 export default class StudentController extends BaseController {
     model = "student";
     authService: authService = new authService;
-    private password = process.env.GLOBAL_PASSWORD;
-    private nanoid = customAlphabet('0123456789', 6);
 
     protected initializePath(): void {
         this.path = '/students';
@@ -38,10 +28,7 @@ export default class StudentController extends BaseController {
         this.router.post(`${this.path}/register`, validationMiddleware(studentSchema), this.register.bind(this));
         this.router.post(`${this.path}/registerNaipunyam`, validationMiddleware(studentSchema), this.registerfornaipunyam.bind(this));
         this.router.post(`${this.path}/addStudent`, validationMiddleware(studentSchemaAddstudent), this.addStudent.bind(this));
-        // this.router.post(`${this.path}/bulkCreateStudent`, this.bulkCreateStudent.bind(this));
         this.router.get(`${this.path}/:student_user_id/studentCertificate`, this.studentCertificate.bind(this));
-        // this.router.post(`${this.path}/:student_user_id/badges`, this.addBadgeToStudent.bind(this));
-        // this.router.get(`${this.path}/:student_user_id/badges`, this.getStudentBadges.bind(this));
         this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
         this.router.post(`${this.path}/login`, validationMiddleware(studentLoginSchema), this.login.bind(this));
         this.router.get(`${this.path}/ListOfPilotStudent`, this.getPilotStudent.bind(this));
@@ -52,8 +39,10 @@ export default class StudentController extends BaseController {
         this.router.get(`${this.path}/IsCertificate`, this.getCertificate.bind(this));
         super.initializeRoutes();
     }
+    //login api for the student users 
+    //Input username and password
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        // let studentDetails: any;
+
         let result;
         req.body['role'] = 'STUDENT'
         if (req.body.logintype === 'SINGLESIGIN') {
@@ -66,7 +55,7 @@ export default class StudentController extends BaseController {
         } else if (result.error) {
             return res.status(401).send(dispatcher(res, result.error, 'error', speeches.USER_RISTRICTED, 401));
         } else {
-            //studentDetails = await this.authService.getServiceDetails('student', { user_id: result.data.user_id });
+
             const studentData = await this.authService.crudService.findOne(student, {
                 where: { user_id: result.data.user_id }
             });
@@ -76,6 +65,9 @@ export default class StudentController extends BaseController {
             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
         }
     }
+    //Fetching student all details 
+    //Single student details by student id
+    //All student list
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -161,6 +153,7 @@ WHERE
             next(error);
         }
     }
+    //Updating the student data by student id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -246,6 +239,7 @@ WHERE
             next(error);
         }
     }
+    //Deleting student data
     protected async deleteData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -268,6 +262,7 @@ WHERE
             next(error);
         }
     }
+    //Deleting student data and team members also
     protected async deleteAllData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -306,6 +301,7 @@ WHERE
             next(error);
         }
     }
+    //Creating pilot student users
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             req.body.password = req.body.confirmPassword;
@@ -351,6 +347,7 @@ WHERE
             next(err)
         }
     }
+    //Creating crew student users
     private async addStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             req.body.password = req.body.confirmPassword;
@@ -358,7 +355,7 @@ WHERE
             req.body.email = req.body.username;
             const payload = this.autoFillTrackingColumns(req, res, student);
             const result = await this.authService.studentRegister(payload);
-             if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
                 return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
             }
             if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
@@ -373,200 +370,7 @@ WHERE
             next(err)
         }
     }
-    // private async bulkCreateStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     try {
-    //         for (let student in req.body) {
-    //             if (!req.body[student].team_id) throw notFound(speeches.USER_TEAMID_REQUIRED);
-    //             //const team_id = req.body[student].team_id
-    //             // if (team_id) {
-    //             //     const teamCanAddMember = await this.authService.checkIfTeamHasPlaceForNewMember(team_id)
-    //             //     if (!teamCanAddMember) {
-    //             //         throw badRequest(speeches.TEAM_MAX_MEMBES_EXCEEDED)
-    //             //     }
-    //             //     if (teamCanAddMember instanceof Error) {
-    //             //         throw teamCanAddMember;
-    //             //     }
-    //             // }
-    //         }
-    //         let cryptoEncryptedString: any;
-    //         const teamName = await this.authService.crudService.findOne(team, {
-    //             attributes: ["team_name"], where: { team_id: req.body[0].team_id }
-    //         });
-    //         if (!teamName) throw notFound(speeches.TEAM_NOT_FOUND, 406);
-    //         if (teamName instanceof Error) throw teamName;
-    //         for (let student in req.body) {
-    //             cryptoEncryptedString = await this.authService.generateCryptEncryption('STUDENT@123');
-    //             req.body[student].username = `${req.body[student].team_id}_${req.body[student].full_name.trim()}`;
-    //             req.body[student].full_name = req.body[student].full_name.trim();
-    //             req.body[student].role = 'STUDENT';
-    //             req.body[student].password = cryptoEncryptedString;
-    //             req.body[student].created_by = res.locals.user_id
-    //             req.body[student].updated_by = res.locals.user_id
-    //         }
-    //         const responseFromService = await this.authService.bulkCreateStudentService(req.body);
-    //         return res.status(201).send(dispatcher(res, responseFromService, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
-    //     } catch (error) {
-    //         next(error);
-    //     }
-    // }
-    // private async addBadgeToStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         //todo: test this api : haven't manually tested this api yet 
-    //         const student_user_id: any = await this.authService.decryptGlobal(req.params.student_user_id);
-    //         const badges_ids: any = req.body.badge_ids;
-    //         const badges_slugs: any = req.body.badge_slugs;
-    //         let areSlugsBeingUsed = true;
-    //         if (!badges_slugs || !badges_slugs.length || badges_slugs.length <= 0) {
-    //             areSlugsBeingUsed = false;
-    //         }
-
-    //         if (!areSlugsBeingUsed && (!badges_ids || !badges_ids.length || badges_ids.length <= 0)) {
-    //             throw badRequest(speeches.BADGE_IDS_ARRAY_REQUIRED)
-    //         }
-
-    //         const serviceStudent = new StudentService()
-    //         let studentBadgesObj: any = await serviceStudent.getStudentBadges(student_user_id);
-    //         ///do not do empty or null check since badges obj can be null if no badges earned yet hence this is not an error condition 
-    //         if (studentBadgesObj instanceof Error) {
-    //             throw studentBadgesObj
-    //         }
-    //         if (!studentBadgesObj) {
-    //             studentBadgesObj = {};
-    //         }
-    //         const success: any = []
-    //         const errors: any = []
-
-    //         let forLoopArr = badges_slugs;
-
-    //         if (!areSlugsBeingUsed) {
-    //             forLoopArr = badges_ids
-    //         }
-
-    //         for (var i = 0; i < forLoopArr.length; i++) {
-    //             let badgeId = forLoopArr[i];
-    //             let badgeFindWhereClause: any = {
-    //                 slug: badgeId
-    //             }
-    //             if (!areSlugsBeingUsed) {
-    //                 badgeFindWhereClause = {
-    //                     badge_id: badgeId
-    //                 }
-    //             }
-    //             const badgeResultForId = await this.crudService.findOne(badge, { where: badgeFindWhereClause })
-    //             if (!badgeResultForId) {
-    //                 errors.push({ id: badgeId, err: badRequest(speeches.DATA_NOT_FOUND) })
-    //                 continue;
-    //             }
-    //             if (badgeResultForId instanceof Error) {
-    //                 errors.push({ id: badgeId, err: badgeResultForId })
-    //                 continue;
-    //             }
-
-    //             const date = new Date();
-    //             const studentHasBadgeObjForId = studentBadgesObj[badgeResultForId.dataValues.slug]
-    //             if (!studentHasBadgeObjForId || !studentHasBadgeObjForId.completed_date) {
-    //                 studentBadgesObj[badgeResultForId.dataValues.slug] = {
-    //                     completed_date: (new Date())
-    //                     // completed_date: ("" + date.getFullYear() + "-" + "" + (date.getMonth() + 1) + "-" + "" + date.getDay())
-    //                 }
-    //             }
-    //         }
-    //         const studentBadgesObjJson = JSON.stringify(studentBadgesObj)
-    //         const result: any = await student.update({ badges: studentBadgesObjJson }, {
-    //             where: {
-    //                 user_id: student_user_id
-    //             }
-    //         })
-    //         if (result instanceof Error) {
-    //             throw result;
-    //         }
-
-    //         if (!result) {
-    //             return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_NOT_FOUND));
-    //         }
-    //         let dispatchStatus = "updated"
-    //         let resStatus = 202
-    //         let dispatchStatusMsg = speeches.USER_BADGES_LINKED
-    //         if (errors && errors.length > 0) {
-    //             dispatchStatus = "error"
-    //             dispatchStatusMsg = "error"
-    //             resStatus = 400
-    //         }
-
-    //         return res.status(resStatus).send(dispatcher(res, { errs: errors, success: studentBadgesObj }, dispatchStatus, dispatchStatusMsg, resStatus));
-    //     } catch (err) {
-    //         next(err)
-    //     }
-    // }
-    // private async getStudentBadges(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     //todo: implement this api ...!!
-    //     try {
-    //         const student_user_id: any = await this.authService.decryptGlobal(req.params.student_user_id);
-    //         const serviceStudent = new StudentService()
-    //         let studentBadgesObj: any = await serviceStudent.getStudentBadges(student_user_id);
-    //         ///do not do empty or null check since badges obj can be null if no badges earned yet hence this is not an error condition 
-    //         if (studentBadgesObj instanceof Error) {
-    //             throw studentBadgesObj
-    //         }
-    //         if (!studentBadgesObj) {
-    //             studentBadgesObj = {};
-    //         }
-    //         const studentBadgesObjKeysArr = Object.keys(studentBadgesObj)
-    //         let newREQQuery: any = {}
-    //         if (req.query.Data) {
-    //             let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-    //             newREQQuery = JSON.parse(newQuery);
-    //         } else if (Object.keys(req.query).length !== 0) {
-    //             return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-    //         }
-    //         const paramStatus: any = newREQQuery.status;
-    //         const where: any = {};
-    //         let whereClauseStatusPart: any = {};
-    //         if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
-    //             whereClauseStatusPart = { "status": paramStatus }
-    //         }
-    //         if (paramStatus && (paramStatus in constents.common_status_flags.list)) {
-    //             whereClauseStatusPart = { "status": paramStatus }
-    //         }
-    //         where['role'] = 'student';
-    //         const allBadgesResult = await badge.findAll({
-    //             where: {
-    //                 [Op.and]: [
-    //                     whereClauseStatusPart,
-    //                     where,
-    //                 ]
-    //             },
-    //             raw: true,
-    //         });
-
-    //         if (!allBadgesResult) {
-    //             throw notFound(speeches.DATA_NOT_FOUND);
-    //         }
-    //         if (allBadgesResult instanceof Error) {
-    //             throw allBadgesResult;
-    //         }
-    //         // console.log(studentBadgesObj);
-    //         for (var i = 0; i < allBadgesResult.length; i++) {
-    //             const currBadge: any = allBadgesResult[i];
-    //             if (studentBadgesObj.hasOwnProperty("" + currBadge.slug)) {
-    //                 currBadge["student_status"] = studentBadgesObj[("" + currBadge.slug)].completed_date
-    //             } else {
-    //                 currBadge["student_status"] = null;
-    //             }
-    //             allBadgesResult[i] = currBadge
-    //         }
-
-    //         return res.status(200).send(dispatcher(res, allBadgesResult, 'success'));
-    //     } catch (err) {
-    //         next(err)
-    //     }
-    // }
+    //Enabling student certificate on business condition
     private async studentCertificate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -594,6 +398,7 @@ WHERE
             next(error);
         }
     }
+    //sending otp to user at the time of registration
     private async emailOtp(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             const { username } = req.body;
@@ -617,6 +422,7 @@ WHERE
             next(error)
         }
     }
+    //fetching all student in team wise like pilot and crew members
     private async getPilotStudent(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             let newREQQuery: any = {}
@@ -652,6 +458,7 @@ GROUP BY
             next(error)
         }
     }
+    //Sending temp password to student email
     private async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             const { email, role } = req.body;
@@ -673,6 +480,7 @@ GROUP BY
             next(error)
         }
     }
+    //change password for student
     private async changePassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -689,6 +497,7 @@ GROUP BY
             return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
         }
     }
+    //after successfully student registation welcome is send to user
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             if (!req.body.student_id) {
@@ -709,6 +518,7 @@ WHERE
             next(error);
         }
     }
+    //Fetching stduent certificate
     protected async getCertificate(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
