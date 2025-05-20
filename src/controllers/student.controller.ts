@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { speeches } from '../configs/speeches.config';
 import dispatcher from '../utils/dispatch.util';
+import { baseConfig } from '../configs/base.config';
 import { studentLoginSchema, studentSchema, studentSchemaAddstudent, studentUpdateSchema } from '../validations/student.validationa';
 import authService from '../services/auth.service';
 import BaseController from './base.controller';
@@ -38,7 +39,7 @@ export default class StudentController extends BaseController {
         this.router.get(`${this.path}/IsCertificate`, this.getCertificate.bind(this));
         super.initializeRoutes();
     }
-     //login api for the student users 
+    //login api for the student users 
     //Input username and password
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
 
@@ -354,7 +355,7 @@ WHERE
             req.body.email = req.body.username;
             const payload = this.autoFillTrackingColumns(req, res, student);
             const result = await this.authService.studentRegister(payload);
-             if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
+            if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
                 return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
             }
             if (result && result.output && result.output.payload && result.output.payload.message == 'Mobile') {
