@@ -1,24 +1,16 @@
-import bcrypt from 'bcrypt';
-import axios from 'axios';
-import fs from 'fs';
-import * as csv from "fast-csv";
 import { Op, QueryTypes } from 'sequelize';
 import { Request, Response, NextFunction } from 'express';
-import { customAlphabet } from 'nanoid';
 import { speeches } from '../configs/speeches.config';
 import { baseConfig } from '../configs/base.config';
 import { user } from '../models/user.model';
 import db from "../utils/dbconnection.util"
-import { mentorRegSchema, mentorSchema, mentorUpdateSchema } from '../validations/mentor.validationa';
+import { mentorSchema, mentorUpdateSchema } from '../validations/mentor.validationa';
 import dispatcher from '../utils/dispatch.util';
 import authService from '../services/auth.service';
 import BaseController from './base.controller';
 import ValidationsHolder from '../validations/validationHolder';
-import { badRequest, forbidden, internal, notFound } from 'boom';
+import { badRequest, notFound } from 'boom';
 import { mentor } from '../models/mentor.model';
-import { where } from 'sequelize/types';
-import { team } from '../models/team.model';
-import { student } from '../models/student.model';
 import { constents } from '../configs/constents.config';
 import { organization } from '../models/organization.model';
 import validationMiddleware from '../middlewares/validation.middleware';
@@ -27,8 +19,6 @@ import { badge } from '../models/badge.model';
 export default class MentorController extends BaseController {
     model = "mentor";
     authService: authService = new authService;
-    private password = process.env.GLOBAL_PASSWORD;
-    private nanoid = customAlphabet('0123456789', 6);
     protected initializePath(): void {
         this.path = '/mentors';
     }
@@ -36,13 +26,10 @@ export default class MentorController extends BaseController {
         this.validations = new ValidationsHolder(mentorSchema, mentorUpdateSchema);
     }
     protected initializeRoutes(): void {
-        //example route to add
-        //this.router.get(`${this.path}/`, this.getData);
         this.router.post(`${this.path}/register`, validationMiddleware(mentorSchema), this.register.bind(this));
         this.router.post(`${this.path}/login`, this.login.bind(this));
         this.router.get(`${this.path}/logout`, this.logout.bind(this));
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
-        //this.router.delete(`${this.path}/:mentor_user_id/deleteAllData`, this.deleteAllData.bind(this));
         this.router.put(`${this.path}/resetPassword`, this.resetPassword.bind(this));
         this.router.post(`${this.path}/emailOtp`, this.emailOtp.bind(this));
         this.router.get(`${this.path}/mentorpdfdata`, this.mentorpdfdata.bind(this));
@@ -54,21 +41,9 @@ export default class MentorController extends BaseController {
 
         super.initializeRoutes();
     }
-    protected async autoFillUserDataForBulkUpload(req: Request, res: Response, modelLoaded: any, reqData: any = null) {
-        let payload = reqData;
-        if (modelLoaded.rawAttributes.user_id !== undefined) {
-            const userData = await this.crudService.create(user, { username: reqData.username, ...reqData });
-            payload['user_id'] = userData.dataValues.user_id;
-        }
-        if (modelLoaded.rawAttributes.created_by !== undefined) {
-            payload['created_by'] = res.locals.user_id;
-        }
-        if (modelLoaded.rawAttributes.updated_by !== undefined) {
-            payload['updated_by'] = res.locals.user_id;
-        }
-        return payload;
-    }
-    //TODO: Override the getDate function for mentor and join org details and user details
+    //fetching Institution all details 
+    //Single Institution details by mentor id
+    //all Institution list
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -87,10 +62,8 @@ export default class MentorController extends BaseController {
             if (model) {
                 this.model = model;
             };
-            // const current_user = res.locals.user_id; 
             // pagination
             const { page, size, status } = newREQQuery;
-            // let condition = status ? { status: { [Op.like]: `%${status}%` } } : null;
             const { limit, offset } = this.getPagination(page, size);
             const modelClass = await this.loadModel(model).catch(error => {
                 next(error)
@@ -110,15 +83,7 @@ export default class MentorController extends BaseController {
                 whereClauseStatusPart = { "status": "ACTIVE" };
                 boolStatusWhereClauseRequired = true;
             };
-            // const getUserIdFromMentorId = await mentor.findOne({
-            //     attributes: ["user_id", "created_by"], where: { mentor_id: req.body.mentor_id }
-            // });
-            // console.log(getUserIdFromMentorId);
-            // if (!getUserIdFromMentorId) throw badRequest(speeches.MENTOR_NOT_EXISTS);
-            // if (getUserIdFromMentorId instanceof Error) throw getUserIdFromMentorId;
-            // if (current_user !== getUserIdFromMentorId.getDataValue("user_id")) {
-            //     throw forbidden();
-            // };
+
             let { district } = newREQQuery
 
             if (id) {
@@ -165,28 +130,20 @@ export default class MentorController extends BaseController {
                 }
 
             }
-            // if (!data) {
-            //     return res.status(404).send(dispatcher(res,data, 'error'));
-            // }
+
             if (!data || data instanceof Error) {
                 if (data != null) {
                     throw notFound(data.message)
                 } else {
                     throw notFound()
                 }
-                res.status(200).send(dispatcher(res, null, "error", speeches.DATA_NOT_FOUND));
-                // if(data!=null){
-                //     throw 
-                (data.message)
-                // }else{
-                //     throw notFound()
-                // }
             }
             return res.status(200).send(dispatcher(res, data, 'success'));
         } catch (error) {
             next(error);
         }
     }
+    //updating the Institution data by mentor id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -224,6 +181,7 @@ export default class MentorController extends BaseController {
             next(error);
         }
     }
+    //creating the Institution users
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         req.body['role'] = 'MENTOR';
         req.body.password = req.body.confirmPassword
@@ -238,6 +196,7 @@ export default class MentorController extends BaseController {
         const data = result.dataValues;
         return res.status(201).send(dispatcher(res, data, 'success', speeches.USER_REGISTERED_SUCCESSFULLY, 201));
     }
+    //Deleting Institution details by mentor_id
     protected async deleteData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -259,6 +218,8 @@ export default class MentorController extends BaseController {
             next(error);
         }
     }
+    //login api for the Institution users 
+    //Input username and password
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         req.body['role'] = 'MENTOR'
         try {
@@ -281,6 +242,7 @@ export default class MentorController extends BaseController {
             return res.status(401).send(dispatcher(res, error, 'error', speeches.USER_RISTRICTED, 401));
         }
     }
+    //logout api for the Institution users
     private async logout(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         const result = await this.authService.logout(req.body, res);
         if (result.error) {
@@ -289,6 +251,7 @@ export default class MentorController extends BaseController {
             return res.status(200).send(dispatcher(res, speeches.LOGOUT_SUCCESS, 'success'));
         }
     }
+    //change password for Institution
     private async changePassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -305,108 +268,7 @@ export default class MentorController extends BaseController {
             return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASSWORD_CHANGE, 202));
         }
     }
-    // private async deleteAllData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    //     if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
-    //         return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
-    //     }
-    //     try {
-    //         const mentor_user_id: any = await this.authService.decryptGlobal(req.params.mentor_user_id);
-    //         // const { mobile } = req.body;
-    //         if (!mentor_user_id) {
-    //             throw badRequest(speeches.USER_USERID_REQUIRED);
-    //         }
-
-    //         //get mentor details
-    //         const mentorResult: any = await this.crudService.findOne(mentor, { where: { user_id: mentor_user_id } })
-    //         if (!mentorResult) {
-    //             throw internal(speeches.DATA_CORRUPTED)
-    //         }
-    //         if (mentorResult instanceof Error) {
-    //             throw mentorResult
-    //         }
-    //         const mentor_id = mentorResult.dataValues.mentor_id
-    //         if (!mentor_id) {
-    //             throw internal(speeches.DATA_CORRUPTED + ":" + speeches.MENTOR_NOT_EXISTS)
-    //         }
-    //         const deleteMentorResponseResult = await this.authService.bulkDeleteMentorResponse(mentor_user_id)
-    //         if (!deleteMentorResponseResult) {
-    //             throw internal("error while deleting mentor response")
-    //         }
-    //         if (deleteMentorResponseResult instanceof Error) {
-    //             throw deleteMentorResponseResult
-    //         }
-
-    //         //get team details
-    //         const teamResult: any = await team.findAll({
-    //             attributes: ["team_id"],
-    //             where: { mentor_id: mentor_id },
-    //             raw: true
-    //         })
-    //         if (!teamResult) {
-    //             throw internal(speeches.DATA_CORRUPTED)
-    //         }
-    //         if (teamResult instanceof Error) {
-    //             throw teamResult
-    //         }
-
-    //         const arrayOfteams = teamResult.map((teamSingleresult: any) => {
-    //             return teamSingleresult.team_id;
-    //         })
-    //         if (arrayOfteams && arrayOfteams.length > 0) {
-    //             const studentUserIds = await student.findAll({
-    //                 where: { team_id: arrayOfteams },
-    //                 raw: true,
-    //                 attributes: ["user_id"]
-    //             })
-
-    //             if (studentUserIds && !(studentUserIds instanceof Error)) {
-    //                 const arrayOfStudentuserIds = studentUserIds.map((student) => student.user_id)
-
-    //                 for (var i = 0; i < arrayOfStudentuserIds.length; i++) {
-    //                     const deletStudentResponseData = await this.authService.bulkDeleteUserResponse(arrayOfStudentuserIds[i])
-    //                     if (deletStudentResponseData instanceof Error) {
-    //                         throw deletStudentResponseData;
-    //                     }
-    //                 };
-    //                 const resultBulkDeleteStudents = await this.authService.bulkDeleteUserWithStudentDetails(arrayOfStudentuserIds)
-    //                 // console.log("resultBulkDeleteStudents",resultBulkDeleteStudents)
-    //                 // if(!resultBulkDeleteStudents){
-    //                 //     throw internal("error while deleteing students")
-    //                 // }
-    //                 if (resultBulkDeleteStudents instanceof Error) {
-    //                     throw resultBulkDeleteStudents
-    //                 }
-    //             }
-
-    //             const resultTeamDelete = await this.crudService.delete(team, { where: { team_id: arrayOfteams } })
-    //             // if(!resultTeamDelete){
-    //             //     throw internal("error while deleting team")
-    //             // }
-    //             if (resultTeamDelete instanceof Error) {
-    //                 throw resultTeamDelete
-    //             }
-    //         }
-    //         let resultmentorDelete: any = {};
-    //         resultmentorDelete = await this.authService.bulkDeleteUserWithMentorDetails([mentor_user_id])
-    //         // if(!resultmentorDelete){
-    //         //     throw internal("error while deleting mentor")
-    //         //}
-    //         if (resultmentorDelete instanceof Error) {
-    //             throw resultmentorDelete
-    //         }
-
-    //         // if (!resultmentorDelete) {
-    //         //     return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_NOT_FOUND));
-    //         // } else 
-    //         if (resultmentorDelete.error) {
-    //             return res.status(404).send(dispatcher(res, resultmentorDelete.error, 'error', resultmentorDelete.error));
-    //         } else {
-    //             return res.status(202).send(dispatcher(res, resultmentorDelete.dataValues, 'success', speeches.USER_DELETED, 202));
-    //         }
-    //     } catch (error) {
-    //         next(error)
-    //     }
-    // }
+    //sending otp to user at the time of registration
     private async emailOtp(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             const { username } = req.body;
@@ -430,6 +292,7 @@ export default class MentorController extends BaseController {
             next(error)
         }
     }
+    //reseting Institution password to default 
     private async resetPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             const { email, role } = req.body;
@@ -451,6 +314,7 @@ export default class MentorController extends BaseController {
             next(error)
         }
     }
+    //fetching Institution details for the pdf genetating 
     protected async mentorpdfdata(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -528,7 +392,6 @@ export default class MentorController extends BaseController {
             data['totalProgress'] = baseConfig.MENTOR_COURSE
             data['teamsCount'] = await db.query(`SELECT count(*) as teams_count FROM teams where mentor_id = ${id}`, { type: QueryTypes.SELECT });
             data['studentCount'] = await db.query(`SELECT count(*) as student_count FROM students join teams on students.team_id = teams.team_id  where mentor_id = ${id};`, { type: QueryTypes.SELECT });
-            //data['IdeaCount'] = await db.query(`SELECT count(*) as idea_count FROM challenge_responses join teams on challenge_responses.team_id = teams.team_id where mentor_id = ${id} && challenge_responses.status = 'SUBMITTED';`, { type: QueryTypes.SELECT });
             if (!data || data instanceof Error) {
                 if (data != null) {
                     throw notFound(data.message)
@@ -541,20 +404,22 @@ export default class MentorController extends BaseController {
             next(error);
         }
     }
+    //after successfully Institution registation welcome is send to user
     protected async triggerWelcomeEmail(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
-            const result = await this.authService.triggerWelcome(req.body, 'Institution User','');
+            const result = await this.authService.triggerWelcome(req.body, 'Institution User', '');
             return res.status(200).send(dispatcher(res, result, 'success'));
         } catch (error) {
             next(error);
         }
     }
+    //Adding badges for the mentor on business conditions
     private async addBadgeToMentor(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
-            //todo: test this api : haven't manually tested this api yet 
+
             const mentor_user_id: any = await this.authService.decryptGlobal(req.params.mentor_user_id);
             const badges_ids: any = req.body.badge_ids;
             const badges_slugs: any = req.body.badge_slugs;
@@ -568,7 +433,6 @@ export default class MentorController extends BaseController {
             }
 
             let mentorBadgesObj: any = await this.authService.getMentorBadges(mentor_user_id);
-            ///do not do empty or null check since badges obj can be null if no badges earned yet hence this is not an error condition 
             if (mentorBadgesObj instanceof Error) {
                 throw mentorBadgesObj
             }
@@ -637,6 +501,7 @@ export default class MentorController extends BaseController {
             next(err)
         }
     }
+    //Fetching mentor badges
     private async getMentorBadges(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -644,7 +509,6 @@ export default class MentorController extends BaseController {
         try {
             const mentor_user_id: any = await this.authService.decryptGlobal(req.params.mentor_user_id);
             let mentorBadgesObj: any = await this.authService.getMentorBadges(mentor_user_id);
-            ///do not do empty or null check since badges obj can be null if no badges earned yet hence this is not an error condition 
             if (mentorBadgesObj instanceof Error) {
                 throw mentorBadgesObj
             }
@@ -699,6 +563,7 @@ export default class MentorController extends BaseController {
             next(err)
         }
     }
+    //fetching team details of the Institution
     protected async getteamCredentials(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
@@ -715,6 +580,7 @@ export default class MentorController extends BaseController {
             next(err)
         }
     }
+    //Fetching student details by the college name
     protected async getNameByInst(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));

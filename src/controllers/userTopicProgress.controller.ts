@@ -20,14 +20,14 @@ export default class UserTopicProgress extends BaseController {
     protected initializeRoutes(): void {
         super.initializeRoutes();
     }
-
+    //creating user course completion details
     protected async createData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
             const { model } = req.params;
-            const { course_topic_id , user_id } = req.body;
+            const { course_topic_id, user_id } = req.body;
             if (model) {
                 this.model = model;
             };
@@ -54,8 +54,8 @@ export default class UserTopicProgress extends BaseController {
             let msg = "OK";
             if (topicProgressAlreadyPresent) {
                 const alreadyPresentStatus = topicProgressAlreadyPresent.dataValues.status;
-                if (alreadyPresentStatus.toLowerCase() !=  req.body.status.toLowerCase()) {
-                    data = await this.crudService.updateAndFind(modelLoaded,  req.body, {
+                if (alreadyPresentStatus.toLowerCase() != req.body.status.toLowerCase()) {
+                    data = await this.crudService.updateAndFind(modelLoaded, req.body, {
                         where: {
                             user_id: user_id,
                             course_topic_id: course_topic_id

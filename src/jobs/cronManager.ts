@@ -17,15 +17,6 @@ export class CronManager {
         return CronManager.instance;
     }
 
-    // private getNewCronJob(periodText: any, fn: any) {
-    //     return new CronJob(periodText, fn);
-    // };
-
-    // public addNewJob(name: any, periodText: any, fn: any) {
-    //     const job: any = {};
-    //     job[name] = new CronJob(periodText, fn, null, true);
-    //     this.jobs.push(job);
-    // };
 
     public addNewJob(name: any, periodText: any, fn: any) {
         this.jobs[name] = new DefaultJob(name, periodText, fn);
