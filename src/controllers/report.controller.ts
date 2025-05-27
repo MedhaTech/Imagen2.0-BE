@@ -269,7 +269,7 @@ FROM
     WHERE
         status = 'ACTIVE'
     GROUP BY district) AS m
-        JOIN
+       LEFT JOIN
     (SELECT 
         district,
             COUNT(student_id) AS studentReg,
