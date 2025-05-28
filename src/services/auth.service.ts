@@ -22,6 +22,7 @@ import { quiz_survey_response } from '../models/quiz_survey_response.model';
 import { user_topic_progress } from '../models/user_topic_progress.model';
 import { evaluator } from '../models/evaluator.model';
 import { team } from '../models/team.model';
+import { mentorship } from '../models/mentorship.model';
 export default class authService {
     crudService: CRUDService = new CRUDService;
     private otp = '112233';
@@ -905,6 +906,9 @@ export default class authService {
                     break;
                 case 'EADMIN':
                     profile = await this.crudService.create(admin, whereClass);
+                    break;
+                case 'MENTORSHIP':
+                    profile = await this.crudService.create(mentorship, whereClass);
                     break;
                 default:
                     profile = null;
