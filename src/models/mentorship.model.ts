@@ -11,6 +11,7 @@ export class mentorship extends Model<InferAttributes<mentorship>, InferCreation
     declare full_name: string;
     declare mobile: string;
     declare areas_of_expertise: string;
+    declare college_name: string;
     declare status: Enumerator;
     declare created_by: number;
     declare created_at: Date;
@@ -37,6 +38,9 @@ export class mentorship extends Model<InferAttributes<mentorship>, InferCreation
             unique: true
         },
         areas_of_expertise: {
+            type: DataTypes.STRING,
+        },
+        college_name: {
             type: DataTypes.STRING,
         },
         status: {
