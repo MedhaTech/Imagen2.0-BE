@@ -30,7 +30,7 @@ export default class MentorshipController extends BaseController {
     }
     //Creating mentorship users
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (!req.body.password || req.body.password === "") req.body.password = await this.authService.generateCryptEncryption(req.body.username);
+        if (!req.body.password || req.body.password === "") req.body.password = await this.authService.generateCryptEncryption(req.body.mobile);
         req.body.role = 'MENTORSHIP';
         const payload = this.autoFillTrackingColumns(req, res, mentorship);
         const result = await this.authService.register(payload);
