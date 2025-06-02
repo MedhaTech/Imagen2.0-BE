@@ -259,6 +259,9 @@ export default class MentorshipController extends BaseController {
     }
     //reseting mentorShip password to default 
     private async resetPassword(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
         try {
             const MS_res = await this.crudService.findOne(mentorship, { where: { user_id: req.body.user_id } });
             if (!MS_res) {
