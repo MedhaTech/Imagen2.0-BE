@@ -384,7 +384,7 @@ export default class authService {
         <h3>Dear ${role},</h3>
         <p>Your temporary password to login to Youth for Social Impact  platform is <b>${otp}.</b></p>
         <p>Change your password as per your preference after you login with temporary password.</p>
-        <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
+        <p><strong>Link:${role === 'Mentor' ? `https://www.youthforsocialimpact.in/mentorship` : `https://www.youthforsocialimpact.in/login`} </strong></p>
         <p>
         <strong>
         Regards,<br> YFSI Team
@@ -552,7 +552,7 @@ export default class authService {
         </table> `: ''}
             
             <p>Please use your Email id and password to login and proceed further.</p>
-            <p><strong>Link: https://www.youthforsocialimpact.in/login</strong></p>
+            <p><strong>Link: ${role === 'Mentor' ? `https://www.youthforsocialimpact.in/mentorship` : `https://www.youthforsocialimpact.in/login`}</strong></p>
             <p><strong>Regards,<br> YFSI Team</strong></p>
             </div></body>
 </html>`
