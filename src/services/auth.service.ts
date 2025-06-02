@@ -341,7 +341,7 @@ export default class authService {
                 if (mentor_data) {
                     throw badRequest('Mobile')
                 } else {
-                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : 'Student');
+                    const otp = await this.triggerEmail(requestBody.username, 1, 'no', modelname === mentor ? 'Institution User' : modelname === mentorship ? 'Mentor' : 'Student');
                     if (otp instanceof Error) {
                         throw otp;
                     }
@@ -532,8 +532,8 @@ export default class authService {
             <h3>Dear ${role},</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>You are successfully registered with the following details :
-            <br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
-            <br> District:<strong> ${district}</strong>
+            ${role !== 'Mentor' && `<br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
+            <br> District:<strong> ${district}</strong>`}
             </p>
             <p> 
             Email Id: <strong> ${email} </strong>
@@ -1207,6 +1207,47 @@ export default class authService {
         }
         catch (err) {
             return err
+        }
+    }
+    /**
+    * Get the mentorship details with user_id update the password without OTP
+    * @param requestBody Object
+    * @returns Object
+    */
+    async MentorShipForgotPassword(requestBody: any) {
+        let result: any = {};
+        try {
+            let passwordNeedToBeUpdated: any = {};
+            const MS_res = await this.crudService.findOne(user, {
+                where: { username: requestBody.email, role: requestBody.role }
+            });
+            if (!MS_res) {
+                result['error'] = speeches.USER_NOT_FOUND;
+                return result;
+            }
+            const otpOBJ = await this.triggerEmail(requestBody.email, 3, 'no', 'Mentor');
+            passwordNeedToBeUpdated['otp'] = otpOBJ.otp;
+            if (passwordNeedToBeUpdated instanceof Error) {
+                throw passwordNeedToBeUpdated;
+            }
+            await this.crudService.update(mentorship,
+                { otp: passwordNeedToBeUpdated.otp },
+                { where: { user_id: MS_res.dataValues.user_id } }
+            );
+            passwordNeedToBeUpdated.otp = String(passwordNeedToBeUpdated.otp);
+            let hashString = await this.generateCryptEncryption(passwordNeedToBeUpdated.otp)
+            const user_res: any = await this.crudService.updateAndFind(user, {
+                password: await bcrypt.hashSync(hashString, process.env.SALT || baseConfig.SALT)
+            }, { where: { user_id: MS_res.dataValues.user_id } })
+            result['data'] = {
+                username: user_res.dataValues.username,
+                user_id: user_res.dataValues.user_id,
+                awsMessageId: passwordNeedToBeUpdated.messageId
+            };
+            return result;
+        } catch (error) {
+            result['error'] = error;
+            return result;
         }
     }
 }

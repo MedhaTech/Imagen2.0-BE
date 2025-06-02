@@ -23,7 +23,7 @@ export class challenge_response extends Model<InferAttributes<challenge_response
     declare updated_by: number;
     declare updated_at: Date;
     declare theme: String;
-    declare idea_describe : String;
+    declare idea_describe: String;
     declare title: String;
     declare solve: String;
     declare customer: String;
@@ -40,6 +40,8 @@ export class challenge_response extends Model<InferAttributes<challenge_response
     declare verified_status: Enumerator;
     declare verified_at: Date;
     declare mentor_rejected_reason: String;
+    declare mentorship_id: number;
+
 }
 
 challenge_response.init(
@@ -184,6 +186,10 @@ challenge_response.init(
             allowNull: true,
             defaultValue: DataTypes.NOW,
             onUpdate: new Date().toLocaleString()
+        },
+        mentorship_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
         }
     },
     {
