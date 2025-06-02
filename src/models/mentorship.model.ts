@@ -17,6 +17,7 @@ export class mentorship extends Model<InferAttributes<mentorship>, InferCreation
     declare created_at: Date;
     declare updated_by: number;
     declare updated_at: Date;
+    declare otp: number;
 
     static modelTableName = 'mentorships';
     static structure: any = {
@@ -67,6 +68,10 @@ export class mentorship extends Model<InferAttributes<mentorship>, InferCreation
             allowNull: true,
             defaultValue: DataTypes.NOW,
             onUpdate: new Date().toLocaleString()
+        },
+        otp: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
         }
     };
 }

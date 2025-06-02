@@ -41,7 +41,8 @@ export const UpdateAnyFieldSchema = Joi.object().keys({
     rejected_reasonSecond: Joi.string(),
     district: Joi.string(),
     state: Joi.string(),
-    final_result: Joi.string()
+    final_result: Joi.string(),
+    mentorship_id: Joi.number()
 });
 export const initiateIdeaSchema = Joi.object().keys({
     theme: Joi.string().required().messages({
@@ -62,9 +63,9 @@ export const initiateIdeaSchema = Joi.object().keys({
     others: Joi.string(),
     prototype_link: Joi.string(),
     support: Joi.string(),
-    state:Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    district:Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    initiated_by:Joi.number()
+    state: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    district: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    initiated_by: Joi.number()
 });
 export const challengeResponsesSchema = Joi.object().keys({
     status: Joi.string().valid(...Object.values(constents.challenges_flags.list)).required().messages({

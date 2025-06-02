@@ -19,7 +19,7 @@ export const mentorshipUpdateSchema = Joi.object().keys({
     username: Joi.string().trim().min(1).email().messages({
         'string.empty': speeches.USER_USERNAME_REQUIRED
     }),
-    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).required().messages({
+    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).messages({
         'string.empty': speeches.USER_FULLNAME_REQUIRED
     }),
     mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN),
