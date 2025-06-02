@@ -53,73 +53,81 @@ export default class MentorshipController extends BaseController {
         if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
         }
-        let data: any;
-        const { model, id } = req.params;
-        if (model) {
-            this.model = model;
-        };
-        const modelClass = await this.loadModel(model).catch(error => {
-            next(error)
-        });
-        let newREQQuery: any = {}
-        if (req.query.Data) {
-            let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
-            newREQQuery = JSON.parse(newQuery);
-        } else if (Object.keys(req.query).length !== 0) {
-            return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
-        }
-        const where: any = {};
-        if (id) {
-            const deValue: any = await this.authService.decryptGlobal(req.params.id);
-            where[`${this.model}_id`] = JSON.parse(deValue);
-            data = await this.crudService.findOne(modelClass, {
-                attributes: [
-                    "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name"
-                ],
-                where: {
-                    [Op.and]: [
-                        where
-                    ]
-                },
-                include: {
-                    model: user,
-                    attributes: [
-                        "user_id",
-                        "username",
-                        "full_name"
-                    ]
-                }
-            })
-        } else if (newREQQuery.qtype === 'names') {
-            data = await this.crudService.findAll(modelClass, {
-                attributes: [
-                    "user_id", "full_name"
-                ],
-            })
-        }
-        else {
-            data = await this.crudService.findAll(modelClass, {
-                attributes: [
-                    "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name"
-                ],
-                include: {
-                    model: user,
-                    attributes: [
-                        "user_id",
-                        "username",
-                        "full_name"
-                    ]
-                }
-            })
-        }
-        if (!data || data instanceof Error) {
-            if (data != null) {
-                throw notFound(data.message)
-            } else {
-                throw notFound()
+        try {
+            let data: any;
+            const { model, id } = req.params;
+            if (model) {
+                this.model = model;
+            };
+            const modelClass = await this.loadModel(model).catch(error => {
+                next(error)
+            });
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
+            const where: any = {};
+            if (id) {
+                const deValue: any = await this.authService.decryptGlobal(req.params.id);
+                where[`${this.model}_id`] = JSON.parse(deValue);
+                data = await this.crudService.findOne(modelClass, {
+                    attributes: [
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name"
+                    ],
+                    where: {
+                        [Op.and]: [
+                            where
+                        ]
+                    },
+                    include: {
+                        model: user,
+                        attributes: [
+                            "user_id",
+                            "username",
+                            "full_name"
+                        ]
+                    }
+                })
+            } else if (newREQQuery.qtype === 'names') {
+                data = await this.crudService.findAll(modelClass, {
+                    attributes: [
+                        "user_id", "full_name"
+                    ],
+                     where: {
+                        status:'ACTIVE'
+                    },
+                })
+            }
+            else {
+                data = await this.crudService.findAll(modelClass, {
+                    attributes: [
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name"
+                    ],
+                    include: {
+                        model: user,
+                        attributes: [
+                            "user_id",
+                            "username",
+                            "full_name"
+                        ]
+                    }
+                })
+            }
+            if (!data || data instanceof Error) {
+                if (data != null) {
+                    throw notFound(data.message);
+                } else {
+                    throw notFound()
+                }
+            }
+            return res.status(200).send(dispatcher(res, data, 'success'));
         }
-        return res.status(200).send(dispatcher(res, data, 'success'));
+        catch (err) {
+            next(err);
+        }
     }
     //updating details of mentorship users with the mentorship id
     protected async updateData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
