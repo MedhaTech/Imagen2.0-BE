@@ -31,5 +31,8 @@ export const wildcardRoutes = [
     "/api/v1/dashboard/CollegeNameForCollegeType",
     "/api/v1/students/triggerWelcomeEmail",
     "/api/v1/mentorships/register",
-    "/api/v1/mentorships/login"
+    "/api/v1/mentorships/login",
+    "/api/v1/mentorships/emailOtp",
+    "/api/v1/mentorships/triggerWelcomeEmail",
+    "/api/v1/mentorships/forgotPassword"
 ];
