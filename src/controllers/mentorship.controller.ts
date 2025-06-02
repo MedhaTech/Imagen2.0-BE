@@ -274,7 +274,7 @@ export default class MentorshipController extends BaseController {
             if (result.error) {
                 return res.status(404).send(dispatcher(res, result.error, 'error', result.error));
             } else {
-                return res.status(202).send(dispatcher(res, result.data, 'accepted', speeches.USER_PASS_UPDATE, 202));
+                return res.status(202).send(dispatcher(res, result, 'accepted', speeches.DEFAULTPASSWORD, 202));
             }
         } catch (error) {
             next(error)
