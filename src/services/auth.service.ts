@@ -532,8 +532,8 @@ export default class authService {
             <h3>Dear ${role},</h3>
             <h4>Congratulations for successfully registering for Youth for Social Impact 2025</h4>
             <p>You are successfully registered with the following details :
-            ${role !== 'Mentor' && `<br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
-            <br> District:<strong> ${district}</strong>`}
+            ${role !== 'Mentor' ? `<br> College Name: <strong> ${college_name}</strong> <br> College Type:<strong> ${college_type}</strong>
+            <br> District:<strong> ${district}</strong>` : ''}
             </p>
             <p> 
             Email Id: <strong> ${email} </strong>
