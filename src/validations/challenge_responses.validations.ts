@@ -42,7 +42,7 @@ export const UpdateAnyFieldSchema = Joi.object().keys({
     district: Joi.string(),
     state: Joi.string(),
     final_result: Joi.string(),
-    mentorship_user_id: Joi.number()
+    mentorship_user_id: Joi.number().allow(null, '')
 });
 export const initiateIdeaSchema = Joi.object().keys({
     theme: Joi.string().required().messages({
