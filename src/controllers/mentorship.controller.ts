@@ -50,8 +50,8 @@ export default class MentorshipController extends BaseController {
     }
     //fetching details of mentorship users
     protected async getData(req: Request, res: Response, next: NextFunction) {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP') {
-            throw unauthorized(speeches.ROLE_ACCES_DECLINE)
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
             let data: any;
@@ -96,8 +96,8 @@ export default class MentorshipController extends BaseController {
                     attributes: [
                         "user_id", "full_name"
                     ],
-                     where: {
-                        status:'ACTIVE'
+                    where: {
+                        status: 'ACTIVE'
                     },
                 })
             }
