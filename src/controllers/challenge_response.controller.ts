@@ -173,6 +173,7 @@ export default class ChallengeResponsesController extends BaseController {
                                     "status",
                                     "rejected_reason",
                                     "rejected_reasonSecond",
+                                    "mentorship_user_id",
                                     [
                                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                                     ],
@@ -219,6 +220,7 @@ export default class ChallengeResponsesController extends BaseController {
                                     "status",
                                     "rejected_reason",
                                     "rejected_reasonSecond",
+                                    "mentorship_user_id",
                                     [
                                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                                     ],
@@ -293,6 +295,10 @@ export default class ChallengeResponsesController extends BaseController {
                         "rejected_reasonSecond",
                         "district",
                         "final_result",
+                        "mentorship_user_id",
+                        [
+                            db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`mentorship_user_id\` )`), 'mentorship_name'
+                        ],
                         [
                             db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                         ],
@@ -388,6 +394,7 @@ export default class ChallengeResponsesController extends BaseController {
                                     "rejected_reason",
                                     "rejected_reasonSecond",
                                     "final_result", "district",
+                                    "mentorship_user_id",
                                     [
                                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`evaluated_by\` )`), 'evaluated_name'
                                     ],
@@ -463,6 +470,7 @@ export default class ChallengeResponsesController extends BaseController {
                                     "rejected_reason",
                                     "rejected_reasonSecond",
                                     "final_result", "district",
+                                    "mentorship_user_id",
                                     [
                                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`evaluated_by\` )`), 'evaluated_name'
                                     ],
@@ -569,6 +577,7 @@ export default class ChallengeResponsesController extends BaseController {
                             "rejected_reason",
                             "rejected_reasonSecond",
                             "final_result", "district",
+                            "mentorship_user_id",
                             [
                                 db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`evaluated_by\` )`), 'evaluated_name'
                             ],
@@ -877,6 +886,7 @@ export default class ChallengeResponsesController extends BaseController {
                     "challenge_response_id",
                     "district",
                     "status",
+                    "mentorship_user_id",
                     [
                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                     ],
@@ -1393,7 +1403,7 @@ export default class ChallengeResponsesController extends BaseController {
                     "status",
                     "rejected_reason",
                     "rejected_reasonSecond",
-                    "final_result", "district", "state", "idea_describe",
+                    "final_result", "district", "state", "idea_describe", "mentorship_user_id",
                     [
                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id =  \`challenge_response\`.\`evaluated_by\` )`), 'evaluated_name'
                     ],
