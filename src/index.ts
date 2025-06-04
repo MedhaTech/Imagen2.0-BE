@@ -35,6 +35,8 @@ import EvaluatorController from "./controllers/evulator.controller";
 import EvaluationProcess from "./controllers/evaluation_process.controller";
 import EvaluatorRatingController from "./controllers/evaluator_rating.controller";
 import MentorshipController from "./controllers/mentorship.controller";
+import ChatboxsController from "./controllers/chatboxs.controller";
+import Chatbox_repliesController from "./controllers/chatbox_replies.controller";
 //import EmailController from "./controllers/email.controller";
 
 
@@ -76,7 +78,9 @@ try {
         new EvaluatorController,
         new EvaluationProcess,
         new EvaluatorRatingController,
-        new MentorshipController
+        new MentorshipController,
+        new ChatboxsController,
+        new Chatbox_repliesController
 
     ], Number(process.env.APP_PORT));
     // starting app
