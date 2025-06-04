@@ -24,7 +24,7 @@ export default class ChatboxsController extends BaseController {
 
     //fetching all chatbox details and single chatbox by chatbox_id
     protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP' && res.locals.role !== 'STUDENT') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
