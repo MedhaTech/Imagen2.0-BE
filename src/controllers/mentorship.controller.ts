@@ -7,11 +7,12 @@ import ValidationsHolder from '../validations/validationHolder';
 import { user } from '../models/user.model';
 import { badRequest, notFound, unauthorized } from 'boom';
 import { mentorship } from '../models/mentorship.model';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { mentorshipSchema, mentorshipUpdateSchema } from '../validations/mentorship.validationa';
 import validationMiddleware from '../middlewares/validation.middleware';
 import bcrypt from 'bcrypt';
 import { baseConfig } from '../configs/base.config';
+import db from "../utils/dbconnection.util";
 
 export default class MentorshipController extends BaseController {
     model = "mentorship";
@@ -32,6 +33,7 @@ export default class MentorshipController extends BaseController {
         this.router.post(`${this.path}/triggerWelcomeEmail`, this.triggerWelcomeEmail.bind(this));
         this.router.put(`${this.path}/resetPassword`, this.resetPassword.bind(this));
         this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
+         this.router.get(`${this.path}/seletedteams`, this.getseletedteams.bind(this));
         super.initializeRoutes();
     }
     //Creating mentorship users
@@ -308,6 +310,28 @@ export default class MentorshipController extends BaseController {
             }
         } catch (error) {
             next(error)
+        }
+    }
+    //fecting team which are assign to mentor
+    protected async getseletedteams(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { user_id } = newREQQuery
+            result = await db.query(`select challenge_response_id from challenge_responses where mentorship_user_id = ${user_id}`, { type: QueryTypes.SELECT });
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
         }
     }
 };
