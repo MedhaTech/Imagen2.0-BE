@@ -72,7 +72,6 @@ export default class ChatboxsController extends BaseController {
                     }
                 });
             } else {
-                console.log(user_id, modelClass);
                 data = await this.crudService.findAll(modelClass, {
                     where: {
                         [Op.and]: [
