@@ -38,6 +38,7 @@ export default class ChallengeResponsesController extends BaseController {
         this.router.get(`${this.path}/ideastatusbyteamId`, this.getideastatusbyteamid.bind(this));
         this.router.get(`${this.path}/schoolpdfideastatus`, this.getSchoolPdfIdeaStatus.bind(this));
         this.router.get(this.path + '/submittedDetailsforideapdf', this.getResponseideapdf.bind(this));
+        this.router.get(this.path + '/ideasformentorship', this.getideasformentorship.bind(this));
         super.initializeRoutes();
     }
     //fetch idea details in different forms
@@ -1546,6 +1547,52 @@ export default class ChallengeResponsesController extends BaseController {
             mentor_id = ${newREQQuery.mentor_id}
         GROUP BY teams.student_id;`, { type: QueryTypes.SELECT });
             res.status(200).send(dispatcher(res, result, "success"))
+        } catch (error) {
+            next(error);
+        }
+    }
+    //fetch list ideas which are assign to mentor with mentorship_user_id
+    protected async getideasformentorship(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            let { mentorship_user_id } = newREQQuery;
+            let data: any;
+            const where: any = {};
+            where[`mentorship_user_id`] = mentorship_user_id;
+            data = await this.crudService.findAll(challenge_response, {
+                attributes: [
+                    "theme",
+                    "idea_describe",
+                    "challenge_response_id",
+                    "status",
+                    "mentorship_user_id",
+                    [
+                        db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
+                    ]
+                ],
+                where: {
+                    [Op.and]: [
+                        where
+                    ]
+                },
+            });
+            if (!data || data instanceof Error) {
+                if (data != null) {
+                    throw notFound(data.message)
+                } else {
+                    throw notFound()
+                }
+            }
+            return res.status(200).send(dispatcher(res, data, 'success'));
         } catch (error) {
             next(error);
         }
