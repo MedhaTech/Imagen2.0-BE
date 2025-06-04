@@ -888,6 +888,9 @@ export default class ChallengeResponsesController extends BaseController {
                     "status",
                     "mentorship_user_id",
                     [
+                        db.literal(`(SELECT chatbox_id FROM chatboxs As c WHERE c.challenge_response_id = \`challenge_response\`.\`challenge_response_id\` )`), 'chatbox_id'
+                    ],
+                    [
                         db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`challenge_response\`.\`initiated_by\` )`), 'initiated_name'
                     ],
                     [
