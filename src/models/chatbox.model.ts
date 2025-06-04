@@ -6,6 +6,7 @@ import db from '../utils/dbconnection.util';
 export class chatbox extends Model<InferAttributes<chatbox>, InferCreationAttributes<chatbox>> {
     declare chatbox_id: CreationOptional<number>;
     declare challenge_response_id: string;
+    declare mentorship_user_id: number;
     declare status: Enumerator;
     declare created_by: number;
     declare created_at: Date;
@@ -22,6 +23,10 @@ chatbox.init(
             primaryKey: true
         },
         challenge_response_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        mentorship_user_id: {
             type: DataTypes.INTEGER,
             allowNull: false
         },

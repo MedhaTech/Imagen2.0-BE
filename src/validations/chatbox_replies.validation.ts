@@ -3,9 +3,8 @@ import { constents } from '../configs/constents.config';
 import { speeches } from '../configs/speeches.config';
 
 export const chatbox_replies = Joi.object().keys({
-    chatbox_replie_id: Joi.number().required().messages({
-        'string.empty': speeches.ID_REQUIRED
-    })
+    chatbox_id: Joi.number().required(),
+    reply_details: Joi.string().required()
 });
 
 export const chatbox_repliesUpdateSchema = Joi.object().keys({

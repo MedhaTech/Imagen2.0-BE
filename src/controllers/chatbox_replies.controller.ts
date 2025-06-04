@@ -4,7 +4,7 @@ import { chatbox_replies, chatbox_repliesUpdateSchema } from "../validations/cha
 
 
 export default class Chatbox_repliesController extends BaseController {
-    model = "chatbox_replies";
+    model = "chatbox_replie";
     protected initializePath(): void {
         this.path = "/chatbox_replies";
     };

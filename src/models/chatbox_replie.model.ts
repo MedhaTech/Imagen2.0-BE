@@ -1,6 +1,8 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
 import { constents } from '../configs/constents.config';
 import db from '../utils/dbconnection.util';
+import { chatbox } from './chatbox.model';
+import { user } from './user.model';
 
 
 export class chatbox_replie extends Model<InferAttributes<chatbox_replie>, InferCreationAttributes<chatbox_replie>> {
@@ -64,3 +66,7 @@ chatbox_replie.init(
         createdAt: 'created_at',
     }
 );
+chatbox_replie.belongsTo(chatbox, { foreignKey: 'chatbox_id' });
+chatbox_replie.belongsTo(user, { foreignKey: 'created_by' })
+chatbox_replie.belongsTo(user, { foreignKey: 'updated_by' })
+chatbox.hasMany(chatbox_replie, { foreignKey: 'chatbox_id' });
