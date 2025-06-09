@@ -25,7 +25,7 @@ export default class ResourceController extends BaseController {
     }
     //fetching all resource details and single resource by resource_id
     protected async getData(req: Request, res: Response, next: NextFunction) {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'MENTOR' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE' && res.locals.role !== 'MENTORSHIP') {
             throw unauthorized(speeches.ROLE_ACCES_DECLINE)
         }
         try {
