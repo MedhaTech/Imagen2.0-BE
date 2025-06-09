@@ -183,10 +183,11 @@ export default class AdminController extends BaseController {
     }
     // creating encrypted value
     private async getcreatequeryparm(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN') {
-            throw unauthorized(speeches.ROLE_ACCES_DECLINE)
-        }
+
         try {
+            if (res.locals.role !== 'ADMIN') {
+                throw unauthorized(speeches.ROLE_ACCES_DECLINE)
+            }
             let newREQQuery: any = {}
             if (req.query.value) {
                 newREQQuery['value'] = await this.authService.encryptGlobal(req.query.value);

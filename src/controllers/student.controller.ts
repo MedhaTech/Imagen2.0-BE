@@ -35,9 +35,10 @@ export default class StudentController extends BaseController {
         this.router.put(`${this.path}/changePassword`, this.changePassword.bind(this));
         this.router.post(`${this.path}/triggerWelcomeEmail`, this.triggerWelcomeEmail.bind(this));
         this.router.get(`${this.path}/IsCertificate`, this.getCertificate.bind(this));
+        this.router.get(`${this.path}/milestones`, this.getmilestones.bind(this));
         super.initializeRoutes();
     }
-     //login api for the student users 
+    //login api for the student users 
     //Input username and password
     private async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
 
@@ -510,6 +511,43 @@ FROM
     evaluator_ratings AS e ON cr.challenge_response_id = e.challenge_response_id
 WHERE
     cr.student_id = ${student_id}`, { type: QueryTypes.SELECT });
+
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    //Fetching stduent milestones
+    protected async getmilestones(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { challenge_response_id } = newREQQuery
+
+            result = await db.query(`SELECT 
+    m.milestone_id,
+    name,
+    description,
+    milestone_progress_id,
+    mp.status,
+    challenge_response_id
+FROM
+    milestones AS m
+LEFT JOIN
+    milestone_progress AS mp 
+    ON m.milestone_id = mp.milestone_id 
+    AND mp.challenge_response_id = ${challenge_response_id};
+`, { type: QueryTypes.SELECT });
 
             res.status(200).send(dispatcher(res, result, 'done'))
         }
