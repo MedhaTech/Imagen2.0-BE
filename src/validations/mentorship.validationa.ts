@@ -24,5 +24,6 @@ export const mentorshipUpdateSchema = Joi.object().keys({
     }),
     mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN),
     areas_of_expertise: Joi.string().trim().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    college_name: Joi.string().trim().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN)
+    college_name: Joi.string().trim().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
+    chatbox: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN)
 });
