@@ -77,7 +77,7 @@ export default class MentorshipController extends BaseController {
                 where[`${this.model}_id`] = JSON.parse(deValue);
                 data = await this.crudService.findOne(modelClass, {
                     attributes: [
-                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name"
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name","chatbox"
                     ],
                     where: {
                         [Op.and]: [
@@ -106,7 +106,7 @@ export default class MentorshipController extends BaseController {
             else {
                 data = await this.crudService.findAll(modelClass, {
                     attributes: [
-                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name"
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name","chatbox"
                     ],
                     include: {
                         model: user,
@@ -183,6 +183,7 @@ export default class MentorshipController extends BaseController {
                 return res.status(404).send(dispatcher(res, null, 'error', speeches.USER_REG_STATUS));
             }
             result.data['mentorship_id'] = MentorshipDetails.dataValues.mentorship_id;
+            result.data['chatbox'] = MentorshipDetails.dataValues.chatbox;
             return res.status(200).send(dispatcher(res, result.data, 'success', speeches.USER_LOGIN_SUCCESS));
         }
     }

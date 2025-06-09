@@ -18,6 +18,7 @@ export class mentorship extends Model<InferAttributes<mentorship>, InferCreation
     declare updated_by: number;
     declare updated_at: Date;
     declare otp: number;
+    declare chatbox: number;
 
     static modelTableName = 'mentorships';
     static structure: any = {
@@ -72,6 +73,9 @@ export class mentorship extends Model<InferAttributes<mentorship>, InferCreation
         otp: {
             type: DataTypes.INTEGER,
             allowNull: true,
+        },
+        chatbox: {
+            type: DataTypes.INTEGER
         }
     };
 }
