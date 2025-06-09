@@ -1,6 +1,6 @@
 import ValidationsHolder from "../validations/validationHolder";
 import BaseController from "./base.controller";
-import { milestone_progress, milestone_progressUpdateSchema } from "../validations/milestone_progress.validation";
+import { milestoneProgress, milestoneProgressUpdateSchema } from "../validations/milestone_progress.validation";
 import { Request, Response, NextFunction } from 'express';
 import dispatcher from "../utils/dispatch.util";
 import db from "../utils/dbconnection.util";
@@ -8,6 +8,8 @@ import { QueryTypes } from "sequelize";
 import { S3 } from "aws-sdk";
 import { speeches } from "../configs/speeches.config";
 import fs from 'fs';
+import { Op } from "sequelize";
+import { milestone_progress } from "../models/milestone_progress.model";
 
 
 export default class MilestoneProgressController extends BaseController {
@@ -16,7 +18,7 @@ export default class MilestoneProgressController extends BaseController {
         this.path = "/milestone_progress";
     };
     protected initializeValidations(): void {
-        this.validations = new ValidationsHolder(milestone_progress, milestone_progressUpdateSchema);
+        this.validations = new ValidationsHolder(milestoneProgress, milestoneProgressUpdateSchema);
     };
     protected initializeRoutes(): void {
         this.router.get(`${this.path}/milestoneQuestion`, this.getmilestoneQuestion.bind(this));
@@ -90,6 +92,32 @@ export default class MilestoneProgressController extends BaseController {
             res.status(200).send(dispatcher(res, result));
         } catch (err) {
             next(err)
+        }
+    }
+    //Fetching milestone_progress of a team
+    protected async getData(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'STUDENT' && res.locals.role !== 'STATE' && res.locals.role !== 'MENTORSHIP') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const data = await this.crudService.findAll(milestone_progress, {
+                where: {
+                    [Op.and]: [
+                        { challenge_response_id: newREQQuery.challenge_response_id }
+                    ]
+                }
+            });
+
+            return res.status(200).send(dispatcher(res, data, 'success'));
+        } catch (error) {
+            next(error);
         }
     }
 };
