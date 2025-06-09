@@ -902,7 +902,10 @@ export default class ChallengeResponsesController extends BaseController {
                     ],
                     [
                         db.literal(`(SELECT college_type FROM students WHERE student_id =  \`challenge_response\`.\`student_id\`)`), 'college_type'
-                    ]
+                    ],
+                    [
+                        db.literal(`(SELECT chatbox FROM mentorships As m WHERE m.user_id = \`challenge_response\`.\`mentorship_user_id\` )`), 'chatbox'
+                    ],
 
                 ],
                 where: {
