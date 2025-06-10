@@ -1310,6 +1310,7 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
         try {
             const data = await db.query(`SELECT 
     full_name,
+    (select username from users as u where u.user_id = m.user_id)as email,
     mobile,
     areas_of_expertise,
     college_name,
