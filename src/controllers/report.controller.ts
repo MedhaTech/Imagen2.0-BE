@@ -36,6 +36,7 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/L1deatilreport`, this.getL1Report.bind(this));
         this.router.get(`${this.path}/L2deatilreport`, this.getL2Report.bind(this));
         this.router.get(`${this.path}/L3deatilreport`, this.getL3Report.bind(this));
+        this.router.get(`${this.path}/mentorshipreport`, this.getmentorshipreport.bind(this));
     }
     //fetching studentsummary counts
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -1290,6 +1291,41 @@ FROM
 GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
             data['summary'] = summary;
             data['evaluatorRatingValues'] = evaluatorRatingValues;
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+    //fetching mentorshipreport detail report
+    protected async getmentorshipreport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            const data = await db.query(`SELECT 
+    full_name,
+    mobile,
+    areas_of_expertise,
+    college_name,
+    challenge_response_id,
+    title,
+    (SELECT 
+            JSON_ARRAYAGG(full_name)
+        FROM
+            students
+        WHERE
+            student_id = cr.student_id
+                OR type = cr.student_id) AS team_members
+FROM
+    mentorships AS m
+        LEFT JOIN
+    challenge_responses AS cr ON m.user_id = cr.mentorship_user_id;`, { type: QueryTypes.SELECT });
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
