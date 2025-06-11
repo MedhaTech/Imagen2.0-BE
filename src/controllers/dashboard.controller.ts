@@ -67,7 +67,7 @@ export default class DashboardController extends BaseController {
     ///////// PS: this assumes that there is only course in the systems and hence alll topics inside topics table are taken for over counts
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private async getTeamStats(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE') {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM' && res.locals.role !== 'STATE' && res.locals.role !== 'MENTORSHIP') {
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
