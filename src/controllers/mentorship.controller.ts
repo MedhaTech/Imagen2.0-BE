@@ -328,7 +328,7 @@ export default class MentorshipController extends BaseController {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
             const { user_id } = newREQQuery
-            result = await db.query(`select challenge_response_id from challenge_responses where mentorship_user_id = ${user_id}`, { type: QueryTypes.SELECT });
+            result = await db.query(`select challenge_response_id,student_id from challenge_responses where mentorship_user_id = ${user_id}`, { type: QueryTypes.SELECT });
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
