@@ -1316,6 +1316,7 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
     college_name,
     challenge_response_id,
     title,
+    theme,
     (SELECT 
             JSON_ARRAYAGG(full_name)
         FROM
