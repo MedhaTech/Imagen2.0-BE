@@ -1578,6 +1578,7 @@ export default class ChallengeResponsesController extends BaseController {
                     "challenge_response_id",
                     "status",
                     "mentorship_user_id",
+                    "meeting_call",
                     [
                         db.literal(`(SELECT JSON_ARRAYAGG(full_name) FROM students WHERE student_id = \`challenge_response\`.\`student_id\` OR type = \`challenge_response\`.\`student_id\` )`), 'team_members'
                     ]
