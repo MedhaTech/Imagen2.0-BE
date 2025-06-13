@@ -540,7 +540,9 @@ WHERE
     description,
     milestone_progress_id,
     mp.status,
-    challenge_response_id
+    challenge_response_id,
+    mp.note,
+    mp.file
 FROM
     milestones AS m
 LEFT JOIN
