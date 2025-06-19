@@ -1164,7 +1164,6 @@ FROM
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
-            console.log(err)
             next(err)
         }
     }
