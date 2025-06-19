@@ -57,7 +57,7 @@ export default class DashboardController extends BaseController {
         //State DashBoard stats
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
         //public api's
-        this.router.get(`${this.path}/CollegeNameForCollegeType`, this.getCollegeNameForCollegeType.bind(this));
+        this.router.get(`${this.path}/CollegeNameForCollegeTypeDistrict`, this.getCollegeNameForCollegeType.bind(this));
 
     }
 
@@ -1108,7 +1108,7 @@ FROM
             next(err)
         }
     }
-    //fetching list of college name by college type
+    //fetching list of college name by college type & district 
     protected async getCollegeNameForCollegeType(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         try {
             let result: any = {};
@@ -1119,28 +1119,52 @@ FROM
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { college_type } = newREQQuery
-            if (college_type) {
-                result = await db.query(`SELECT DISTINCT college_name
-FROM students
-WHERE college_type = '${college_type}'
-UNION
-SELECT DISTINCT college_name
-FROM mentors
-WHERE college_type = '${college_type}';
+            const { college_type, district } = newREQQuery
+            if (college_type && district) {
+                result = await db.query(`
+                    SELECT 
+    college_name
+FROM
+    institutions
+WHERE
+    college_type = '${college_type}'
+        AND UPPER(district) = '${district}'
+UNION SELECT 
+    college_name
+FROM
+    students
+WHERE
+    college_type = '${college_type}'
+        AND UPPER(district) = '${district}'
+UNION SELECT 
+    college_name
+FROM
+    mentors
+WHERE
+    college_type = '${college_type}'
+        AND UPPER(district) = '${district}'
 `, { type: QueryTypes.SELECT });
             }
             else {
-                result = await db.query(`SELECT DISTINCT college_name
-                    FROM students
-                    UNION
-                    SELECT DISTINCT college_name
-                    FROM mentors;
+                result = await db.query(`
+                    SELECT 
+    college_name
+FROM
+    institutions 
+UNION SELECT 
+    college_name
+FROM
+    students 
+UNION SELECT 
+    college_name
+FROM
+    mentors
                     `, { type: QueryTypes.SELECT });
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
         catch (err) {
+            console.log(err)
             next(err)
         }
     }
