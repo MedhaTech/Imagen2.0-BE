@@ -16,6 +16,7 @@ export class schedule_call extends Model<InferAttributes<schedule_call>, InferCr
     declare created_at: Date;
     declare updated_by: number;
     declare updated_at: Date;
+    declare mentorship_user_id: number;
 
 }
 
@@ -67,6 +68,11 @@ schedule_call.init(
             allowNull: true,
             defaultValue: DataTypes.NOW,
             onUpdate: new Date().toLocaleString()
+        },
+        mentorship_user_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: null
         }
     },
     {
