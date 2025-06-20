@@ -38,6 +38,7 @@ import MentorshipController from "./controllers/mentorship.controller";
 import ChatboxsController from "./controllers/chatboxs.controller";
 import Chatbox_repliesController from "./controllers/chatbox_replies.controller";
 import MilestoneProgressController from "./controllers/milestone_progresss.controller";
+import ScheduleCallsController from "./controllers/schedule_call.controller";
 //import EmailController from "./controllers/email.controller";
 
 
@@ -82,7 +83,8 @@ try {
         new MentorshipController,
         new ChatboxsController,
         new Chatbox_repliesController,
-        new MilestoneProgressController
+        new MilestoneProgressController,
+        new ScheduleCallsController
 
     ], Number(process.env.APP_PORT));
     // starting app
