@@ -41,8 +41,6 @@ export class challenge_response extends Model<InferAttributes<challenge_response
     declare verified_at: Date;
     declare mentor_rejected_reason: String;
     declare mentorship_user_id: number;
-    declare meeting_call: String;
-
 }
 
 challenge_response.init(
@@ -190,10 +188,6 @@ challenge_response.init(
         },
         mentorship_user_id: {
             type: DataTypes.INTEGER,
-            allowNull: true,
-        },
-        meeting_call: {
-            type: DataTypes.STRING,
             allowNull: true,
         }
     },
