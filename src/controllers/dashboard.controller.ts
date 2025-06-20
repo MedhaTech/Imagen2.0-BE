@@ -58,6 +58,10 @@ export default class DashboardController extends BaseController {
         this.router.get(`${this.path}/StateDashboard`, this.getStateDashboard.bind(this));
         //public api's
         this.router.get(`${this.path}/CollegeNameForCollegeType`, this.getCollegeNameForCollegeType.bind(this));
+        //MentorShip Dashboard stats
+        this.router.get(`${this.path}/MSteamCount`, this.getMSteamCount.bind(this));
+        this.router.get(`${this.path}/MmileStoneCount`, this.getMentormileStoneCount.bind(this));
+        this.router.get(`${this.path}/MschedulecallsCount`, this.getMschedule_callsCount.bind(this));
 
     }
 
@@ -1137,6 +1141,102 @@ WHERE college_type = '${college_type}';
                     SELECT DISTINCT college_name
                     FROM mentors;
                     `, { type: QueryTypes.SELECT });
+            }
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    //fecting total team assign to mentor
+    protected async getMSteamCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { user_id } = newREQQuery
+            if (user_id) {
+                const summary = await db.query(`select count(challenge_response_id) as MSteamCount from challenge_responses where mentorship_user_id = ${user_id}`, { type: QueryTypes.SELECT });
+                result = Object.values(summary[0]).toString()
+            }
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    //fecting total milestone Completed by mentor
+    protected async getMentormileStoneCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { user_id } = newREQQuery
+            if (user_id) {
+                const summary = await db.query(`SELECT 
+    COUNT(mc.challenge_response_id) AS milestoneCount
+FROM
+    challenge_responses AS cr
+        JOIN
+    (SELECT 
+        COUNT(milestone_id) AS allmilestone, challenge_response_id
+    FROM
+        milestone_progress
+    WHERE
+        status = 'COMPLETED'
+    GROUP BY challenge_response_id
+    HAVING allmilestone >= 8) AS mc ON cr.challenge_response_id = mc.challenge_response_id
+WHERE
+    cr.mentorship_user_id = ${user_id}`, { type: QueryTypes.SELECT });
+                result = Object.values(summary[0]).toString()
+            }
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            console.log(err)
+            next(err)
+        }
+    }
+    //fecting Completed and incompleted schedule_calls by mentor
+    protected async getMschedule_callsCount(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { user_id } = newREQQuery
+            if (user_id) {
+                const summary = await db.query(`SELECT 
+    COALESCE(SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END), 0) AS cmptotal,
+    COALESCE(SUM(CASE WHEN status = 'INCOMPLETE' THEN 1 ELSE 0 END), 0) AS intotal
+FROM schedule_calls
+WHERE mentorship_user_id = ${user_id};`, { type: QueryTypes.SELECT });
+                result['scheduleCompleted'] = Object.values(summary[0])[0].toString();
+                result['scheduleIncompleted'] = Object.values(summary[0])[1].toString();
+
             }
             res.status(200).send(dispatcher(res, result, 'done'))
         }
