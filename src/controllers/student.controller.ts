@@ -116,7 +116,10 @@ export default class StudentController extends BaseController {
     type,
     username,
     gender,
-    college_town
+    college_town,
+    dateofbirth,
+    disability,
+    area
 FROM
     students AS s
       INNER JOIN
