@@ -22,7 +22,10 @@ export const studentSchema = Joi.object().keys({
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
     email: Joi.string().email().allow(null, ''),
-    reg_type: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, '')
+    reg_type: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
+    dateofbirth: Joi.date(),
+    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
 });
 
 export const studentSchemaAddstudent = Joi.object().keys({
@@ -45,7 +48,10 @@ export const studentSchemaAddstudent = Joi.object().keys({
     confirmPassword: Joi.any(),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
-    email: Joi.string().email().allow(null, '')
+    email: Joi.string().email().allow(null, ''),
+    dateofbirth: Joi.date(),
+    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
 });
 
 export const studentUpdateSchema = Joi.object().keys({
@@ -64,7 +70,10 @@ export const studentUpdateSchema = Joi.object().keys({
     type: Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN),
     gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
-    email: Joi.string().email().allow(null, '')
+    email: Joi.string().email().allow(null, ''),
+    dateofbirth: Joi.date(),
+    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
 
 });
 

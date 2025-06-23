@@ -30,7 +30,10 @@ export class student extends Model<InferAttributes<student>, InferCreationAttrib
     declare updated_at: Date;
     declare otp: number;
     declare course: number;
-    declare reg_type: string
+    declare reg_type: string;
+    declare dateofbirth: Date;
+    declare disability: string;
+    declare area: string;
 }
 
 student.init(
@@ -126,6 +129,15 @@ student.init(
             allowNull: true,
         },
         reg_type: {
+            type: DataTypes.STRING
+        },
+        dateofbirth: {
+            type: DataTypes.DATE
+        },
+        disability: {
+            type: DataTypes.STRING
+        },
+        area: {
             type: DataTypes.STRING
         }
     },
