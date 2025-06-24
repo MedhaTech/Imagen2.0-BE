@@ -33,7 +33,7 @@ export default class MentorshipController extends BaseController {
         this.router.post(`${this.path}/triggerWelcomeEmail`, this.triggerWelcomeEmail.bind(this));
         this.router.put(`${this.path}/resetPassword`, this.resetPassword.bind(this));
         this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
-         this.router.get(`${this.path}/seletedteams`, this.getseletedteams.bind(this));
+        this.router.get(`${this.path}/seletedteams`, this.getseletedteams.bind(this));
         super.initializeRoutes();
     }
     //Creating mentorship users
@@ -77,7 +77,7 @@ export default class MentorshipController extends BaseController {
                 where[`${this.model}_id`] = JSON.parse(deValue);
                 data = await this.crudService.findOne(modelClass, {
                     attributes: [
-                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name","chatbox"
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name", "chatbox"
                     ],
                     where: {
                         [Op.and]: [
@@ -96,8 +96,12 @@ export default class MentorshipController extends BaseController {
             } else if (newREQQuery.qtype === 'names') {
                 data = await this.crudService.findAll(modelClass, {
                     attributes: [
-                        "user_id", "full_name"
+                        "user_id", "full_name",
+                        [
+                            db.literal(`(select count(challenge_response_id) as MSteamCount from challenge_responses where mentorship_user_id = \`mentorship\`.\`user_id\` )`), 'teamCount'
+                        ]
                     ],
+
                     where: {
                         status: 'ACTIVE'
                     },
@@ -106,7 +110,7 @@ export default class MentorshipController extends BaseController {
             else {
                 data = await this.crudService.findAll(modelClass, {
                     attributes: [
-                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name","chatbox"
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name", "chatbox"
                     ],
                     include: {
                         model: user,

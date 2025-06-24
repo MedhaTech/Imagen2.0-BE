@@ -185,7 +185,8 @@ export default class DashboardController extends BaseController {
                     "badges",
                     "created_at",
                     "full_name",
-                    "user_id"
+                    "user_id",
+                    "student_id"
                 ]
             })
             if (!studentStatsResul) {
