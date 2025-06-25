@@ -110,7 +110,10 @@ export default class MentorshipController extends BaseController {
             else {
                 data = await this.crudService.findAll(modelClass, {
                     attributes: [
-                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name", "chatbox"
+                        "mentorship_id", "areas_of_expertise", "mobile", "status", "college_name", "chatbox",
+                        [
+                            db.literal(`(select count(challenge_response_id) as MSteamCount from challenge_responses where mentorship_user_id = \`mentorship\`.\`user_id\` )`), 'teamCount'
+                        ]
                     ],
                     include: {
                         model: user,
