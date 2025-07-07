@@ -40,12 +40,14 @@ SET
             const InstData = `UPDATE dashboard_map_stats AS d
         JOIN
     (SELECT 
-        COUNT(mn.mentor_id) AS totalmentor, district
-    FROM
-        mentors AS mn
-    WHERE
-        mn.status = 'ACTIVE'
-    GROUP BY district) AS s ON d.district_name = s.district 
+    COUNT(DISTINCT mn.college_name) AS totalmentor, 
+    mn.district
+FROM
+    mentors AS mn
+WHERE
+    mn.status = 'ACTIVE'
+GROUP BY 
+    mn.district) AS s ON d.district_name = s.district 
 SET 
     d.reg_mentors = s.totalmentor`
             const IdeaData = `UPDATE dashboard_map_stats AS d
