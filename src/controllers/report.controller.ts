@@ -137,7 +137,7 @@ FROM
                 mentors;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT district,${querystring.combilequery} count(mentor_id) as instReg FROM mentors group by district ORDER BY district;
+                                SELECT district,${querystring.combilequery} count(DISTINCT college_name) as instReg FROM mentors group by district ORDER BY district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
@@ -177,19 +177,21 @@ FROM
             }
 
             const insReglist = await db.query(`SELECT 
-    m.full_name,
-    username,
-    mobile,
+    JSON_ARRAYAGG(m.full_name) AS full_names,
+    JSON_ARRAYAGG(username) AS usernames,
+    JSON_ARRAYAGG(mobile) AS mobiles,
     district,
     college_type,
     college_name,
-    m.created_at
+    JSON_ARRAYAGG(DATE_FORMAT(m.created_at,'%d-%m-%Y')) AS created_at,
+    COUNT(m.mentor_id) AS instuser_Count
 FROM
     mentors AS m
         JOIN
     users AS u ON m.user_id = u.user_id
 WHERE
-    m.status = 'ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter};`, { type: QueryTypes.SELECT });
+    m.status = 'ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter}
+GROUP BY m.college_name;`, { type: QueryTypes.SELECT });
             if (!insReglist) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
@@ -266,7 +268,7 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
     COALESCE(teamCount, 0) AS teamCount
 FROM
     (SELECT 
-        district, COUNT(DISTINCT mentor_id) AS insReg
+        district, COUNT(DISTINCT college_name) AS insReg
     FROM
         mentors
     WHERE
@@ -405,16 +407,18 @@ GROUP BY district ORDER BY district`, { type: QueryTypes.SELECT });
     college_name,
     college_type,
     district,
-    m.full_name,
-    mobile,
-    username
+    JSON_ARRAYAGG(m.full_name) AS full_names,
+    JSON_ARRAYAGG(mobile) AS mobiles,
+    JSON_ARRAYAGG(username) AS usernames,
+    COUNT(m.mentor_id) AS users_count
 FROM
     mentors AS m
         JOIN
     users AS u ON m.user_id = u.user_id
 WHERE
     m.status = 'ACTIVE' && m.district LIKE ${districtFilter} && m.college_type LIKE ${categoryFilter}
-            ORDER BY m.district,m.full_name;`, { type: QueryTypes.SELECT });
+GROUP BY m.college_name
+ORDER BY m.district , m.full_name;`, { type: QueryTypes.SELECT });
             const studentCount = await db.query(`SELECT 
     college_name, COUNT(student_id) as stuCount, COUNT(CASE
         WHEN type = 0 THEN 1
