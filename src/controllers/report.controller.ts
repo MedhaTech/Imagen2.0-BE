@@ -137,7 +137,7 @@ FROM
                 mentors;`, { type: QueryTypes.SELECT });
             const querystring: any = await this.authService.combinecategory(categorydata);
             cat_gender = await db.query(`
-                                SELECT district,${querystring.combilequery} count(DISTINCT college_name) as instReg FROM mentors group by district ORDER BY district;
+                                SELECT district,${querystring.combilequery} count(DISTINCT college_name,college_type) as instReg FROM mentors group by district ORDER BY district;
                                 `, { type: QueryTypes.SELECT });
             data = cat_gender
             if (!data) {
@@ -191,7 +191,7 @@ FROM
     users AS u ON m.user_id = u.user_id
 WHERE
     m.status = 'ACTIVE' and district LIKE ${districtFilter} and college_type LIKE ${categoryFilter}
-GROUP BY m.college_name;`, { type: QueryTypes.SELECT });
+GROUP BY m.college_name,m.college_type,m.district;`, { type: QueryTypes.SELECT });
             if (!insReglist) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
@@ -268,7 +268,7 @@ GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
     COALESCE(teamCount, 0) AS teamCount
 FROM
     (SELECT 
-        district, COUNT(DISTINCT college_name) AS insReg
+        district, COUNT(DISTINCT college_name,college_type) AS insReg
     FROM
         mentors
     WHERE
@@ -417,7 +417,7 @@ FROM
     users AS u ON m.user_id = u.user_id
 WHERE
     m.status = 'ACTIVE' && m.district LIKE ${districtFilter} && m.college_type LIKE ${categoryFilter}
-GROUP BY m.college_name
+GROUP BY m.college_name,m.college_type,m.district
 ORDER BY m.district , m.full_name;`, { type: QueryTypes.SELECT });
             const studentCount = await db.query(`SELECT 
     college_name, COUNT(student_id) as stuCount, COUNT(CASE
