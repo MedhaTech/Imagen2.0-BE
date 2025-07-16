@@ -232,8 +232,7 @@ GROUP BY m.college_name,m.college_type,m.district;`, { type: QueryTypes.SELECT }
     s.college_name,
     s.college_type,
     s.district,
-    college_town,
-    COUNT(student_id) AS studentRegCount
+    college_town
 FROM
     Aim_db.students AS s
         LEFT JOIN
@@ -241,7 +240,14 @@ FROM
 WHERE
     m.college_name IS NULL
         AND s.status = 'ACTIVE' AND s.district LIKE ${districtFilter} AND s.college_type LIKE ${categoryFilter}
-GROUP BY s.college_name;`, { type: QueryTypes.SELECT });
+GROUP BY s.college_name
+UNION
+SELECT 
+    college_name,
+    college_type,
+    district,
+    college_town
+FROM institutions WHERE status = 'ACTIVE' AND district LIKE ${districtFilter} AND college_type LIKE ${categoryFilter}`, { type: QueryTypes.SELECT });
             if (!insReglist) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
