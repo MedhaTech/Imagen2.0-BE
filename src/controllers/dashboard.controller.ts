@@ -646,7 +646,7 @@ WHERE
         try {
             let result: any = {};
             const mentorCount = await db.query(`SELECT 
-    COUNT(mn.mentor_id) AS totalmentor
+    COUNT(distinct mn.college_name,mn.college_type,mn.district) AS totalmentor
 FROM
     mentors AS mn
 WHERE
