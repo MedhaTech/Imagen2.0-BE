@@ -40,7 +40,7 @@ SET
             const InstData = `UPDATE dashboard_map_stats AS d
         JOIN
     (SELECT 
-        COUNT(mn.mentor_id) AS totalmentor, district
+        COUNT(DISTINCT mn.college_name,mn.college_type,mn.district) AS totalmentor, district
     FROM
         mentors AS mn
     WHERE
