@@ -9,9 +9,9 @@ export default class DashboardService extends BaseService {
      */
     async resetMapStats() {
         try {
-//             const removeData = `truncate dashboard_map_stats;`
-//             const DistrictData = `INSERT INTO dashboard_map_stats(district_name)
-// select district from organizations group by district`
+            const removeData = `truncate dashboard_map_stats;`
+            const DistrictData = `INSERT INTO dashboard_map_stats(district_name)
+select district from organizations group by district`
             const teamData = `UPDATE dashboard_map_stats AS d
         JOIN
     (SELECT 
@@ -66,12 +66,12 @@ SET
 SET 
     d.ideas = s.submittedCount`
 
-            // await db.query(removeData, {
-            //     type: QueryTypes.RAW,
-            // });
-            // await db.query(DistrictData, {
-            //     type: QueryTypes.RAW,
-            // });
+            await db.query(removeData, {
+                type: QueryTypes.RAW,
+            });
+            await db.query(DistrictData, {
+                type: QueryTypes.RAW,
+            });
             await db.query(teamData, {
                 type: QueryTypes.RAW,
             });
