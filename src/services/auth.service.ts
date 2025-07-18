@@ -1153,11 +1153,11 @@ export default class authService {
             let combilequery = ''
             let categoryList = ''
             data.map((iteam: any) => {
-                combilequery += `COUNT(CASE
+                combilequery += `COUNT(DISTINCT CASE
         WHEN
             college_type = '${iteam.college_type}'
         THEN
-            1
+            college_name
     END) AS '${iteam.college_type.replace(/[^a-zA-Z]/g, '')}_Count',`
                 categoryList += `${iteam.college_type.replace(/[^a-zA-Z]/g, '')}_Count,`
             })
