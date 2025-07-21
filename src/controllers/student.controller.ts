@@ -36,6 +36,7 @@ export default class StudentController extends BaseController {
         this.router.post(`${this.path}/triggerWelcomeEmail`, this.triggerWelcomeEmail.bind(this));
         this.router.get(`${this.path}/IsCertificate`, this.getCertificate.bind(this));
         this.router.get(`${this.path}/milestones`, this.getmilestones.bind(this));
+        this.router.get(`${this.path}/CIDteamMenbers`, this.getCIDteamMenbers.bind(this));
         super.initializeRoutes();
     }
     //login api for the student users 
@@ -549,6 +550,39 @@ LEFT JOIN
     milestone_progress AS mp 
     ON m.milestone_id = mp.milestone_id 
     AND mp.challenge_response_id = ${challenge_response_id};
+`, { type: QueryTypes.SELECT });
+
+            res.status(200).send(dispatcher(res, result, 'done'))
+        }
+        catch (err) {
+            next(err)
+        }
+    }
+    //Fetching team Members by cid 
+    protected async getCIDteamMenbers(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTOR' && res.locals.role !== 'STATE' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let result: any = {};
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { challenge_response_id } = newREQQuery
+
+            result = await db.query(`SELECT 
+    s.full_name
+FROM
+    students s
+        JOIN
+    challenge_responses cr ON s.student_id = cr.student_id
+        OR s.type = cr.student_id
+WHERE
+    cr.challenge_response_id = ${challenge_response_id};
 `, { type: QueryTypes.SELECT });
 
             res.status(200).send(dispatcher(res, result, 'done'))
