@@ -93,7 +93,9 @@ export default class App {
      */
     private initializeJobs(): void {
         const cronManager = CronManager.getInstance()
-        cronManager.addJob(new DashboardMapStatsJob())
+        if (process.env.pm_id === '0') {
+            cronManager.addJob(new DashboardMapStatsJob())
+        }
         cronManager.startAll();
     }
 
