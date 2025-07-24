@@ -3,33 +3,33 @@ import { constents } from '../configs/constents.config';
 import { speeches } from '../configs/speeches.config';
 
 export const studentSchema = Joi.object().keys({
-    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).required().messages({
+    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN_HUD).required().messages({
         'string.empty': speeches.USER_FULLNAME_REQUIRED
     }),
     username: Joi.string().trim().min(1).required().messages({
         'string.empty': speeches.USER_USERNAME_REQUIRED
     }),
-    mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN).allow(null, ''),
+    mobile: Joi.string().trim().regex(constents.ONLY_DIGIT_PATTERN),
     district: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_type: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_name: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    roll_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    roll_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN_HUD).allow(null, ''),
     id_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
-    branch: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    branch: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
+    year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
     password: Joi.any(),
     confirmPassword: Joi.any(),
-    gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
     email: Joi.string().email().allow(null, ''),
     reg_type: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
-    dateofbirth: Joi.date(),
-    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
+    dateofbirth: Joi.date().allow(null, ''),
+    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
+    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, '')
 });
 
 export const studentSchemaAddstudent = Joi.object().keys({
-    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN).required().messages({
+    full_name: Joi.string().trim().min(1).regex(constents.ALPHA_NUMERIC_PATTERN_HUD).required().messages({
         'string.empty': speeches.USER_FULLNAME_REQUIRED
     }),
     type: Joi.string().trim().min(1).regex(constents.ONLY_DIGIT_PATTERN).required().messages({
@@ -40,18 +40,18 @@ export const studentSchemaAddstudent = Joi.object().keys({
     district: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_type: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
     college_name: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    roll_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    roll_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN_HUD).allow(null, ''),
     id_number: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
-    branch: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN),
-    year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    branch: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
+    year_of_study: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
     password: Joi.any(),
     confirmPassword: Joi.any(),
-    gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
+    gender: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
     college_town: Joi.string().regex(constents.ALPHA_NUMERIC_PLUS_PATTERN).allow(null, ''),
     email: Joi.string().email().allow(null, ''),
-    dateofbirth: Joi.date(),
-    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN),
-    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN)
+    dateofbirth: Joi.date().allow(null, ''),
+    disability: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, ''),
+    area: Joi.string().regex(constents.ALPHA_NUMERIC_PATTERN).allow(null, '')
 });
 
 export const studentUpdateSchema = Joi.object().keys({
