@@ -185,6 +185,16 @@ export default class MentorController extends BaseController {
     private async register(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
         req.body['role'] = 'MENTOR';
         req.body.password = req.body.confirmPassword
+        const checkmentor = await this.crudService.findAndCountAll(mentor, {
+            where: {
+                college_name: req.body.college_name,
+                college_type: req.body.college_type,
+                district: req.body.district
+            }
+        });
+        if (checkmentor.count >= 2) {
+            return res.status(400).send(dispatcher(res, '', 'error', 'A user from this institution has already been registered. Maximum registration limit reached.', 400));
+        }
         const payloadData = this.autoFillTrackingColumns(req, res, mentor);
         const result: any = await this.authService.mentorRegister(payloadData);
         if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
@@ -274,6 +284,16 @@ export default class MentorController extends BaseController {
             const { username } = req.body;
             if (!username) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
+            }
+            const checkmentor = await this.crudService.findAndCountAll(mentor, {
+                where: {
+                    college_name: req.body.college_name,
+                    college_type: req.body.college_type,
+                    district: req.body.district
+                }
+            });
+            if (checkmentor.count >= 2) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'A user from this institution has already been registered. Maximum registration limit reached.', 400));
             }
             const result = await this.authService.emailotp(req.body, mentor);
             if (result.error) {
