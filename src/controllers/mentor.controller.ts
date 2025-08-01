@@ -187,6 +187,10 @@ export default class MentorController extends BaseController {
         req.body.password = req.body.confirmPassword
         const payloadData = this.autoFillTrackingColumns(req, res, mentor);
         const result: any = await this.authService.mentorRegister(payloadData);
+        const checkmentor = await this.crudService.findAndCountAll(mentor, { where: { college_name: req.body.college_name } });
+        if (checkmentor.count >= 2) {
+            return res.status(400).send(dispatcher(res, '', 'error', 'A user from this institution has already been registered. Maximum registration limit reached.', 400));
+        }
         if (result && result.output && result.output.payload && result.output.payload.message == 'Email') {
             return res.status(406).send(dispatcher(res, result.data, 'error', speeches.MENTOR_EXISTS, 406));
         }
@@ -274,6 +278,10 @@ export default class MentorController extends BaseController {
             const { username } = req.body;
             if (!username) {
                 throw badRequest(speeches.USER_EMAIL_REQUIRED);
+            }
+            const checkmentor = await this.crudService.findAndCountAll(mentor, { where: { college_name: req.body.college_name } });
+            if (checkmentor.count >= 2) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'A user from this institution has already been registered. Maximum registration limit reached.', 400));
             }
             const result = await this.authService.emailotp(req.body, mentor);
             if (result.error) {
