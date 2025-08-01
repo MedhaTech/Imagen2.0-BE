@@ -60,6 +60,9 @@ export default class SupportTicketController extends BaseController {
                 data = await this.crudService.findOne(modelClass, {
                     attributes: [
                         [
+                            db.literal(`(SELECT role FROM users As s WHERE s.user_id = \`support_ticket\`.\`created_by\` )`), 'role'
+                        ],
+                        [
                             db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`support_ticket\`.\`created_by\` )`), 'created_by'
                         ],
                         [
@@ -116,6 +119,9 @@ export default class SupportTicketController extends BaseController {
                             "link",
                             "file",
                             'district',
+                            [
+                                db.literal(`(SELECT role FROM users As s WHERE s.user_id = \`support_ticket\`.\`created_by\` )`), 'role'
+                            ],
                             [
                                 db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`support_ticket\`.\`created_by\` )`), 'created_by'
                             ],
