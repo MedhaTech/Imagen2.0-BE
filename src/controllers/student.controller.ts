@@ -187,6 +187,7 @@ WHERE
             const payload = this.autoFillTrackingColumns(req, res, modelLoaded);
             if (req.body.username) {
                 const username = req.body.username;
+                payload.email = req.body.username;
                 const studentDetails = await this.crudService.findOne(user, { where: { username: username } });
                 if (studentDetails) {
                     if (studentDetails.dataValues.username == username) throw badRequest(speeches.USER_EMAIL_EXISTED);
