@@ -39,6 +39,7 @@ export default class ChallengeResponsesController extends BaseController {
         this.router.get(`${this.path}/schoolpdfideastatus`, this.getSchoolPdfIdeaStatus.bind(this));
         this.router.get(this.path + '/submittedDetailsforideapdf', this.getResponseideapdf.bind(this));
         this.router.get(this.path + '/ideasformentorship', this.getideasformentorship.bind(this));
+        this.router.put(this.path + '/CIDGroupMentorId', this.CIDGroupMentorId.bind(this));
         super.initializeRoutes();
     }
     //fetch idea details in different forms
@@ -1596,6 +1597,37 @@ export default class ChallengeResponsesController extends BaseController {
                 }
             }
             return res.status(200).send(dispatcher(res, data, 'success'));
+        } catch (error) {
+            next(error);
+        }
+    }
+    //updating list of ideas by group of challenge_response_id's
+    protected async CIDGroupMentorId(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            const payload = this.autoFillTrackingColumns(req, res, challenge_response);
+            const result = await this.crudService.update(challenge_response,
+                payload,
+                {
+                    where: {
+                        challenge_response_id: {
+                            [Op.in]: req.body.cids
+                        },
+                        mentorship_user_id: {
+                            [Op.is]: null
+                    }
+                }
+                }
+            );
+            if (!result) {
+                throw badRequest()
+            }
+            if (result instanceof Error) {
+                throw result;
+            }
+            return res.status(200).send(dispatcher(res, result, 'updated'));
         } catch (error) {
             next(error);
         }

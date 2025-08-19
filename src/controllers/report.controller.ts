@@ -6,6 +6,8 @@ import { notFound } from "boom";
 import { speeches } from "../configs/speeches.config";
 import { QueryTypes } from 'sequelize';
 import { baseConfig } from "../configs/base.config";
+import { user } from "../models/user.model";
+import { mentorship } from "../models/mentorship.model";
 
 export default class ReportController extends BaseController {
     model = "mentor"; ///giving any name because this shouldnt be used in any apis in this controller
@@ -37,6 +39,7 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/L2deatilreport`, this.getL2Report.bind(this));
         this.router.get(`${this.path}/L3deatilreport`, this.getL3Report.bind(this));
         this.router.get(`${this.path}/mentorshipreport`, this.getmentorshipreport.bind(this));
+        this.router.get(`${this.path}/mentorshipteamWiseReport`, this.getmentorshipteamWiseReport.bind(this));
     }
     //fetching studentsummary counts
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -1312,13 +1315,54 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
             return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
         }
         try {
+            let data: any;
+            data = await this.crudService.findAll(mentorship, {
+                attributes: [
+                     "areas_of_expertise", "mobile", "status", "college_name",
+                    [
+                        db.literal(`(select count(challenge_response_id) as MSteamCount from challenge_responses where mentorship_user_id = \`mentorship\`.\`user_id\` )`), 'teamCount'
+                    ]
+                ],
+                include: {
+                    model: user,
+                    attributes: [
+                        "user_id",
+                        "username",
+                        "full_name"
+                    ]
+                }
+            })
+
+            if (!data || data instanceof Error) {
+                if (data != null) {
+                    throw notFound(data.message);
+                } else {
+                    throw notFound()
+                }
+            }
+            return res.status(200).send(dispatcher(res, data, 'success'));
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    protected async getmentorshipteamWiseReport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
             const data = await db.query(`SELECT 
     full_name,
-    (select username from users as u where u.user_id = m.user_id)as email,
+    (SELECT 
+            username
+        FROM
+            users AS u
+        WHERE
+            u.user_id = m.user_id) AS email,
     mobile,
     areas_of_expertise,
     college_name,
-    challenge_response_id,
+    cr.challenge_response_id,
     title,
     theme,
     (SELECT 
@@ -1327,11 +1371,67 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
             students
         WHERE
             student_id = cr.student_id
-                OR type = cr.student_id) AS team_members
+                OR type = cr.student_id) AS team_members,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 1) AS MS_1,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 2) AS MS_2,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 3) AS MS_3,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 4) AS MS_4,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 5) AS MS_5,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 6) AS MS_6,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 7) AS MS_7,
+    (SELECT 
+            status
+        FROM
+            milestone_progress
+        WHERE
+            challenge_response_id = cr.challenge_response_id
+                AND milestone_id = 8) AS MS_8
 FROM
     mentorships AS m
         LEFT JOIN
-    challenge_responses AS cr ON m.user_id = cr.mentorship_user_id;`, { type: QueryTypes.SELECT });
+    challenge_responses AS cr ON m.user_id = cr.mentorship_user_id`, { type: QueryTypes.SELECT });
             if (!data) {
                 throw notFound(speeches.DATA_NOT_FOUND)
             }
