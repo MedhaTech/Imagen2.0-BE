@@ -40,6 +40,7 @@ export default class ReportController extends BaseController {
         this.router.get(`${this.path}/L3deatilreport`, this.getL3Report.bind(this));
         this.router.get(`${this.path}/mentorshipreport`, this.getmentorshipreport.bind(this));
         this.router.get(`${this.path}/mentorshipteamWiseReport`, this.getmentorshipteamWiseReport.bind(this));
+        this.router.get(`${this.path}/TeamMilestoneReport`, this.getTeamMilestoneReport.bind(this));
     }
     //fetching studentsummary counts
     protected async studentsummary(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -1318,7 +1319,7 @@ GROUP BY challenge_response_id`, { type: QueryTypes.SELECT });
             let data: any;
             data = await this.crudService.findAll(mentorship, {
                 attributes: [
-                     "areas_of_expertise", "mobile", "status", "college_name",
+                    "areas_of_expertise", "mobile", "status", "college_name",
                     [
                         db.literal(`(select count(challenge_response_id) as MSteamCount from challenge_responses where mentorship_user_id = \`mentorship\`.\`user_id\` )`), 'teamCount'
                     ]
@@ -1443,4 +1444,37 @@ FROM
             next(err)
         }
     }
+    protected async getTeamMilestoneReport(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'EADMIN' && res.locals.role !== 'MENTORSHIP' && res.locals.role !== 'STUDENT' && res.locals.role !== 'TEAM') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { challenge_response_id } = newREQQuery;
+            const data = await db.query(`SELECT 
+    m.name, m.description, mp.note, mp.file, mp.status
+FROM
+    milestones AS m
+        LEFT JOIN
+    milestone_progress AS mp ON m.milestone_id = mp.milestone_id
+        AND mp.challenge_response_id = ${challenge_response_id};
+`, { type: QueryTypes.SELECT });
+            if (!data) {
+                throw notFound(speeches.DATA_NOT_FOUND)
+            }
+            if (data instanceof Error) {
+                throw data
+            }
+            res.status(200).send(dispatcher(res, data, "success"))
+        } catch (err) {
+            next(err)
+        }
+    }
+
 }
