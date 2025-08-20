@@ -60,11 +60,12 @@ export default class ChatboxsController extends BaseController {
                             "reply_details",
                             "created_at",
                             "updated_at",
+                            "created_by",
                             [
-                                db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`chatbox_replies\`.\`created_by\` )`), 'created_by'
+                                db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`chatbox_replies\`.\`created_by\` )`), 'created_name'
                             ],
                             [
-                                db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`chatbox_replies\`.\`updated_by\` )`), 'updated_by'
+                                db.literal(`(SELECT full_name FROM users As s WHERE s.user_id = \`chatbox_replies\`.\`updated_by\` )`), 'updated_name'
                             ],
                         ],
                         model: chatbox_replie,
