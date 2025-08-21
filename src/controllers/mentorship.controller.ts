@@ -13,6 +13,11 @@ import validationMiddleware from '../middlewares/validation.middleware';
 import bcrypt from 'bcrypt';
 import { baseConfig } from '../configs/base.config';
 import db from "../utils/dbconnection.util";
+import { challenge_response } from '../models/challenge_response.model';
+import { chatbox } from '../models/chatbox.model';
+import { schedule_call } from '../models/schedule_call.model';
+import { milestone_progress } from '../models/milestone_progress.model';
+import { chatbox_replie } from '../models/chatbox_replie.model';
 
 export default class MentorshipController extends BaseController {
     model = "mentorship";
@@ -235,6 +240,25 @@ export default class MentorshipController extends BaseController {
             if (!getUserIdFromMentorshipData) throw notFound(speeches.USER_NOT_FOUND);
             if (getUserIdFromMentorshipData instanceof Error) throw getUserIdFromMentorshipData;
             const user_id = getUserIdFromMentorshipData.dataValues.user_id;
+
+            const cids = await this.crudService.findAll(challenge_response, {
+                attributes: ['challenge_response_id'],
+                where: { mentorship_user_id: user_id }
+            });
+
+            for (const cid of cids) {
+                await this.crudService.delete(schedule_call, { where: { challenge_response_id: cid.challenge_response_id } });
+                await this.crudService.delete(milestone_progress, { where: { challenge_response_id: cid.challenge_response_id } });
+            }
+            const chatids = await this.crudService.findAll(chatbox, {
+                attributes: ['chatbox_id'],
+                where: { mentorship_user_id: user_id }
+            });
+            for (const chatid of chatids) {
+                await this.crudService.delete(chatbox_replie, { where: { chatbox_id: chatid.chatbox_id } });
+            }
+            await this.crudService.delete(chatbox, { where: { mentorship_user_id: user_id } });
+            await this.crudService.update(challenge_response, { mentorship_user_id: null }, { where: { mentorship_user_id: user_id } });
             await this.crudService.delete(user, { where: { user_id: user_id } })
             const data = await this.crudService.delete(mentorship, { where: { mentorship_id: where.mentorship_id } })
             return res.status(200).send(dispatcher(res, data, 'deleted'));
