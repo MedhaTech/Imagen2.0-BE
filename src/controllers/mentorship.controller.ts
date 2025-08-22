@@ -39,6 +39,7 @@ export default class MentorshipController extends BaseController {
         this.router.put(`${this.path}/resetPassword`, this.resetPassword.bind(this));
         this.router.put(`${this.path}/forgotPassword`, this.forgotPassword.bind(this));
         this.router.get(`${this.path}/seletedteams`, this.getseletedteams.bind(this));
+        this.router.put(`${this.path}/unassignteam`, this.unassignteam.bind(this));
         super.initializeRoutes();
     }
     //Creating mentorship users
@@ -262,6 +263,35 @@ export default class MentorshipController extends BaseController {
             await this.crudService.delete(user, { where: { user_id: user_id } })
             const data = await this.crudService.delete(mentorship, { where: { mentorship_id: where.mentorship_id } })
             return res.status(200).send(dispatcher(res, data, 'deleted'));
+        } catch (error) {
+            next(error);
+        }
+    }
+    private async unassignteam(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+        if (res.locals.role !== 'ADMIN' && res.locals.role !== 'MENTORSHIP') {
+            return res.status(401).send(dispatcher(res, '', 'error', speeches.ROLE_ACCES_DECLINE, 401));
+        }
+        try {
+            let newREQQuery: any = {}
+            if (req.query.Data) {
+                let newQuery: any = await this.authService.decryptGlobal(req.query.Data);
+                newREQQuery = JSON.parse(newQuery);
+            } else if (Object.keys(req.query).length !== 0) {
+                return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
+            }
+            const { mentorship_user_id, challenge_response_id } = newREQQuery
+            await this.crudService.delete(schedule_call, { where: { challenge_response_id: challenge_response_id } });
+            await this.crudService.delete(milestone_progress, { where: { challenge_response_id: challenge_response_id } });
+            const chatids = await this.crudService.findAll(chatbox, {
+                attributes: ['chatbox_id'],
+                where: { challenge_response_id: challenge_response_id }
+            });
+            for (const chatid of chatids) {
+                await this.crudService.delete(chatbox_replie, { where: { chatbox_id: chatid.chatbox_id } });
+            }
+            await this.crudService.delete(chatbox, { where: { challenge_response_id: challenge_response_id } });
+            const data = await this.crudService.update(challenge_response, { mentorship_user_id: null }, { where: { mentorship_user_id: mentorship_user_id } });
+            return res.status(200).send(dispatcher(res, data, 'updated'));
         } catch (error) {
             next(error);
         }
