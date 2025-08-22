@@ -279,7 +279,7 @@ export default class MentorshipController extends BaseController {
             } else if (Object.keys(req.query).length !== 0) {
                 return res.status(400).send(dispatcher(res, '', 'error', 'Bad Request', 400));
             }
-            const { mentorship_user_id, challenge_response_id } = newREQQuery
+            const { challenge_response_id } = newREQQuery
             await this.crudService.delete(schedule_call, { where: { challenge_response_id: challenge_response_id } });
             await this.crudService.delete(milestone_progress, { where: { challenge_response_id: challenge_response_id } });
             const chatids = await this.crudService.findAll(chatbox, {
@@ -290,7 +290,7 @@ export default class MentorshipController extends BaseController {
                 await this.crudService.delete(chatbox_replie, { where: { chatbox_id: chatid.chatbox_id } });
             }
             await this.crudService.delete(chatbox, { where: { challenge_response_id: challenge_response_id } });
-            const data = await this.crudService.update(challenge_response, { mentorship_user_id: null }, { where: { mentorship_user_id: mentorship_user_id } });
+            const data = await this.crudService.update(challenge_response, { mentorship_user_id: null }, { where: { challenge_response_id: challenge_response_id } });
             return res.status(200).send(dispatcher(res, data, 'updated'));
         } catch (error) {
             next(error);
